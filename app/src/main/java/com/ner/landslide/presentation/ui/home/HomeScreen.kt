@@ -195,7 +195,7 @@ fun HomeScreen(
                                 .background(SurfaceVariantDark)
                                 .border(1.dp, BorderSubtle, CircleShape)
                         ) {
-                            Icon(Icons.Default.Cloud, "Weather Radar", tint = CyberCyan, modifier = Modifier.size(18.dp))
+                            Icon(Icons.Default.Cloud, "Weather Radar", tint = Primary80, modifier = Modifier.size(18.dp))
                         }
                         IconButton(
                             onClick = onNavigateToPrediction,
@@ -237,7 +237,7 @@ fun HomeScreen(
                         value = "48.2",
                         unit = "mm",
                         progressFraction = 0.48f,
-                        indicatorColor = CyberCyan,
+                        indicatorColor = Primary80,
                         modifier = Modifier.weight(1f)
                     )
                     TelemetryInstrumentTile(
@@ -245,7 +245,7 @@ fun HomeScreen(
                         value = "64%",
                         unit = "Sat",
                         progressFraction = 0.64f,
-                        indicatorColor = Secondary80,
+                        indicatorColor = SeverityModerate,
                         modifier = Modifier.weight(1f)
                     )
                     TelemetryInstrumentTile(
@@ -350,69 +350,73 @@ fun HomeScreen(
                         modifier = Modifier.horizontalScroll(rememberScrollState())
                     ) {
                         // All Filter
+                        val isAllSelected = selectedSeverityFilter == null
                         Surface(
                             onClick = { selectedSeverityFilter = null },
                             shape = RoundedCornerShape(6.dp),
-                            color = if (selectedSeverityFilter == null) Primary80.copy(alpha = 0.18f) else SurfaceDark,
-                            border = BorderStroke(1.dp, if (selectedSeverityFilter == null) Primary80 else BorderSubtle)
+                            color = if (isAllSelected) Primary80 else SurfaceDark,
+                            border = BorderStroke(1.dp, if (isAllSelected) Primary80 else BorderSubtle)
                         ) {
                             Text(
                                 text = "All (${uiState.alerts.size})",
                                 fontSize = 11.sp,
-                                fontWeight = if (selectedSeverityFilter == null) FontWeight.Bold else FontWeight.Medium,
-                                color = if (selectedSeverityFilter == null) Primary80 else TextMuted,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                fontWeight = if (isAllSelected) FontWeight.Bold else FontWeight.Medium,
+                                color = if (isAllSelected) Color.White else TextMuted,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
                             )
                         }
 
                         // Critical Filter
+                        val isCritSelected = selectedSeverityFilter == AlertSeverity.CRITICAL
                         val critCount = uiState.alerts.count { it.severity == AlertSeverity.CRITICAL }
                         Surface(
                             onClick = { selectedSeverityFilter = AlertSeverity.CRITICAL },
                             shape = RoundedCornerShape(6.dp),
-                            color = if (selectedSeverityFilter == AlertSeverity.CRITICAL) SeverityCritical.copy(alpha = 0.18f) else SurfaceDark,
-                            border = BorderStroke(1.dp, if (selectedSeverityFilter == AlertSeverity.CRITICAL) SeverityCritical else BorderSubtle)
+                            color = if (isCritSelected) SeverityCritical else SurfaceDark,
+                            border = BorderStroke(1.dp, if (isCritSelected) SeverityCritical else BorderSubtle)
                         ) {
                             Text(
                                 text = "Critical ($critCount)",
                                 fontSize = 11.sp,
-                                fontWeight = if (selectedSeverityFilter == AlertSeverity.CRITICAL) FontWeight.Bold else FontWeight.Medium,
-                                color = if (selectedSeverityFilter == AlertSeverity.CRITICAL) SeverityCritical else TextMuted,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                fontWeight = if (isCritSelected) FontWeight.Bold else FontWeight.Medium,
+                                color = if (isCritSelected) Color.White else TextMuted,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
                             )
                         }
 
                         // High Filter
+                        val isHighSelected = selectedSeverityFilter == AlertSeverity.HIGH
                         val highCount = uiState.alerts.count { it.severity == AlertSeverity.HIGH }
                         Surface(
                             onClick = { selectedSeverityFilter = AlertSeverity.HIGH },
                             shape = RoundedCornerShape(6.dp),
-                            color = if (selectedSeverityFilter == AlertSeverity.HIGH) SeverityHigh.copy(alpha = 0.18f) else SurfaceDark,
-                            border = BorderStroke(1.dp, if (selectedSeverityFilter == AlertSeverity.HIGH) SeverityHigh else BorderSubtle)
+                            color = if (isHighSelected) SeverityHigh else SurfaceDark,
+                            border = BorderStroke(1.dp, if (isHighSelected) SeverityHigh else BorderSubtle)
                         ) {
                             Text(
                                 text = "Warning ($highCount)",
                                 fontSize = 11.sp,
-                                fontWeight = if (selectedSeverityFilter == AlertSeverity.HIGH) FontWeight.Bold else FontWeight.Medium,
-                                color = if (selectedSeverityFilter == AlertSeverity.HIGH) SeverityHigh else TextMuted,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                fontWeight = if (isHighSelected) FontWeight.Bold else FontWeight.Medium,
+                                color = if (isHighSelected) Color.White else TextMuted,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
                             )
                         }
 
                         // Moderate Filter
+                        val isModSelected = selectedSeverityFilter == AlertSeverity.MODERATE
                         val modCount = uiState.alerts.count { it.severity == AlertSeverity.MODERATE }
                         Surface(
                             onClick = { selectedSeverityFilter = AlertSeverity.MODERATE },
                             shape = RoundedCornerShape(6.dp),
-                            color = if (selectedSeverityFilter == AlertSeverity.MODERATE) SeverityModerate.copy(alpha = 0.18f) else SurfaceDark,
-                            border = BorderStroke(1.dp, if (selectedSeverityFilter == AlertSeverity.MODERATE) SeverityModerate else BorderSubtle)
+                            color = if (isModSelected) SeverityModerate else SurfaceDark,
+                            border = BorderStroke(1.dp, if (isModSelected) SeverityModerate else BorderSubtle)
                         ) {
                             Text(
                                 text = "Advisory ($modCount)",
                                 fontSize = 11.sp,
-                                fontWeight = if (selectedSeverityFilter == AlertSeverity.MODERATE) FontWeight.Bold else FontWeight.Medium,
-                                color = if (selectedSeverityFilter == AlertSeverity.MODERATE) SeverityModerate else TextMuted,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                fontWeight = if (isModSelected) FontWeight.Bold else FontWeight.Medium,
+                                color = if (isModSelected) Color.White else TextMuted,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
                             )
                         }
                     }
@@ -632,7 +636,7 @@ private fun HeroAiFeatureCard(
                     border = BorderStroke(1.dp, BorderSubtle),
                     modifier = Modifier.weight(1f).height(40.dp)
                 ) {
-                    Icon(Icons.Default.Radar, null, modifier = Modifier.size(15.dp), tint = CyberCyan)
+                    Icon(Icons.Default.Radar, null, modifier = Modifier.size(15.dp), tint = Primary80)
                     Spacer(Modifier.width(6.dp))
                     Text("Doppler", fontWeight = FontWeight.SemiBold, color = OnBackgroundDark, fontSize = 12.sp)
                 }

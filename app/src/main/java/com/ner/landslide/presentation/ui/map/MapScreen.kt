@@ -167,56 +167,56 @@ fun MapScreen(viewModel: MapViewModel = hiltViewModel()) {
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Risk Polygons toggle
+                    // Risk Polygons toggle (Solid fill when active, flat hairline border)
                     Surface(
                         onClick = { viewModel.toggleRiskLayer() },
-                        shape = RoundedCornerShape(4.dp),
-                        color = if (uiState.showRiskLayer) SurfaceVariantDark else SurfaceDark,
-                        border = BorderStroke(1.dp, if (uiState.showRiskLayer) SeverityCritical.copy(alpha = 0.6f) else BorderSubtle)
+                        shape = RoundedCornerShape(6.dp),
+                        color = if (uiState.showRiskLayer) Primary80 else SurfaceDark,
+                        border = BorderStroke(1.dp, if (uiState.showRiskLayer) Primary80 else BorderSubtle)
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            horizontalArrangement = Arrangement.spacedBy(5.dp)
                         ) {
                             Box(
                                 modifier = Modifier
                                     .size(6.dp)
                                     .clip(CircleShape)
-                                    .background(if (uiState.showRiskLayer) SeverityCritical else TextSubtle)
+                                    .background(if (uiState.showRiskLayer) Color.White else TextSubtle)
                             )
                             Text(
                                 "Hazard Polygons",
                                 fontSize = 10.sp,
                                 fontWeight = if (uiState.showRiskLayer) FontWeight.Bold else FontWeight.Medium,
-                                color = if (uiState.showRiskLayer) OnBackgroundDark else TextMuted
+                                color = if (uiState.showRiskLayer) Color.White else TextMuted
                             )
                         }
                     }
 
-                    // Key Road Segments toggle
+                    // Key Road Segments toggle (Solid fill when active, flat hairline border)
                     Surface(
                         onClick = { viewModel.toggleRoadLayer() },
-                        shape = RoundedCornerShape(4.dp),
-                        color = if (uiState.showRoadLayer) SurfaceVariantDark else SurfaceDark,
-                        border = BorderStroke(1.dp, if (uiState.showRoadLayer) Primary80.copy(alpha = 0.6f) else BorderSubtle)
+                        shape = RoundedCornerShape(6.dp),
+                        color = if (uiState.showRoadLayer) Primary80 else SurfaceDark,
+                        border = BorderStroke(1.dp, if (uiState.showRoadLayer) Primary80 else BorderSubtle)
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            horizontalArrangement = Arrangement.spacedBy(5.dp)
                         ) {
                             Box(
                                 modifier = Modifier
                                     .size(6.dp)
                                     .clip(CircleShape)
-                                    .background(if (uiState.showRoadLayer) Primary80 else TextSubtle)
+                                    .background(if (uiState.showRoadLayer) Color.White else TextSubtle)
                             )
                             Text(
                                 "Corridors",
                                 fontSize = 10.sp,
                                 fontWeight = if (uiState.showRoadLayer) FontWeight.Bold else FontWeight.Medium,
-                                color = if (uiState.showRoadLayer) OnBackgroundDark else TextMuted
+                                color = if (uiState.showRoadLayer) Color.White else TextMuted
                             )
                         }
                     }

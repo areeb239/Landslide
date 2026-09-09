@@ -3,89 +3,90 @@ package com.ner.landslide.presentation.ui.theme
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
-// ─── Authoritative Mission-Critical Charcoal Slate Palette ───────────────────
-// Base Surface Hierarchy (Deep Charcoal Slate — avoids pitch-black eye strain)
-val ObsidianBase = Color(0xFF0F141C)       // Deep slate root canvas
-val BackgroundDark = Color(0xFF0F141C)     // Primary screen backdrop
-val SurfaceDark = Color(0xFF161D27)        // Card surface
-val SurfaceVariantDark = Color(0xFF1E2634) // Elevated interactive surface
-val SurfaceElevated = Color(0xFF263242)    // Popover / dialog elevation
-val BorderSubtle = Color(0xFF263242)      // Low-contrast 1dp hairline
-val BorderHighlight = Color(0xFF38495F)   // Focused active hairline
+// ─── Control-Room Blue Master Palette (Bhurakshak Early Warning System) ──────
+// Calm, legible, purpose-built for a safety-critical disaster monitoring tool.
+// Base Surface Hierarchy (Deep blue-slate — dark, but not black)
+val ObsidianBase = Color(0xFF0F1720)       // Deep blue-slate root canvas (#0F1720)
+val BackgroundDark = Color(0xFF0F1720)     // Screen background
+val SurfaceDark = Color(0xFF141E29)        // Card / surface panels (#141E29)
+val SurfaceVariantDark = Color(0xFF1C2836) // Slightly elevated interactive chips (#1C2836)
+val SurfaceElevated = Color(0xFF26313D)    // Modal / popover elevation
+val BorderSubtle = Color(0xFF26313D)      // Low-contrast flat 1px hairline (#26313D)
+val BorderHighlight = Color(0xFF2D9CDB)   // Active / focused hairline (#2D9CDB)
 
 // Text & Content Hierarchy
-val OnBackgroundDark = Color(0xFFF1F5F9)   // Crisp high-contrast off-white
-val OnSurfaceDark = Color(0xFFE2E8F0)      // Slate 200 high-readability text
-val TextMuted = Color(0xFF94A3B8)          // Slate 400 secondary metadata
-val TextSubtle = Color(0xFF64748B)         // Slate 500 technical tags & timestamps
+val OnBackgroundDark = Color(0xFFEAF0F5)   // Off-white primary text (#EAF0F5)
+val OnSurfaceDark = Color(0xFFEAF0F5)      // Primary card text
+val TextMuted = Color(0xFF8A99A8)          // Muted blue-gray metadata & labels (#8A99A8)
+val TextSubtle = Color(0xFF6B7A8A)         // Lower-priority technical specs & footnotes
 
-// Primary Monitoring & Telemetry Brand (Muted Field Teal — non-neon)
-val Primary80 = Color(0xFF0D9488)         // Operational Monitoring Teal
-val Primary40 = Color(0xFF0F766E)         // Deep Slate Teal
-val PrimaryLight = Color(0xFF14B8A6)      // Active Beacon Teal
+// Accent & System Active State (Calm Blue — normal monitoring, GNSS locked, active telemetry)
+val Primary80 = Color(0xFF2D9CDB)         // Calm Blue Accent (#2D9CDB)
+val Primary40 = Color(0xFF1B6C9B)         // Deep Slate Blue
+val PrimaryLight = Color(0xFF56B4E9)      // Active Indicator Blue
 val OnPrimary = Color(0xFFFFFFFF)
 
 // Secondary & Advisory Palette
-val Secondary80 = Color(0xFFF59E0B)       // Advisory Amber
+val Secondary80 = Color(0xFFF2994A)       // Amber / Advisory (#F2994A)
 val Secondary40 = Color(0xFFD97706)       // Dark Amber
-val OnSecondary = Color(0xFF0F141C)
+val OnSecondary = Color(0xFF0F1720)
 
-// Telemetry & Utility Colors (Restrained)
-val CyberCyan = Color(0xFF0284C7)         // Tactical GNSS Blue
-val BrandIndigo = Color(0xFF475569)       // Muted Slate Core
-val BrandViolet = Color(0xFF64748B)       // Neutral Slate
+// Telemetry & Utility Aliases (Restrained)
+val CyberCyan = Color(0xFF2D9CDB)         // Tactical GNSS Blue (#2D9CDB)
+val BrandIndigo = Color(0xFF2D9CDB)       // Calm Blue Core
+val BrandViolet = Color(0xFF8A99A8)       // Neutral Slate
 
 // Strict Semantic Severity Tokens
-// NOTE: Saturated Red is strictly reserved for Critical/Emergency states only!
-val SeverityLow = Color(0xFF0D9488)        // Monitoring Teal (Nominal)
-val SeverityModerate = Color(0xFFF59E0B)   // Amber / Gold (Advisory)
-val SeverityHigh = Color(0xFFF97316)       // Warm Amber-Orange (Warning)
-val SeverityCritical = Color(0xFFEF4444)   // Saturated Crimson (Critical Emergency)
+// NOTE: Red (#EB5757) is reserved ONLY for Critical severity, SOS/Emergency actions, and Hazard markers!
+val SeverityLow = Color(0xFF27AE60)        // Muted Green (Nominal / Safe / Completed) (#27AE60)
+val SeverityModerate = Color(0xFFF2994A)   // Amber (Moderate / Advisory) (#F2994A)
+val SeverityHigh = Color(0xFFF2994A)       // Amber (Warning) (#F2994A)
+val SeverityCritical = Color(0xFFEB5757)   // Saturated Muted Red (Critical Emergency) (#EB5757)
 
 // Error & States
-val ErrorRed = Color(0xFFEF4444)
+val ErrorRed = Color(0xFFEB5757)
 val OnError = Color(0xFFFFFFFF)
 
 // Light mode fallback (Standard high-legibility slate)
 val BackgroundLight = Color(0xFFF8FAFC)
 val SurfaceLight = Color(0xFFFFFFFF)
 val SurfaceVariantLight = Color(0xFFF1F5F9)
-val OnBackgroundLight = Color(0xFF0F172A)
-val OnSurfaceLight = Color(0xFF1E293B)
+val OnBackgroundLight = Color(0xFF0F1720)
+val OnSurfaceLight = Color(0xFF141E29)
 
-// ─── Restrained Field Gradients (Zero Neon Glow) ─────────────────────────────
+// ─── Flat Field Gradients (Zero Neon Glow, Pure Slate Depth) ─────────────────
 val GlassGradient = Brush.verticalGradient(
     colors = listOf(
-        Color(0xFF1E2634),
-        Color(0xFF161D27)
+        Color(0xFF141E29),
+        Color(0xFF0F1720)
     )
 )
 
 val CardGlowGradient = Brush.linearGradient(
     colors = listOf(
-        Color(0xFF1E2634),
-        Color(0xFF161D27)
+        Color(0xFF141E29),
+        Color(0xFF141E29)
     )
 )
 
 val HeroRadarGradient = Brush.verticalGradient(
     colors = listOf(
-        Color(0xFF161D27),
-        Color(0xFF0F141C)
+        Color(0xFF141E29),
+        Color(0xFF0F1720)
     )
 )
 
 // Single-purpose Emergency SOS Gradient (Used ONLY for SOS dispatch actions)
 val CrimsonEmergencyGradient = Brush.horizontalGradient(
     colors = listOf(
-        Color(0xFFDC2626),
-        Color(0xFF991B1B)
+        Color(0xFFEB5757),
+        Color(0xFFC53030)
     )
 )
 
 val CyberAiGradient = Brush.horizontalGradient(
     colors = listOf(
-        Color(0xFF1E293B),
-        Color(0xFF0F766E)
+        Color(0xFF141E29),
+        Color(0xFF1C2836)
     )
 )

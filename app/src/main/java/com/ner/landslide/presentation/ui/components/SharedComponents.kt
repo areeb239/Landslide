@@ -166,24 +166,31 @@ fun SeverityAccentCard(
     val accentColor = severity.toColor()
     val isCritical = severity == AlertSeverity.CRITICAL
 
+    val barWidth = when (severity) {
+        AlertSeverity.CRITICAL -> 5.dp
+        AlertSeverity.HIGH -> 4.dp
+        AlertSeverity.MODERATE -> 3.5.dp
+        AlertSeverity.LOW -> 3.dp
+    }
+
     val baseModifier = if (onClick != null) {
         modifier.clickable(onClick = onClick)
     } else modifier
 
     Surface(
         modifier = baseModifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        color = if (isCritical) Color(0xFF1C1A22) else SurfaceDark,
+        shape = RoundedCornerShape(10.dp),
+        color = SurfaceDark,
         border = BorderStroke(
             1.dp,
-            if (isCritical) SeverityCritical.copy(alpha = 0.35f) else BorderSubtle
+            if (isCritical) SeverityCritical.copy(alpha = 0.6f) else BorderSubtle
         )
     ) {
         Row(modifier = Modifier.fillMaxWidth()) {
-            // 4dp Solid Left Semantic Accent Bar
+            // Graduated Solid Left Semantic Accent Bar
             Box(
                 modifier = Modifier
-                    .width(4.dp)
+                    .width(barWidth)
                     .fillMaxHeight()
                     .defaultMinSize(minHeight = 88.dp)
                     .background(accentColor)
@@ -308,7 +315,7 @@ fun TelemetryInstrumentTile(
                     .fillMaxWidth()
                     .height(3.dp)
                     .clip(RoundedCornerShape(2.dp))
-                    .background(Color(0xFF263242))
+                    .background(BorderSubtle)
             ) {
                 Box(
                     modifier = Modifier
@@ -425,7 +432,7 @@ fun AlertCard(
             if (alert.affectedDistrict.isNotBlank()) {
                 Surface(
                     shape = RoundedCornerShape(4.dp),
-                    color = Color(0xFF1E2634),
+                    color = SurfaceVariantDark,
                     border = BorderStroke(1.dp, BorderSubtle)
                 ) {
                     Row(
@@ -500,7 +507,7 @@ fun GraduatedSeveritySelector(
                     .height(height),
                 shape = RoundedCornerShape(8.dp),
                 color = when {
-                    isSelected && severity == AlertSeverity.CRITICAL -> Color(0xFF331418)
+                    isSelected && severity == AlertSeverity.CRITICAL -> SeverityCritical.copy(alpha = 0.25f)
                     isSelected -> color.copy(alpha = 0.2f)
                     else -> SurfaceDark
                 },
@@ -635,8 +642,8 @@ fun EmergencySOSBar(
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(10.dp),
-        color = Color(0xFF221115),
-        border = BorderStroke(1.dp, SeverityCritical.copy(alpha = 0.5f))
+        color = SurfaceDark,
+        border = BorderStroke(1.dp, SeverityCritical.copy(alpha = 0.6f))
     ) {
         Row(
             modifier = Modifier

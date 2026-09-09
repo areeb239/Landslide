@@ -47,6 +47,7 @@ fun PredictionScreen(
     viewModel: PredictionViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var selectedScenario by remember { mutableStateOf<String?>("Monsoon Cloudburst") }
 
     Scaffold(
         containerColor = BackgroundDark,
@@ -100,7 +101,9 @@ fun PredictionScreen(
                 ScenarioChip(
                     title = "Monsoon Cloudburst",
                     accent = SeverityCritical,
+                    isSelected = selectedScenario == "Monsoon Cloudburst",
                     onClick = {
+                        selectedScenario = "Monsoon Cloudburst"
                         viewModel.onRainfallChange("185")
                         viewModel.onSlopeChange("42")
                         viewModel.onSoilMoistureChange("92")
@@ -110,7 +113,9 @@ fun PredictionScreen(
                 ScenarioChip(
                     title = "Moderate Hill Shower",
                     accent = SeverityModerate,
+                    isSelected = selectedScenario == "Moderate Hill Shower",
                     onClick = {
+                        selectedScenario = "Moderate Hill Shower"
                         viewModel.onRainfallChange("55")
                         viewModel.onSlopeChange("28")
                         viewModel.onSoilMoistureChange("62")
@@ -119,8 +124,10 @@ fun PredictionScreen(
                 )
                 ScenarioChip(
                     title = "Dry Hill Slope",
-                    accent = SeverityLow,
+                    accent = Primary80,
+                    isSelected = selectedScenario == "Dry Hill Slope",
                     onClick = {
+                        selectedScenario = "Dry Hill Slope"
                         viewModel.onRainfallChange("5")
                         viewModel.onSlopeChange("18")
                         viewModel.onSoilMoistureChange("22")
@@ -146,9 +153,12 @@ fun PredictionScreen(
                         label = "Current 24h Precipitation",
                         unit = "mm",
                         icon = Icons.Default.WaterDrop,
-                        iconColor = CyberCyan,
+                        iconColor = Primary80,
                         value = uiState.rainfallMm,
-                        onValueChange = viewModel::onRainfallChange,
+                        onValueChange = {
+                            selectedScenario = null
+                            viewModel.onRainfallChange(it)
+                        },
                         placeholder = "e.g. 140"
                     )
 
@@ -156,9 +166,12 @@ fun PredictionScreen(
                         label = "Slope Angle Inclination",
                         unit = "degrees (°)",
                         icon = Icons.Default.Terrain,
-                        iconColor = Secondary80,
+                        iconColor = SeverityModerate,
                         value = uiState.slopeDeg,
-                        onValueChange = viewModel::onSlopeChange,
+                        onValueChange = {
+                            selectedScenario = null
+                            viewModel.onSlopeChange(it)
+                        },
                         placeholder = "e.g. 38"
                     )
 
@@ -168,7 +181,10 @@ fun PredictionScreen(
                         icon = Icons.Default.Grass,
                         iconColor = Primary80,
                         value = uiState.soilMoisturePct,
-                        onValueChange = viewModel::onSoilMoistureChange,
+                        onValueChange = {
+                            selectedScenario = null
+                            viewModel.onSoilMoistureChange(it)
+                        },
                         placeholder = "e.g. 82"
                     )
 
@@ -176,50 +192,25 @@ fun PredictionScreen(
                         label = "3-Day Antecedent Rainfall Index",
                         unit = "mm accumulated",
                         icon = Icons.Default.CloudSync,
-                        iconColor = BrandIndigo,
+                        iconColor = Primary80,
                         value = uiState.antecedentRain3d,
-                        onValueChange = viewModel::onAntecedentRainChange,
+                        onValueChange = {
+                            selectedScenario = null
+                            viewModel.onAntecedentRainChange(it)
+                        },
                         placeholder = "e.g. 260"
                     )
                 }
             }
 
-            // Compute Action Button
-            Button(
+            // Compute Action Button (Unified Primary Action Button)
+            PrimaryActionButton(
+                text = if (uiState.isLoading) "RUNNING INFERENCE PIPELINE..." else "RUN GEOTECHNICAL RISK ASSESSMENT",
                 onClick = { viewModel.predict() },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(14.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Primary80),
-                enabled = !uiState.isLoading
-            ) {
-                if (uiState.isLoading) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(22.dp),
-                        color = ObsidianBase,
-                        strokeWidth = 2.5.dp
-                    )
-                    Spacer(Modifier.width(10.dp))
-                    Text(
-                        "RUNNING INFERENCE PIPELINE...",
-                        fontWeight = FontWeight.ExtraBold,
-                        color = ObsidianBase,
-                        fontSize = 14.sp,
-                        letterSpacing = 1.sp
-                    )
-                } else {
-                    Icon(Icons.Default.Bolt, null, tint = ObsidianBase, modifier = Modifier.size(20.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        "RUN GEOTECHNICAL RISK ASSESSMENT",
-                        fontWeight = FontWeight.ExtraBold,
-                        color = ObsidianBase,
-                        fontSize = 14.sp,
-                        letterSpacing = 0.8.sp
-                    )
-                }
-            }
+                enabled = !uiState.isLoading,
+                icon = Icons.Default.Bolt,
+                containerColor = Primary80
+            )
 
             // Error Message
             uiState.error?.let {
@@ -258,30 +249,31 @@ fun PredictionScreen(
 private fun ScenarioChip(
     title: String,
     accent: Color,
+    isSelected: Boolean,
     onClick: () -> Unit
 ) {
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(20.dp),
-        color = SurfaceVariantDark,
-        border = BorderStroke(1.dp, accent.copy(alpha = 0.4f))
+        shape = RoundedCornerShape(8.dp),
+        color = if (isSelected) accent else SurfaceDark,
+        border = BorderStroke(1.dp, if (isSelected) accent else BorderSubtle)
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Box(
                 modifier = Modifier
-                    .size(8.dp)
+                    .size(6.dp)
                     .clip(CircleShape)
-                    .background(accent)
+                    .background(if (isSelected) Color.White else accent)
             )
             Text(
                 text = title,
                 style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = OnBackgroundDark
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                color = if (isSelected) Color.White else TextMuted
             )
         }
     }
@@ -319,19 +311,20 @@ private fun PredictionInputField(
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
-            leadingIcon = { Icon(icon, null, tint = iconColor, modifier = Modifier.size(20.dp)) },
-            placeholder = { Text(placeholder, color = TextSubtle) },
+            leadingIcon = { Icon(icon, null, tint = iconColor, modifier = Modifier.size(18.dp)) },
+            placeholder = { Text(placeholder, color = TextSubtle, fontSize = 13.sp) },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(8.dp),
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = Primary80,
                 unfocusedBorderColor = BorderSubtle,
-                focusedContainerColor = SurfaceVariantDark.copy(alpha = 0.5f),
-                unfocusedContainerColor = SurfaceVariantDark.copy(alpha = 0.3f),
+                focusedContainerColor = SurfaceDark,
+                unfocusedContainerColor = SurfaceDark,
                 focusedTextColor = OnBackgroundDark,
-                unfocusedTextColor = OnBackgroundDark
+                unfocusedTextColor = OnBackgroundDark,
+                cursorColor = Primary80
             )
         )
     }

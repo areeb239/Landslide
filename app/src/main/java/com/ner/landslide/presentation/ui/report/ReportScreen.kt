@@ -94,7 +94,7 @@ fun ReportScreen(
                 OfflineBanner(pendingCount = 1)
             }
 
-            // Stepper Progress Header
+            // Stepper Progress Header (Solid Active Fill, Muted Upcoming)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -105,34 +105,40 @@ fun ReportScreen(
                 // Step 1 Pill
                 Surface(
                     onClick = { currentStep = 1 },
-                    shape = RoundedCornerShape(16.dp),
-                    color = if (currentStep == 1) Primary80.copy(alpha = 0.2f) else SurfaceDark,
+                    shape = RoundedCornerShape(8.dp),
+                    color = if (currentStep == 1) Primary80 else SurfaceDark,
                     border = BorderStroke(1.dp, if (currentStep == 1) Primary80 else BorderSubtle),
                     modifier = Modifier.weight(1f)
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(16.dp)
+                                .size(18.dp)
                                 .clip(CircleShape)
-                                .background(if (currentStep > 1) Primary80 else if (currentStep == 1) Primary80 else TextSubtle),
+                                .background(
+                                    when {
+                                        currentStep > 1 -> SeverityLow
+                                        currentStep == 1 -> Color.White.copy(alpha = 0.25f)
+                                        else -> SurfaceVariantDark
+                                    }
+                                ),
                             contentAlignment = Alignment.Center
                         ) {
                             if (currentStep > 1) {
-                                Icon(Icons.Default.Check, null, tint = Color.White, modifier = Modifier.size(10.dp))
+                                Icon(Icons.Default.Check, null, tint = Color.White, modifier = Modifier.size(12.dp))
                             } else {
-                                Text("1", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                Text("1", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.White)
                             }
                         }
                         Text(
                             text = "Location & Evidence",
                             fontSize = 11.sp,
                             fontWeight = if (currentStep == 1) FontWeight.Bold else FontWeight.Medium,
-                            color = if (currentStep == 1) OnBackgroundDark else TextMuted
+                            color = if (currentStep == 1) Color.White else TextMuted
                         )
                     }
                 }
@@ -140,30 +146,35 @@ fun ReportScreen(
                 // Step 2 Pill
                 Surface(
                     onClick = { currentStep = 2 },
-                    shape = RoundedCornerShape(16.dp),
-                    color = if (currentStep == 2) Primary80.copy(alpha = 0.2f) else SurfaceDark,
+                    shape = RoundedCornerShape(8.dp),
+                    color = if (currentStep == 2) Primary80 else SurfaceDark,
                     border = BorderStroke(1.dp, if (currentStep == 2) Primary80 else BorderSubtle),
                     modifier = Modifier.weight(1f)
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(16.dp)
+                                .size(18.dp)
                                 .clip(CircleShape)
-                                .background(if (currentStep == 2) Primary80 else TextSubtle),
+                                .background(if (currentStep == 2) Color.White.copy(alpha = 0.25f) else SurfaceVariantDark),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text("2", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            Text(
+                                "2",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (currentStep == 2) Color.White else TextSubtle
+                            )
                         }
                         Text(
-                            text = "Classification & Severity",
+                            text = "Classification",
                             fontSize = 11.sp,
                             fontWeight = if (currentStep == 2) FontWeight.Bold else FontWeight.Medium,
-                            color = if (currentStep == 2) OnBackgroundDark else TextMuted
+                            color = if (currentStep == 2) Color.White else TextMuted
                         )
                     }
                 }
@@ -253,13 +264,17 @@ fun ReportScreen(
                                     placeholder = { Text("e.g. East Sikkim, NH-10 KM 28", fontSize = 12.sp) },
                                     singleLine = true,
                                     modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(8.dp),
                                     colors = OutlinedTextFieldDefaults.colors(
                                         focusedBorderColor = Primary80,
                                         unfocusedBorderColor = BorderSubtle,
                                         focusedLabelColor = Primary80,
                                         unfocusedLabelColor = TextMuted,
                                         focusedTextColor = OnBackgroundDark,
-                                        unfocusedTextColor = OnBackgroundDark
+                                        unfocusedTextColor = OnBackgroundDark,
+                                        focusedContainerColor = SurfaceDark,
+                                        unfocusedContainerColor = SurfaceDark,
+                                        cursorColor = Primary80
                                     )
                                 )
                             }
@@ -289,11 +304,15 @@ fun ReportScreen(
                                     minLines = 4,
                                     maxLines = 6,
                                     modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(8.dp),
                                     colors = OutlinedTextFieldDefaults.colors(
                                         focusedBorderColor = Primary80,
                                         unfocusedBorderColor = BorderSubtle,
                                         focusedTextColor = OnBackgroundDark,
-                                        unfocusedTextColor = OnBackgroundDark
+                                        unfocusedTextColor = OnBackgroundDark,
+                                        focusedContainerColor = SurfaceDark,
+                                        unfocusedContainerColor = SurfaceDark,
+                                        cursorColor = Primary80
                                     )
                                 )
                             }
@@ -406,7 +425,7 @@ fun ReportScreen(
                                         Surface(
                                             onClick = { viewModel.onIncidentTypeChange(type) },
                                             shape = RoundedCornerShape(8.dp),
-                                            color = if (isSelected) Color(0xFF1E2A38) else SurfaceDark,
+                                            color = if (isSelected) Primary80 else SurfaceDark,
                                             border = BorderStroke(
                                                 1.dp,
                                                 if (isSelected) Primary80 else BorderSubtle
@@ -429,13 +448,13 @@ fun ReportScreen(
                                                     },
                                                     contentDescription = null,
                                                     modifier = Modifier.size(16.dp),
-                                                    tint = if (isSelected) Primary80 else TextMuted
+                                                    tint = if (isSelected) Color.White else TextMuted
                                                 )
                                                 Text(
                                                     text = type.name.replace("_", " "),
                                                     fontSize = 11.sp,
                                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                                    color = if (isSelected) OnBackgroundDark else TextMuted
+                                                    color = if (isSelected) Color.White else TextMuted
                                                 )
                                             }
                                         }
@@ -456,14 +475,11 @@ fun ReportScreen(
                             onSeveritySelected = { viewModel.onSeverityChange(it) }
                         )
 
-                        // Action Directive Banner for selected severity
+                        // Action Directive Banner (Amber accent only per design system, zero glow)
                         Surface(
                             shape = RoundedCornerShape(8.dp),
-                            color = if (uiState.severity == AlertSeverity.CRITICAL) Color(0xFF2B1216) else SurfaceDark,
-                            border = BorderStroke(
-                                1.dp,
-                                if (uiState.severity == AlertSeverity.CRITICAL) SeverityCritical.copy(alpha = 0.5f) else BorderSubtle
-                            ),
+                            color = SurfaceDark,
+                            border = BorderStroke(1.dp, SeverityModerate.copy(alpha = 0.6f)),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Row(
@@ -474,7 +490,7 @@ fun ReportScreen(
                                 Icon(
                                     Icons.Default.Shield,
                                     contentDescription = null,
-                                    tint = uiState.severity.toColor(),
+                                    tint = SeverityModerate,
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Column {
@@ -482,7 +498,7 @@ fun ReportScreen(
                                         "PROTOCOL DIRECTIVE",
                                         fontSize = 9.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = uiState.severity.toColor()
+                                        color = SeverityModerate
                                     )
                                     Text(
                                         uiState.severity.toActionGuideline(),

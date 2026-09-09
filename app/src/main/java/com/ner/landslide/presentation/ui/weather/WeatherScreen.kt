@@ -155,7 +155,7 @@ fun WeatherScreen(
                                     "%.1f mm/h".format(maxRain),
                                     fontSize = 26.sp,
                                     fontWeight = FontWeight.Black,
-                                    color = alertColor
+                                    color = Primary80
                                 )
                                 Text(
                                     when {
@@ -191,14 +191,14 @@ fun WeatherScreen(
 private fun HourlyWeatherCard(hour: HourlyWeather) {
     val rainColor = when {
         hour.rainfallMm > 50 -> SeverityCritical
-        hour.rainfallMm > 20 -> SeverityHigh
+        hour.rainfallMm > 20 -> SeverityModerate
         hour.rainfallMm > 5 -> SeverityModerate
         else -> Primary80
     }
 
     FieldCard(
         shape = RoundedCornerShape(8.dp),
-        borderColor = if (hour.rainfallMm > 20) rainColor.copy(alpha = 0.4f) else BorderSubtle
+        borderColor = if (hour.rainfallMm > 50) SeverityCritical.copy(alpha = 0.5f) else BorderSubtle
     ) {
         Column(
             modifier = Modifier.padding(10.dp).width(74.dp),
