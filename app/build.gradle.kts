@@ -20,8 +20,8 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // FastAPI AI API base URL (10.0.2.2 points to host localhost from Android emulator)
-        buildConfigField("String", "PREDICTION_API_BASE_URL", "\"http://10.0.2.2:8000/\"")
+        // FastAPI AI API base URL (Live Render Production Server)
+        buildConfigField("String", "PREDICTION_API_BASE_URL", "\"https://landslide-g9x5.onrender.com/\"")
         // Open-Meteo free weather API
         buildConfigField("String", "WEATHER_API_BASE_URL", "\"https://api.open-meteo.com/\"")
         // Google Maps API Key — set in local.properties
