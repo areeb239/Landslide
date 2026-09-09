@@ -8,11 +8,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.*
 import com.google.firebase.auth.FirebaseAuth
+import com.ner.landslide.presentation.ui.theme.*
 import com.ner.landslide.presentation.ui.admin.AdminDashboardScreen
 import com.ner.landslide.presentation.ui.admin.BroadcastAlertScreen
 import com.ner.landslide.presentation.ui.auth.LoginScreen
@@ -53,27 +55,55 @@ fun AppNavGraph() {
     val showBottomBar = currentRoute in tabRoutes
 
     Scaffold(
+        containerColor = BackgroundDark,
         bottomBar = {
             if (showBottomBar) {
-                NavigationBar {
-                    val currentDestination = navBackStackEntry?.destination
-                    bottomNavItems.forEach { item ->
-                        NavigationBarItem(
-                            icon = { Icon(item.icon, contentDescription = item.label) },
-                            label = { Text(item.label) },
-                            selected = currentDestination?.hierarchy?.any {
+                Surface(
+                    color = SurfaceDark,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, androidx.compose.ui.graphics.Color.White.copy(alpha = 0.08f)),
+                    shadowElevation = 12.dp
+                ) {
+                    NavigationBar(
+                        containerColor = SurfaceDark,
+                        tonalElevation = 0.dp
+                    ) {
+                        val currentDestination = navBackStackEntry?.destination
+                        bottomNavItems.forEach { item ->
+                            val isSelected = currentDestination?.hierarchy?.any {
                                 it.route == item.screen.route
-                            } == true,
-                            onClick = {
-                                navController.navigate(item.screen.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
+                            } == true
+                            NavigationBarItem(
+                                icon = {
+                                    Icon(
+                                        imageVector = item.icon,
+                                        contentDescription = item.label
+                                    )
+                                },
+                                label = {
+                                    Text(
+                                        text = item.label,
+                                        fontWeight = if (isSelected) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal
+                                    )
+                                },
+                                selected = isSelected,
+                                colors = NavigationBarItemDefaults.colors(
+                                    selectedIconColor = Primary80,
+                                    selectedTextColor = Primary80,
+                                    indicatorColor = Primary80.copy(alpha = 0.18f),
+                                    unselectedIconColor = TextMuted,
+                                    unselectedTextColor = TextSubtle
+                                ),
+                                onClick = {
+                                    navController.navigate(item.screen.route) {
+                                        popUpTo(navController.graph.findStartDestination().id) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
                                     }
-                                    launchSingleTop = true
-                                    restoreState = true
                                 }
-                            }
-                        )
+                            )
+                        }
                     }
                 }
             }

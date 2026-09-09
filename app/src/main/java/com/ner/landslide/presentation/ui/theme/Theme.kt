@@ -17,14 +17,20 @@ import androidx.core.view.WindowCompat
 
 private val DarkColorScheme = darkColorScheme(
     primary = Primary80,
-    onPrimary = OnPrimary,
+    onPrimary = ObsidianBase,
+    primaryContainer = SurfaceVariantDark,
+    onPrimaryContainer = PrimaryLight,
     secondary = Secondary80,
-    onSecondary = OnSecondary,
+    onSecondary = ObsidianBase,
+    secondaryContainer = SurfaceVariantDark,
+    onSecondaryContainer = Secondary80,
     background = BackgroundDark,
     surface = SurfaceDark,
     surfaceVariant = SurfaceVariantDark,
     onBackground = OnBackgroundDark,
     onSurface = OnSurfaceDark,
+    onSurfaceVariant = TextMuted,
+    outline = BorderSubtle,
     error = ErrorRed,
     onError = OnError
 )
@@ -45,8 +51,8 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun NERLandslideTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+; disabled to use our brand palette
+    darkTheme: Boolean = true, // Default to Dark Theme First for Mission-Critical Telemetry
+    // Dynamic color is available on Android 12+; disabled to preserve our precision hazard palette
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
@@ -64,7 +70,9 @@ fun NERLandslideTheme(
         SideEffect {
             val window = (view.context as Activity).window
             window.statusBarColor = colorScheme.background.toArgb()
+            window.navigationBarColor = colorScheme.background.toArgb()
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+            WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = !darkTheme
         }
     }
 

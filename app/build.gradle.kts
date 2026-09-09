@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -11,10 +14,10 @@ android {
     namespace = "com.ner.landslide"
     compileSdk = 35
 
-    val localProperties = java.util.Properties().apply {
-        val file = rootProject.file("local.properties")
-        if (file.exists()) {
-            load(file.inputStream())
+    val localProperties = Properties().apply {
+        val localPropertiesFile = rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            load(FileInputStream(localPropertiesFile))
         }
     }
     val mapsApiKey = localProperties.getProperty("MAPS_API_KEY") ?: project.findProperty("MAPS_API_KEY")?.toString() ?: ""

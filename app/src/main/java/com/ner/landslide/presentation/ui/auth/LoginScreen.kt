@@ -2,6 +2,7 @@ package com.ner.landslide.presentation.ui.auth
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -10,8 +11,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.*
 import androidx.compose.ui.text.style.TextAlign
@@ -19,7 +21,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ner.landslide.presentation.ui.components.GlassCard
 import com.ner.landslide.presentation.ui.components.LoadingContent
+import com.ner.landslide.presentation.ui.components.PulsingStatusDot
 import com.ner.landslide.presentation.ui.theme.*
 import com.ner.landslide.presentation.viewmodel.AuthViewModel
 
@@ -44,7 +48,13 @@ fun LoginScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(
-                Brush.verticalGradient(listOf(BackgroundDark, SurfaceDark))
+                Brush.verticalGradient(
+                    listOf(
+                        ObsidianBase,
+                        BackgroundDark,
+                        Color(0xFF0F172A)
+                    )
+                )
             )
     ) {
         if (uiState.isLoading) {
@@ -54,164 +64,222 @@ fun LoginScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 28.dp, vertical = 48.dp),
+                    .statusBarsPadding()
+                    .padding(horizontal = 24.dp, vertical = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Spacer(Modifier.height(40.dp))
+                Spacer(Modifier.height(16.dp))
 
-                // Header
+                // Brand Emblem with Pulsing Radar
+                Box(contentAlignment = Alignment.Center) {
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .clip(CircleShape)
+                            .background(
+                                Brush.linearGradient(
+                                    listOf(BrandIndigo.copy(alpha = 0.3f), Primary80.copy(alpha = 0.2f))
+                                )
+                            )
+                            .border(1.5.dp, Primary80.copy(alpha = 0.5f), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Shield,
+                            contentDescription = null,
+                            tint = Primary80,
+                            modifier = Modifier.size(42.dp)
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(18.dp))
+
+                // Title & Mission Classification
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        text = "BHURAKSHAK",
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 1.5.sp,
+                        color = OnBackgroundDark
+                    )
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = Primary80.copy(alpha = 0.2f),
+                        border = BorderStroke(0.8.dp, Primary80.copy(alpha = 0.6f))
+                    ) {
+                        Text(
+                            text = "NER",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = Primary80,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(4.dp))
+
                 Text(
-                    text = "Welcome Back",
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = OnBackgroundDark
-                )
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = "Sign in to the NER Landslide Early Warning System",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = OnBackgroundDark.copy(alpha = 0.55f),
+                    text = "Himalayan Landslide Early Warning & Telemetry System",
+                    style = MaterialTheme.typography.bodySmall,
+                    fontSize = 12.sp,
+                    color = TextMuted,
                     textAlign = TextAlign.Center
                 )
 
-                Spacer(Modifier.height(48.dp))
+                Spacer(Modifier.height(32.dp))
 
-                // Email
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it },
-                    label = { Text("Email Address") },
-                    leadingIcon = { Icon(Icons.Default.Email, null) },
-                    singleLine = true,
+                // Authentication Card
+                GlassCard(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Email,
-                        imeAction = ImeAction.Next
-                    )
-                )
+                    backgroundColor = SurfaceDark.copy(alpha = 0.95f),
+                    borderColor = Color.White.copy(alpha = 0.1f)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Text(
+                            text = "OPERATOR LOGIN",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = 1.sp,
+                            color = Primary80
+                        )
 
-                Spacer(Modifier.height(16.dp))
+                        // Email
+                        OutlinedTextField(
+                            value = email,
+                            onValueChange = { email = it },
+                            label = { Text("Government / Citizen Email") },
+                            leadingIcon = { Icon(Icons.Default.Email, null, tint = Primary80, modifier = Modifier.size(20.dp)) },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Email,
+                                imeAction = ImeAction.Next
+                            ),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Primary80,
+                                unfocusedBorderColor = BorderSubtle,
+                                focusedTextColor = OnBackgroundDark,
+                                unfocusedTextColor = OnBackgroundDark
+                            )
+                        )
 
-                // Password
-                OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    label = { Text("Password") },
-                    leadingIcon = { Icon(Icons.Default.Lock, null) },
-                    trailingIcon = {
-                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                            Icon(
-                                if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                                null
+                        // Password
+                        OutlinedTextField(
+                            value = password,
+                            onValueChange = { password = it },
+                            label = { Text("Security Key / Password") },
+                            leadingIcon = { Icon(Icons.Default.Lock, null, tint = Primary80, modifier = Modifier.size(20.dp)) },
+                            trailingIcon = {
+                                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                                    Icon(
+                                        if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                        contentDescription = null,
+                                        tint = TextMuted
+                                    )
+                                }
+                            },
+                            visualTransformation = if (passwordVisible) VisualTransformation.None
+                            else PasswordVisualTransformation(),
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Password,
+                                imeAction = ImeAction.Done
+                            ),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Primary80,
+                                unfocusedBorderColor = BorderSubtle,
+                                focusedTextColor = OnBackgroundDark,
+                                unfocusedTextColor = OnBackgroundDark
+                            )
+                        )
+
+                        // Error Banner
+                        uiState.error?.let { error ->
+                            Surface(
+                                shape = RoundedCornerShape(10.dp),
+                                color = SeverityCritical.copy(alpha = 0.15f),
+                                border = BorderStroke(1.dp, SeverityCritical.copy(alpha = 0.4f)),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Icon(Icons.Default.ErrorOutline, null, tint = SeverityCritical, modifier = Modifier.size(18.dp))
+                                    Text(
+                                        text = error,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontSize = 12.sp,
+                                        color = SeverityCritical
+                                    )
+                                }
+                            }
+                        }
+
+                        // Sign In Button
+                        Button(
+                            onClick = { viewModel.signInWithEmail(email.trim(), password) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(50.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Primary80),
+                            enabled = email.isNotBlank() && password.isNotBlank()
+                        ) {
+                            Text(
+                                text = "AUTHENTICATE ACCESS",
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 14.sp,
+                                letterSpacing = 0.8.sp,
+                                color = ObsidianBase
                             )
                         }
-                    },
-                    visualTransformation = if (passwordVisible) VisualTransformation.None
-                    else PasswordVisualTransformation(),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(14.dp),
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Password,
-                        imeAction = ImeAction.Done
-                    )
-                )
 
-                uiState.error?.let { error ->
-                    Spacer(Modifier.height(12.dp))
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.errorContainer,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(modifier = Modifier.padding(14.dp)) {
+                        // Instant Guest Demo Button
+                        OutlinedButton(
+                            onClick = { viewModel.loginAsDemo() },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(50.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            border = BorderStroke(1.2.dp, Primary80.copy(alpha = 0.5f))
+                        ) {
+                            Icon(Icons.Default.Bolt, null, tint = Primary80, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
                             Text(
-                                text = error,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onErrorContainer
+                                "Instant Demo Access (One-Tap Guest)",
+                                color = Primary80,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp
                             )
-                            Spacer(Modifier.height(10.dp))
-                            FilledTonalButton(
-                                onClick = {
-                                    viewModel.loginAsDemo(
-                                        name = email.substringBefore("@").replace(".", " ")
-                                    )
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Icon(Icons.Default.Bolt, null, modifier = Modifier.size(18.dp))
-                                Spacer(Modifier.width(6.dp))
-                                Text("Bypass with Demo Access")
-                            }
                         }
                     }
                 }
 
-                Spacer(Modifier.height(28.dp))
+                Spacer(Modifier.height(20.dp))
 
-                // Login Button
-                Button(
-                    onClick = { viewModel.signInWithEmail(email.trim(), password) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    enabled = email.isNotBlank() && password.isNotBlank()
-                ) {
+                // Register Link
+                TextButton(onClick = onNavigateToRegister) {
                     Text(
-                        text = "Sign In",
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 16.sp
+                        text = "New Responder or Citizen? Register Credentials",
+                        color = TextMuted,
+                        fontSize = 13.sp
                     )
-                }
-
-                Spacer(Modifier.height(12.dp))
-
-                OutlinedButton(
-                    onClick = { viewModel.loginAsDemo() },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(52.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    border = BorderStroke(1.dp, Primary80.copy(alpha = 0.6f))
-                ) {
-                    Icon(Icons.Default.Bolt, null, tint = Primary80, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(6.dp))
-                    Text(
-                        "Instant Demo Mode (Guest Access)",
-                        color = Primary80,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-
-                Spacer(Modifier.height(16.dp))
-
-                // Divider
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Divider(modifier = Modifier.weight(1f), color = OnBackgroundDark.copy(0.15f))
-                    Text(
-                        text = "  or  ",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = OnBackgroundDark.copy(0.5f)
-                    )
-                    Divider(modifier = Modifier.weight(1f), color = OnBackgroundDark.copy(0.15f))
                 }
 
                 Spacer(Modifier.height(24.dp))
-
-                // Register
-                TextButton(onClick = onNavigateToRegister) {
-                    Text(
-                        text = "Don't have an account? Register",
-                        color = Primary80
-                    )
-                }
             }
         }
     }
 }
+
