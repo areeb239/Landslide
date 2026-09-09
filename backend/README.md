@@ -74,9 +74,20 @@ In your Android app's `app/build.gradle.kts`:
 
 ## 🔑 Firebase Admin SDK Setup (Optional for Live Firebase)
 
-The backend works **100% in mock/demo mode** without Firebase credentials.
-To enable live Firestore syncing and real FCM push notifications:
+The backend works **100% out-of-the-box in fallback/demo mode** without Firebase credentials — ML inference, weather correlation, and sensor simulation are fully functional!
+
+To enable live Firestore database persistence and real FCM push notifications:
+### Option A: Local Development
 1. Go to [Firebase Console](https://console.firebase.google.com/) -> Project Settings -> **Service accounts**.
 2. Click **Generate new private key**.
 3. Save the downloaded JSON file as `serviceAccountKey.json` inside this `backend/` folder.
 4. Restart the server.
+
+### Option B: Cloud Hosting (Render / Railway / Heroku)
+Because `serviceAccountKey.json` is not committed to git for security:
+1. Open your downloaded `serviceAccountKey.json` in a text editor and copy the entire JSON content.
+2. Go to your **Render Dashboard** -> Select your Web Service -> **Environment**.
+3. Add an Environment Variable:
+   - **Key**: `FIREBASE_SERVICE_ACCOUNT_JSON`
+   - **Value**: *(Paste the entire contents of your serviceAccountKey.json)*
+4. Save Changes — Render will redeploy and automatically connect to Firebase!

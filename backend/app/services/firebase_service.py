@@ -10,30 +10,67 @@ _firebase_initialized = False
 _db = None
 
 try:
+    import json
+    import base64
     import firebase_admin
     from firebase_admin import credentials, firestore, messaging
 
     settings = get_settings()
     cred_path = settings.firebase_credentials_path
 
-    if os.path.exists(cred_path):
+    # 1. Direct JSON string in environment variable (Ideal for Render / Heroku / Container deployments)
+    if settings.firebase_service_account_json:
+        try:
+            cred_dict = json.loads(settings.firebase_service_account_json)
+            cred = credentials.Certificate(cred_dict)
+            firebase_admin.initialize_app(cred)
+            _db = firestore.client()
+            _firebase_initialized = True
+            logger.info("Firebase Admin SDK initialized successfully via FIREBASE_SERVICE_ACCOUNT_JSON.")
+        except Exception as json_err:
+            logger.warning(f"Failed to parse FIREBASE_SERVICE_ACCOUNT_JSON: {json_err}")
+
+    # 2. Base64-encoded JSON string in environment variable
+    elif settings.firebase_service_account_base64:
+        try:
+            decoded = base64.b64decode(settings.firebase_service_account_base64).decode("utf-8")
+            cred_dict = json.loads(decoded)
+            cred = credentials.Certificate(cred_dict)
+            firebase_admin.initialize_app(cred)
+            _db = firestore.client()
+            _firebase_initialized = True
+            logger.info("Firebase Admin SDK initialized successfully via FIREBASE_SERVICE_ACCOUNT_BASE64.")
+        except Exception as b64_err:
+            logger.warning(f"Failed to parse FIREBASE_SERVICE_ACCOUNT_BASE64: {b64_err}")
+
+    # 3. File path on disk (Local development with serviceAccountKey.json)
+    elif os.path.exists(cred_path):
         cred = credentials.Certificate(cred_path)
         firebase_admin.initialize_app(cred)
         _db = firestore.client()
         _firebase_initialized = True
-        logger.info("Firebase Admin SDK initialized successfully with serviceAccountKey.json")
+        logger.info(f"Firebase Admin SDK initialized successfully with credentials file: {cred_path}")
+
+    # 4. Attempt Google Cloud Application Default Credentials if project_id is specified
     elif settings.firebase_project_id:
-        firebase_admin.initialize_app(options={"projectId": settings.firebase_project_id})
-        _db = firestore.client()
-        _firebase_initialized = True
-        logger.info(f"Firebase Admin SDK initialized with project ID: {settings.firebase_project_id}")
+        try:
+            firebase_admin.initialize_app(options={"projectId": settings.firebase_project_id})
+            _db = firestore.client()
+            _firebase_initialized = True
+            logger.info(f"Firebase Admin SDK initialized with project ID: {settings.firebase_project_id}")
+        except Exception as adc_err:
+            logger.info(
+                f"Application Default Credentials not present on this host ({adc_err}). "
+                "Running in fallback mode (in-memory mock alerts & sensor telemetry). "
+                "To enable live Firestore & FCM on Render, set FIREBASE_SERVICE_ACCOUNT_JSON in Render environment variables."
+            )
     else:
-        logger.warning(
-            "Firebase credentials not found. Running in DEMO/MOCK mode. "
-            "To enable live Firestore & FCM, place serviceAccountKey.json in the backend directory."
+        logger.info(
+            "No Firebase credentials configured. Running in fallback mode with in-memory state. "
+            "ML inference, weather, and sensor simulation are fully functional."
         )
 except Exception as e:
-    logger.warning(f"Failed to initialize Firebase Admin SDK: {e}. Running in fallback mode.")
+    logger.warning(f"Firebase Admin SDK initialization bypassed: {e}. Running in fallback mode.")
 
 
 def is_firebase_connected() -> bool:

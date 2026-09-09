@@ -1,3 +1,4 @@
+from typing import Optional
 from pydantic_settings import BaseSettings
 from functools import lru_cache
 
@@ -5,6 +6,8 @@ from functools import lru_cache
 class Settings(BaseSettings):
     # Firebase
     firebase_credentials_path: str = "serviceAccountKey.json"
+    firebase_service_account_json: Optional[str] = None
+    firebase_service_account_base64: Optional[str] = None
     firebase_project_id: str = ""
 
     # Server
