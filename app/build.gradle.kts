@@ -11,6 +11,14 @@ android {
     namespace = "com.ner.landslide"
     compileSdk = 35
 
+    val localProperties = java.util.Properties().apply {
+        val file = rootProject.file("local.properties")
+        if (file.exists()) {
+            load(file.inputStream())
+        }
+    }
+    val mapsApiKey = localProperties.getProperty("MAPS_API_KEY") ?: project.findProperty("MAPS_API_KEY")?.toString() ?: ""
+
     defaultConfig {
         applicationId = "com.ner.landslide"
         minSdk = 24
@@ -24,8 +32,8 @@ android {
         buildConfigField("String", "PREDICTION_API_BASE_URL", "\"https://landslide-g9x5.onrender.com/\"")
         // Open-Meteo free weather API
         buildConfigField("String", "WEATHER_API_BASE_URL", "\"https://api.open-meteo.com/\"")
-        // Google Maps API Key — set in local.properties
-        manifestPlaceholders["MAPS_API_KEY"] = project.findProperty("MAPS_API_KEY") ?: ""
+        // Google Maps API Key — loaded from local.properties
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
     }
 
     buildTypes {
