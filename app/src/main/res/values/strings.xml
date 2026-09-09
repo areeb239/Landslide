@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NER Landslide Watch</string>
+
+    <!-- Auth -->
+    <string name="welcome_back">Welcome Back</string>
+    <string name="sign_in">Sign In</string>
+    <string name="register">Create Account</string>
+    <string name="email">Email Address</string>
+    <string name="password">Password</string>
+    <string name="full_name">Full Name</string>
+    <string name="select_role">Select Your Role</string>
+    <string name="citizen">Citizen</string>
+    <string name="field_officer">Field Officer</string>
+    <string name="admin">Admin</string>
+
+    <!-- Home -->
+    <string name="active_alerts">Active Alerts</string>
+    <string name="no_active_alerts">No active alerts</string>
+    <string name="sos">SOS</string>
+    <string name="sos_confirm_title">Send SOS Alert?</string>
+    <string name="sos_confirm_body">This will send your current GPS location to district emergency responders. Only use in a genuine emergency.</string>
+    <string name="sos_sent">SOS alert sent to district emergency response team.</string>
+
+    <!-- Map -->
+    <string name="map_title">GIS Risk Map</string>
+    <string name="risk_zones_layer">Risk Zones</string>
+    <string name="roads_layer">Roads</string>
+    <string name="layers">Layers</string>
+    <string name="risk_level">Risk Level</string>
+
+    <!-- Report -->
+    <string name="report_title">Report an Incident</string>
+    <string name="incident_type">Incident Type</string>
+    <string name="severity">Severity Level</string>
+    <string name="description">Description</string>
+    <string name="district">District</string>
+    <string name="village">Village / Area</string>
+    <string name="submit_report">Submit Report</string>
+    <string name="save_offline">Save Offline</string>
+    <string name="offline_queue_notice">You\'re offline. Report will be saved locally and auto-synced when connected.</string>
+    <string name="select_photos">Tap to select photos</string>
+
+    <!-- Prediction -->
+    <string name="prediction_title">AI Risk Prediction</string>
+    <string name="rainfall">Rainfall (mm)</string>
+    <string name="slope_angle">Slope Angle (°)</string>
+    <string name="soil_moisture">Soil Moisture (%)</string>
+    <string name="antecedent_rain">Antecedent Rainfall (mm) — 3 days</string>
+    <string name="predict">Predict Risk</string>
+
+    <!-- Weather -->
+    <string name="weather_title">Weather Forecast</string>
+    <string name="hourly_forecast">Hourly Forecast</string>
+    <string name="peak_rainfall">Peak Rainfall Alert</string>
+
+    <!-- Admin -->
+    <string name="admin_dashboard">Admin Dashboard</string>
+    <string name="broadcast_alert">Broadcast Alert</string>
+    <string name="send_alert">Send Alert to All Users</string>
+    <string name="resolve">Mark Resolved</string>
+
+    <!-- Profile -->
+    <string name="profile">Profile</string>
+    <string name="sign_out">Sign Out</string>
+</resources>

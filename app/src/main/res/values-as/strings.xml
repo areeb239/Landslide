@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NER ভূমিধস সতর্কতা</string>
+
+    <!-- Auth -->
+    <string name="welcome_back">আপোনাক স্বাগতম</string>
+    <string name="sign_in">চাইন ইন কৰক</string>
+    <string name="register">একাউণ্ট তৈয়াৰ কৰক</string>
+    <string name="email">ইমেইল ঠিকনা</string>
+    <string name="password">পাচৱৰ্ড</string>
+    <string name="full_name">সম্পূৰ্ণ নাম</string>
+    <string name="select_role">আপোনাৰ ভূমিকা বাছক</string>
+    <string name="citizen">নাগৰিক</string>
+    <string name="field_officer">ফিল্ড বিষয়া</string>
+    <string name="admin">প্ৰশাসক</string>
+
+    <!-- Home -->
+    <string name="active_alerts">সক্ৰিয় সতৰ্কতা</string>
+    <string name="no_active_alerts">কোনো সক্ৰিয় সতৰ্কতা নাই</string>
+    <string name="sos">জৰুৰীকালীন</string>
+    <string name="sos_confirm_title">SOS পঠাব নেকি?</string>
+    <string name="sos_confirm_body">এইটোৱে আপোনাৰ GPS স্থান জিলা জৰুৰীকালীন সঁহাৰি দলক পঠাব। কেৱল প্ৰকৃত জৰুৰীকালীন অৱস্থাত ব্যৱহাৰ কৰক।</string>
+    <string name="sos_sent">SOS সতৰ্কতা জিলা জৰুৰীকালীন দলক পঠোৱা হৈছে।</string>
+
+    <!-- Map -->
+    <string name="map_title">GIS জোখাৰ মানচিত্ৰ</string>
+    <string name="risk_zones_layer">বিপদৰ অঞ্চল</string>
+    <string name="roads_layer">পথ</string>
+    <string name="layers">স্তৰসমূহ</string>
+    <string name="risk_level">বিপদৰ স্তৰ</string>
+
+    <!-- Report -->
+    <string name="report_title">ঘটনা প্ৰতিবেদন কৰক</string>
+    <string name="incident_type">ঘটনাৰ ধৰন</string>
+    <string name="severity">গুৰুত্বৰ স্তৰ</string>
+    <string name="description">বিৱৰণ</string>
+    <string name="district">জিলা</string>
+    <string name="village">গাঁও / এলেকা</string>
+    <string name="submit_report">প্ৰতিবেদন দাখিল কৰক</string>
+    <string name="save_offline">অফলাইনত সংৰক্ষণ কৰক</string>
+    <string name="offline_queue_notice">আপুনি অফলাইনত আছে। প্ৰতিবেদন স্থানীয়ভাৱে সংৰক্ষণ হ\'ব আৰু সংযুক্ত হ\'লে স্বয়ংক্ৰিয়ভাৱে সিংক হ\'ব।</string>
+    <string name="select_photos">ফটো বাছিবলৈ টেপ কৰক</string>
+
+    <!-- Prediction -->
+    <string name="prediction_title">AI বিপদ পূৰ্বানুমান</string>
+    <string name="rainfall">বৰষুণ (মিমি)</string>
+    <string name="slope_angle">ঢাল কোণ (°)</string>
+    <string name="soil_moisture">মাটিৰ আৰ্দ্ৰতা (%)</string>
+    <string name="antecedent_rain">পূৰ্বৱৰ্তী বৰষুণ (মিমি) — ৩ দিন</string>
+    <string name="predict">বিপদ পূৰ্বানুমান কৰক</string>
+
+    <!-- Weather -->
+    <string name="weather_title">বতৰ পূৰ্বানুমান</string>
+    <string name="hourly_forecast">প্ৰতি ঘণ্টাৰ পূৰ্বানুমান</string>
+    <string name="peak_rainfall">সৰ্বোচ্চ বৰষুণ সতৰ্কতা</string>
+
+    <!-- Admin -->
+    <string name="admin_dashboard">প্ৰশাসক ডেচব\'ৰ্ড</string>
+    <string name="broadcast_alert">সতৰ্কতা প্ৰচাৰ কৰক</string>
+    <string name="send_alert">সকলো ব্যৱহাৰকাৰীলৈ সতৰ্কতা পঠাওক</string>
+    <string name="resolve">সমাধান হ\'ল বুলি চিহ্নিত কৰক</string>
+
+    <!-- Profile -->
+    <string name="profile">প্ৰফাইল</string>
+    <string name="sign_out">চাইন আউট</string>
+</resources>
