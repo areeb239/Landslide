@@ -60,8 +60,8 @@ fun AppNavGraph() {
             if (showBottomBar) {
                 Surface(
                     color = SurfaceDark,
-                    border = androidx.compose.foundation.BorderStroke(1.dp, androidx.compose.ui.graphics.Color.White.copy(alpha = 0.08f)),
-                    shadowElevation = 12.dp
+                    border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle),
+                    shadowElevation = 0.dp
                 ) {
                     NavigationBar(
                         containerColor = SurfaceDark,

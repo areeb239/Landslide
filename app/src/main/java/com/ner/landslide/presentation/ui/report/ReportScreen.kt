@@ -3,9 +3,12 @@ package com.ner.landslide.presentation.ui.report
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -28,13 +31,14 @@ import com.ner.landslide.presentation.ui.components.*
 import com.ner.landslide.presentation.ui.theme.*
 import com.ner.landslide.presentation.viewmodel.ReportViewModel
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReportScreen(
     onReportSubmitted: () -> Unit,
     viewModel: ReportViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var currentStep by remember { mutableIntStateOf(1) } // Step 1: Location/Evidence, Step 2: Classification/Severity
 
     val photoPicker = rememberLauncherForActivityResult(
         ActivityResultContracts.GetMultipleContents()
@@ -51,21 +55,30 @@ fun ReportScreen(
                 title = {
                     Column {
                         Text(
-                            "Civic Hazard Report",
+                            "DISASTER INCIDENT REPORT",
                             fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
+                            fontSize = 16.sp,
+                            letterSpacing = 0.6.sp,
                             color = OnBackgroundDark
                         )
                         Text(
-                            "Direct link to District Disaster Management",
+                            "Step $currentStep of 2 • Field Telemetry Intake",
                             style = MaterialTheme.typography.labelSmall,
-                            color = Primary80
+                            fontSize = 11.sp,
+                            color = TextMuted
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = ObsidianBase
-                )
+                ),
+                actions = {
+                    if (currentStep == 2) {
+                        TextButton(onClick = { currentStep = 1 }) {
+                            Text("Edit Step 1", color = Primary80, fontSize = 12.sp)
+                        }
+                    }
+                }
             )
         }
     ) { paddingValues ->
@@ -80,332 +93,439 @@ fun ReportScreen(
                 OfflineBanner(pendingCount = 1)
             }
 
-            Column(
+            // Stepper Progress Header
+            Row(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 10.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Section: Incident Classification
-                SectionHeader(
-                    title = "Incident Classification",
-                    subtitle = "Specify the type of geotechnical or slope hazard"
-                )
-
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                // Step 1 Pill
+                Surface(
+                    onClick = { currentStep = 1 },
+                    shape = RoundedCornerShape(16.dp),
+                    color = if (currentStep == 1) Primary80.copy(alpha = 0.2f) else SurfaceDark,
+                    border = BorderStroke(1.dp, if (currentStep == 1) Primary80 else BorderSubtle),
+                    modifier = Modifier.weight(1f)
                 ) {
-                    IncidentType.values().forEach { type ->
-                        val isSelected = uiState.incidentType == type
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(16.dp)
+                                .clip(CircleShape)
+                                .background(if (currentStep > 1) Primary80 else if (currentStep == 1) Primary80 else TextSubtle),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (currentStep > 1) {
+                                Icon(Icons.Default.Check, null, tint = Color.White, modifier = Modifier.size(10.dp))
+                            } else {
+                                Text("1", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            }
+                        }
+                        Text(
+                            text = "Location & Evidence",
+                            fontSize = 11.sp,
+                            fontWeight = if (currentStep == 1) FontWeight.Bold else FontWeight.Medium,
+                            color = if (currentStep == 1) OnBackgroundDark else TextMuted
+                        )
+                    }
+                }
+
+                // Step 2 Pill
+                Surface(
+                    onClick = { currentStep = 2 },
+                    shape = RoundedCornerShape(16.dp),
+                    color = if (currentStep == 2) Primary80.copy(alpha = 0.2f) else SurfaceDark,
+                    border = BorderStroke(1.dp, if (currentStep == 2) Primary80 else BorderSubtle),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(16.dp)
+                                .clip(CircleShape)
+                                .background(if (currentStep == 2) Primary80 else TextSubtle),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text("2", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        }
+                        Text(
+                            text = "Classification & Severity",
+                            fontSize = 11.sp,
+                            fontWeight = if (currentStep == 2) FontWeight.Bold else FontWeight.Medium,
+                            color = if (currentStep == 2) OnBackgroundDark else TextMuted
+                        )
+                    }
+                }
+            }
+
+            AnimatedContent(
+                targetState = currentStep,
+                transitionSpec = {
+                    if (targetState > initialState) {
+                        slideInHorizontally { it } + fadeIn() togetherWith slideOutHorizontally { -it } + fadeOut()
+                    } else {
+                        slideInHorizontally { -it } + fadeIn() togetherWith slideOutHorizontally { it } + fadeOut()
+                    }
+                },
+                label = "step_transition",
+                modifier = Modifier.weight(1f)
+            ) { step ->
+                if (step == 1) {
+                    // ─── STEP 1: Location, Observations & Photographic Evidence ───
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        // Section 1: GNSS Satellite Lock Card
+                        FieldCard(modifier = Modifier.fillMaxWidth()) {
+                            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        "GNSS TRIANGULATION LOCK",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 12.sp,
+                                        letterSpacing = 0.5.sp,
+                                        color = TextMuted
+                                    )
+                                    Surface(
+                                        shape = RoundedCornerShape(4.dp),
+                                        color = Primary80.copy(alpha = 0.15f),
+                                        border = BorderStroke(1.dp, Primary80.copy(alpha = 0.3f))
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
+                                            PulsingStatusDot(color = Primary80, size = 5.dp)
+                                            Text(
+                                                "GNSS LOCKED ±3.2m",
+                                                fontSize = 10.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = Primary80
+                                            )
+                                        }
+                                    }
+                                }
+
+                                val latDisplay = if (uiState.latitude != 0.0) "%.4f° N".format(uiState.latitude) else "27.1765° N"
+                                val lonDisplay = if (uiState.longitude != 0.0) "%.4f° E".format(uiState.longitude) else "88.5321° E"
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column {
+                                        Text("COORDINATES", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = TextSubtle)
+                                        Text("$latDisplay, $lonDisplay", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = OnBackgroundDark)
+                                    }
+                                    Column(horizontalAlignment = Alignment.End) {
+                                        Text("ELEVATION", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = TextSubtle)
+                                        Text("1,420 m MSL", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = OnBackgroundDark)
+                                    }
+                                }
+
+                                Divider(color = BorderSubtle, thickness = 0.8.dp)
+
+                                // District / Location manual refinement
+                                OutlinedTextField(
+                                    value = uiState.district,
+                                    onValueChange = { viewModel.onDistrictChange(it) },
+                                    label = { Text("Sector / District Location", fontSize = 12.sp) },
+                                    placeholder = { Text("e.g. East Sikkim, NH-10 KM 28", fontSize = 12.sp) },
+                                    singleLine = true,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = Primary80,
+                                        unfocusedBorderColor = BorderSubtle,
+                                        focusedLabelColor = Primary80,
+                                        unfocusedLabelColor = TextMuted,
+                                        focusedTextColor = OnBackgroundDark,
+                                        unfocusedTextColor = OnBackgroundDark
+                                    )
+                                )
+                            }
+                        }
+
+                        // Section 2: Field Observations Field
+                        FieldCard(modifier = Modifier.fillMaxWidth()) {
+                            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(
+                                    "FIELD OBSERVATIONS",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp,
+                                    letterSpacing = 0.5.sp,
+                                    color = TextMuted
+                                )
+                                OutlinedTextField(
+                                    value = uiState.description,
+                                    onValueChange = { viewModel.onDescriptionChange(it) },
+                                    placeholder = {
+                                        Text(
+                                            "Describe slope movement, tension crack widening, water seepage, rockfall volume, or highway obstruction...",
+                                            fontSize = 12.sp,
+                                            color = TextSubtle,
+                                            lineHeight = 17.sp
+                                        )
+                                    },
+                                    minLines = 4,
+                                    maxLines = 6,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedBorderColor = Primary80,
+                                        unfocusedBorderColor = BorderSubtle,
+                                        focusedTextColor = OnBackgroundDark,
+                                        unfocusedTextColor = OnBackgroundDark
+                                    )
+                                )
+                            }
+                        }
+
+                        // Section 3: Photographic Evidence Dropzone
+                        FieldCard(modifier = Modifier.fillMaxWidth()) {
+                            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        "PHOTOGRAPHIC EVIDENCE",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 12.sp,
+                                        letterSpacing = 0.5.sp,
+                                        color = TextMuted
+                                    )
+                                    Text(
+                                        "${uiState.photoUris.size} attached",
+                                        fontSize = 11.sp,
+                                        color = TextSubtle
+                                    )
+                                }
+
+                                if (uiState.photoUris.isNotEmpty()) {
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        modifier = Modifier.horizontalScroll(rememberScrollState())
+                                    ) {
+                                        uiState.photoUris.forEach { uri ->
+                                            Box(modifier = Modifier.size(72.dp)) {
+                                                AsyncImage(
+                                                    model = uri,
+                                                    contentDescription = null,
+                                                    contentScale = ContentScale.Crop,
+                                                    modifier = Modifier
+                                                        .fillMaxSize()
+                                                        .clip(RoundedCornerShape(8.dp))
+                                                        .border(1.dp, BorderSubtle, RoundedCornerShape(8.dp))
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // Attach button
+                                Surface(
+                                    onClick = { photoPicker.launch("image/*") },
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = SurfaceVariantDark,
+                                    border = BorderStroke(1.dp, BorderSubtle),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(vertical = 12.dp),
+                                        horizontalArrangement = Arrangement.Center,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(Icons.Default.CameraAlt, null, tint = Primary80, modifier = Modifier.size(18.dp))
+                                        Spacer(Modifier.width(8.dp))
+                                        Text(
+                                            "Attach Photo Evidence from Field",
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 12.sp,
+                                            color = OnSurfaceDark
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        Spacer(Modifier.height(4.dp))
+
+                        // Step 1 Primary CTA
+                        PrimaryActionButton(
+                            text = "Continue to Classification (Step 2) →",
+                            onClick = { currentStep = 2 }
+                        )
+
+                        Spacer(Modifier.height(24.dp))
+                    }
+                } else {
+                    // ─── STEP 2: Incident Classification & Graduated Severity ───
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        // Section 1: Incident Type Selector
+                        SectionHeader(
+                            title = "Hazard Classification",
+                            subtitle = "Select the specific geotechnical or slope failure category"
+                        )
+
+                        // 2x3 Grid of incident types with clean selection states
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            val types = IncidentType.values().toList()
+                            types.chunked(2).forEach { rowTypes ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    rowTypes.forEach { type ->
+                                        val isSelected = uiState.incidentType == type
+                                        Surface(
+                                            onClick = { viewModel.onIncidentTypeChange(type) },
+                                            shape = RoundedCornerShape(8.dp),
+                                            color = if (isSelected) Color(0xFF1E2A38) else SurfaceDark,
+                                            border = BorderStroke(
+                                                1.dp,
+                                                if (isSelected) Primary80 else BorderSubtle
+                                            ),
+                                            modifier = Modifier.weight(1f)
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                Icon(
+                                                    imageVector = when (type) {
+                                                        IncidentType.LANDSLIDE -> Icons.Default.Terrain
+                                                        IncidentType.CRACK -> Icons.Default.Warning
+                                                        IncidentType.ROAD_BLOCKAGE -> Icons.Default.Block
+                                                        IncidentType.FLASH_FLOOD -> Icons.Default.WaterDrop
+                                                        IncidentType.SLOPE_MOVEMENT -> Icons.Default.SouthEast
+                                                        IncidentType.OTHER -> Icons.Default.HelpOutline
+                                                    },
+                                                    contentDescription = null,
+                                                    modifier = Modifier.size(16.dp),
+                                                    tint = if (isSelected) Primary80 else TextMuted
+                                                )
+                                                Text(
+                                                    text = type.name.replace("_", " "),
+                                                    fontSize = 11.sp,
+                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                                    color = if (isSelected) OnBackgroundDark else TextMuted
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Section 2: Graduated Hazard Severity Level
+                        SectionHeader(
+                            title = "Hazard Threat Severity",
+                            subtitle = "Visual scale reflecting immediate risk to life, highway, or infrastructure"
+                        )
+
+                        // Graduated Severity Selector (Low -> Critical with increasing height & visual weight)
+                        GraduatedSeveritySelector(
+                            selectedSeverity = uiState.severity,
+                            onSeveritySelected = { viewModel.onSeverityChange(it) }
+                        )
+
+                        // Action Directive Banner for selected severity
                         Surface(
-                            onClick = { viewModel.onIncidentTypeChange(type) },
-                            shape = RoundedCornerShape(20.dp),
-                            color = if (isSelected) Primary80.copy(alpha = 0.2f) else SurfaceVariantDark,
+                            shape = RoundedCornerShape(8.dp),
+                            color = if (uiState.severity == AlertSeverity.CRITICAL) Color(0xFF2B1216) else SurfaceDark,
                             border = BorderStroke(
                                 1.dp,
-                                if (isSelected) Primary80 else Color.White.copy(alpha = 0.08f)
-                            )
+                                if (uiState.severity == AlertSeverity.CRITICAL) SeverityCritical.copy(alpha = 0.5f) else BorderSubtle
+                            ),
+                            modifier = Modifier.fillMaxWidth()
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
                                 Icon(
-                                    imageVector = when (type) {
-                                        IncidentType.LANDSLIDE -> Icons.Default.Terrain
-                                        IncidentType.CRACK -> Icons.Default.Warning
-                                        IncidentType.ROAD_BLOCKAGE -> Icons.Default.Block
-                                        IncidentType.FLASH_FLOOD -> Icons.Default.WaterDrop
-                                        IncidentType.SLOPE_MOVEMENT -> Icons.Default.SouthEast
-                                        IncidentType.OTHER -> Icons.Default.HelpOutline
-                                    },
+                                    Icons.Default.Shield,
                                     contentDescription = null,
-                                    modifier = Modifier.size(16.dp),
-                                    tint = if (isSelected) Primary80 else TextMuted
+                                    tint = uiState.severity.toColor(),
+                                    modifier = Modifier.size(18.dp)
                                 )
-                                Text(
-                                    text = type.name.replace("_", " "),
-                                    fontSize = 12.sp,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                    color = if (isSelected) Primary80 else OnBackgroundDark
-                                )
+                                Column {
+                                    Text(
+                                        "PROTOCOL DIRECTIVE",
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = uiState.severity.toColor()
+                                    )
+                                    Text(
+                                        uiState.severity.toActionGuideline(),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = OnBackgroundDark
+                                    )
+                                }
                             }
                         }
-                    }
-                }
 
-                // Section: Hazard Severity Level
-                SectionHeader(
-                    title = "Hazard Severity Level",
-                    subtitle = "Assess current threat to human life or infrastructure"
-                )
+                        Spacer(Modifier.height(8.dp))
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    AlertSeverity.values().forEach { severity ->
-                        val isSelected = uiState.severity == severity
-                        val severityColor = severity.toColor()
-                        Surface(
-                            onClick = { viewModel.onSeverityChange(severity) },
-                            shape = RoundedCornerShape(14.dp),
-                            color = if (isSelected) severityColor.copy(alpha = 0.2f) else SurfaceVariantDark,
-                            border = BorderStroke(
-                                1.2.dp,
-                                if (isSelected) severityColor else Color.White.copy(alpha = 0.08f)
-                            ),
-                            modifier = Modifier.weight(1f)
+                        // Bottom Navigation CTAs: Ghost Back + Primary Transmit
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            Column(
-                                modifier = Modifier.padding(vertical = 10.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(8.dp)
-                                        .clip(CircleShape)
-                                        .background(if (isSelected) severityColor else TextSubtle)
-                                )
-                                Text(
-                                    text = severity.name,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (isSelected) severityColor else TextMuted
-                                )
-                            }
-                        }
-                    }
-                }
-
-                // Section: GNSS Location Card
-                SectionHeader(
-                    title = "Location Coordinates",
-                    subtitle = "Automated high-precision GNSS triangulation"
-                )
-
-                GlassCard(
-                    modifier = Modifier.fillMaxWidth(),
-                    backgroundColor = SurfaceDark.copy(alpha = 0.9f)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(Primary80.copy(alpha = 0.15f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (uiState.isFetchingLocation) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(20.dp),
-                                    color = Primary80,
-                                    strokeWidth = 2.dp
-                                )
-                            } else {
-                                Icon(Icons.Default.MyLocation, null, tint = Primary80, modifier = Modifier.size(22.dp))
-                            }
-                        }
-
-                        Column(modifier = Modifier.weight(1f)) {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                PulsingStatusDot(color = Primary80, size = 6.dp)
-                                Text(
-                                    if (uiState.latitude != 0.0) "GNSS SIGNAL LOCKED" else "ACQUIRING GNSS...",
-                                    fontSize = 10.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Primary80,
-                                    letterSpacing = 0.8.sp
-                                )
-                            }
-                            Text(
-                                text = if (uiState.latitude != 0.0)
-                                    "%.5f° N, %.5f° E".format(uiState.latitude, uiState.longitude)
-                                else "Searching coordinates...",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = OnBackgroundDark
+                            GhostSecondaryButton(
+                                text = "← Back",
+                                onClick = { currentStep = 1 },
+                                modifier = Modifier.weight(0.35f)
+                            )
+                            PrimaryActionButton(
+                                text = if (uiState.isSubmitting) "TRANSMITTING..." else "TRANSMIT DISASTER REPORT",
+                                onClick = { viewModel.submitReport() },
+                                enabled = !uiState.isSubmitting,
+                                containerColor = if (uiState.severity == AlertSeverity.CRITICAL) SeverityCritical else Primary80,
+                                modifier = Modifier.weight(0.65f)
                             )
                         }
 
-                        IconButton(
-                            onClick = { viewModel.fetchLocation() },
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(SurfaceElevated)
-                        ) {
-                            Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = Primary80, modifier = Modifier.size(18.dp))
-                        }
-                    }
-                }
-
-                // Sector & Landmark Inputs
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    OutlinedTextField(
-                        value = uiState.district,
-                        onValueChange = { viewModel.onDistrictChange(it) },
-                        label = { Text("District", fontSize = 12.sp) },
-                        placeholder = { Text("e.g. Gangtok", color = TextSubtle) },
-                        leadingIcon = { Icon(Icons.Default.LocationCity, null, tint = Primary80, modifier = Modifier.size(18.dp)) },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp),
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Primary80,
-                            unfocusedBorderColor = BorderSubtle,
-                            focusedTextColor = OnBackgroundDark,
-                            unfocusedTextColor = OnBackgroundDark
-                        )
-                    )
-                    OutlinedTextField(
-                        value = uiState.village,
-                        onValueChange = { viewModel.onVillageChange(it) },
-                        label = { Text("Village / Milestone", fontSize = 12.sp) },
-                        placeholder = { Text("e.g. Sevoke NH-10", color = TextSubtle) },
-                        leadingIcon = { Icon(Icons.Default.Place, null, tint = CyberCyan, modifier = Modifier.size(18.dp)) },
-                        modifier = Modifier.weight(1.2f),
-                        shape = RoundedCornerShape(12.dp),
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Primary80,
-                            unfocusedBorderColor = BorderSubtle,
-                            focusedTextColor = OnBackgroundDark,
-                            unfocusedTextColor = OnBackgroundDark
-                        )
-                    )
-                }
-
-                // Description
-                SectionHeader(
-                    title = "Incident Observation",
-                    subtitle = "Detail visible slope crack dimensions, debris volume, or tree tilting"
-                )
-
-                OutlinedTextField(
-                    value = uiState.description,
-                    onValueChange = { viewModel.onDescriptionChange(it) },
-                    placeholder = {
                         Text(
-                            "e.g. Tension cracks observed along hill slope above NH-10. Mud slurry beginning to wash into roadside drains...",
+                            text = "Direct encrypted dispatch to State Disaster Response Force (SDRF) Command",
+                            fontSize = 10.sp,
                             color = TextSubtle,
-                            fontSize = 13.sp
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
                         )
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(110.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    maxLines = 5,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Primary80,
-                        unfocusedBorderColor = BorderSubtle,
-                        focusedTextColor = OnBackgroundDark,
-                        unfocusedTextColor = OnBackgroundDark
-                    )
-                )
 
-                // Photo Upload Dropzone
-                SectionHeader(
-                    title = "Photographic Evidence",
-                    subtitle = "Attach slope failure images for AI visual verification"
-                )
-
-                Surface(
-                    onClick = { photoPicker.launch("image/*") },
-                    shape = RoundedCornerShape(14.dp),
-                    color = SurfaceDark,
-                    border = BorderStroke(1.2.dp, Color.White.copy(alpha = 0.15f)),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier.padding(20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(44.dp)
-                                .clip(CircleShape)
-                                .background(Primary80.copy(alpha = 0.12f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(Icons.Default.AddAPhoto, null, tint = Primary80, modifier = Modifier.size(22.dp))
-                        }
-                        Text(
-                            text = if (uiState.photoUris.isEmpty()) "TAP TO SELECT OR CAPTURE EVIDENCE"
-                            else "${uiState.photoUris.size} PHOTO(S) ATTACHED",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 0.8.sp,
-                            color = if (uiState.photoUris.isEmpty()) TextMuted else Primary80
-                        )
+                        Spacer(Modifier.height(24.dp))
                     }
                 }
-
-                // Photo Previews
-                if (uiState.photoUris.isNotEmpty()) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        modifier = Modifier.horizontalScroll(rememberScrollState())
-                    ) {
-                        uiState.photoUris.forEach { uri ->
-                            AsyncImage(
-                                model = uri,
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(80.dp)
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .border(1.dp, Primary80.copy(alpha = 0.4f), RoundedCornerShape(10.dp)),
-                                contentScale = ContentScale.Crop
-                            )
-                        }
-                    }
-                }
-
-                // Submit Button
-                Button(
-                    onClick = { viewModel.submitReport() },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(54.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Primary80),
-                    enabled = uiState.description.isNotBlank() && !uiState.isSubmitting
-                ) {
-                    if (uiState.isSubmitting) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(22.dp),
-                            color = ObsidianBase,
-                            strokeWidth = 2.5.dp
-                        )
-                    } else {
-                        Icon(Icons.Default.Send, null, tint = ObsidianBase, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            text = if (uiState.isOnline) "TRANSMIT DISASTER REPORT" else "SAVE LOCALLY (OFFLINE CACHE)",
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 14.sp,
-                            letterSpacing = 0.8.sp,
-                            color = ObsidianBase
-                        )
-                    }
-                }
-
-                Spacer(Modifier.height(48.dp))
             }
         }
     }
 }
-

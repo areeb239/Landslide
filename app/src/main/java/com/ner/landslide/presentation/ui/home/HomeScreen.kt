@@ -1,10 +1,7 @@
 package com.ner.landslide.presentation.ui.home
 
 import androidx.compose.animation.*
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -17,9 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,6 +35,7 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showSOSDialog by remember { mutableStateOf(false) }
+    var selectedSeverityFilter by remember { mutableStateOf<AlertSeverity?>(null) }
 
     LaunchedEffect(uiState.sosState) {
         if (uiState.sosState == SOSState.SENT) {
@@ -55,19 +51,19 @@ fun HomeScreen(
             icon = {
                 Box(
                     modifier = Modifier
-                        .size(52.dp)
+                        .size(48.dp)
                         .clip(CircleShape)
                         .background(SeverityCritical.copy(alpha = 0.15f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Default.Emergency, null, tint = SeverityCritical, modifier = Modifier.size(32.dp))
+                    Icon(Icons.Default.Emergency, null, tint = SeverityCritical, modifier = Modifier.size(28.dp))
                 }
             },
             title = {
                 Text(
                     "TRIGGER EMERGENCY SOS?",
                     fontWeight = FontWeight.ExtraBold,
-                    fontSize = 18.sp,
+                    fontSize = 17.sp,
                     color = OnBackgroundDark,
                     letterSpacing = 0.5.sp
                 )
@@ -77,7 +73,7 @@ fun HomeScreen(
                     "This broadcasts your verified GPS coordinates directly to the State Disaster Management Authority (SDMA) and District Incident Response Teams.\n\nUse solely in case of immediate slope failure, structural collapse, or life hazard.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = TextMuted,
-                    lineHeight = 20.sp
+                    lineHeight = 19.sp
                 )
             },
             confirmButton = {
@@ -87,14 +83,14 @@ fun HomeScreen(
                         viewModel.onSOSTrigger()
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = SeverityCritical),
-                    shape = RoundedCornerShape(10.dp)
+                    shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text("TRANSMIT SOS", fontWeight = FontWeight.Bold)
+                    Text("TRANSMIT SOS", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showSOSDialog = false }) {
-                    Text("Cancel", color = TextMuted)
+                    Text("Cancel", color = TextMuted, fontSize = 12.sp)
                 }
             }
         )
@@ -118,16 +114,16 @@ fun HomeScreen(
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        PulsingStatusDot(color = Primary80, size = 7.dp)
+                        PulsingStatusDot(color = Primary80, size = 6.dp)
                         Text(
                             text = "TELEMETRY RADAR: ACTIVE",
                             style = MaterialTheme.typography.labelSmall,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
                             color = Primary80,
-                            letterSpacing = 1.sp
+                            letterSpacing = 0.8.sp
                         )
                     }
 
@@ -135,17 +131,17 @@ fun HomeScreen(
                     if (uiState.currentUser?.role == UserRole.ADMIN) {
                         Surface(
                             onClick = onNavigateToAdmin,
-                            shape = RoundedCornerShape(20.dp),
-                            color = BrandIndigo.copy(alpha = 0.2f),
-                            border = androidx.compose.foundation.BorderStroke(1.dp, BrandIndigo.copy(alpha = 0.5f))
+                            shape = RoundedCornerShape(14.dp),
+                            color = SurfaceVariantDark,
+                            border = BorderStroke(1.dp, BorderSubtle)
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
-                                Icon(Icons.Default.AdminPanelSettings, null, tint = BrandIndigo, modifier = Modifier.size(14.dp))
-                                Text("ADMIN", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = BrandIndigo)
+                                Icon(Icons.Default.AdminPanelSettings, null, tint = TextMuted, modifier = Modifier.size(13.dp))
+                                Text("ADMIN", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = OnSurfaceDark)
                             }
                         }
                     }
@@ -163,29 +159,29 @@ fun HomeScreen(
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(
                                 text = "BHURAKSHAK",
-                                fontSize = 22.sp,
+                                fontSize = 20.sp,
                                 fontWeight = FontWeight.Black,
-                                letterSpacing = 1.2.sp,
+                                letterSpacing = 1.sp,
                                 color = OnBackgroundDark
                             )
                             Surface(
-                                shape = RoundedCornerShape(6.dp),
-                                color = Primary80.copy(alpha = 0.2f),
-                                border = androidx.compose.foundation.BorderStroke(0.8.dp, Primary80.copy(alpha = 0.5f))
+                                shape = RoundedCornerShape(4.dp),
+                                color = Primary80.copy(alpha = 0.15f),
+                                border = BorderStroke(1.dp, Primary80.copy(alpha = 0.35f))
                             ) {
                                 Text(
                                     text = "NER 2.0",
                                     fontSize = 9.sp,
-                                    fontWeight = FontWeight.ExtraBold,
+                                    fontWeight = FontWeight.Bold,
                                     color = Primary80,
                                     modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
                                 )
                             }
                         }
                         Text(
-                            text = "Himalayan Landslide Early Warning System",
+                            text = "Himalayan Landslide Early Warning & Response",
                             style = MaterialTheme.typography.bodySmall,
-                            fontSize = 12.sp,
+                            fontSize = 11.sp,
                             color = TextMuted
                         )
                     }
@@ -194,20 +190,22 @@ fun HomeScreen(
                         IconButton(
                             onClick = onNavigateToWeather,
                             modifier = Modifier
-                                .size(40.dp)
+                                .size(36.dp)
                                 .clip(CircleShape)
                                 .background(SurfaceVariantDark)
+                                .border(1.dp, BorderSubtle, CircleShape)
                         ) {
-                            Icon(Icons.Default.Cloud, "Weather Doppler", tint = CyberCyan, modifier = Modifier.size(20.dp))
+                            Icon(Icons.Default.Cloud, "Weather Radar", tint = CyberCyan, modifier = Modifier.size(18.dp))
                         }
                         IconButton(
                             onClick = onNavigateToPrediction,
                             modifier = Modifier
-                                .size(40.dp)
+                                .size(36.dp)
                                 .clip(CircleShape)
                                 .background(SurfaceVariantDark)
+                                .border(1.dp, BorderSubtle, CircleShape)
                         ) {
-                            Icon(Icons.Default.Psychology, "AI Predictor", tint = Primary80, modifier = Modifier.size(20.dp))
+                            Icon(Icons.Default.Psychology, "AI Predictor", tint = Primary80, modifier = Modifier.size(18.dp))
                         }
                     }
                 }
@@ -218,161 +216,102 @@ fun HomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues),
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 14.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // Citizen Profile & Regional Telemetry Ribbon
+            // Citizen Profile Ribbon
             item {
                 uiState.currentUser?.let { user ->
                     MissionUserProfileCard(user = user)
                 }
             }
 
-            // Real-time Regional Geotechnical Metrics
+            // Real-time Regional Telemetry Instrumentation (Inline Micro-Gauges)
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    TelemetryMetricItem(
+                    TelemetryInstrumentTile(
                         title = "Rainfall",
                         value = "48.2",
                         unit = "mm",
-                        icon = Icons.Default.WaterDrop,
-                        iconColor = CyberCyan,
+                        progressFraction = 0.48f,
+                        indicatorColor = CyberCyan,
                         modifier = Modifier.weight(1f)
                     )
-                    TelemetryMetricItem(
+                    TelemetryInstrumentTile(
                         title = "Soil Sat",
                         value = "64%",
                         unit = "Sat",
-                        icon = Icons.Default.Grass,
-                        iconColor = Secondary80,
+                        progressFraction = 0.64f,
+                        indicatorColor = Secondary80,
                         modifier = Modifier.weight(1f)
                     )
-                    TelemetryMetricItem(
+                    TelemetryInstrumentTile(
                         title = "Sectors",
                         value = "8",
                         unit = "Live",
-                        icon = Icons.Default.Terrain,
-                        iconColor = Primary80,
+                        progressFraction = 0.80f,
+                        indicatorColor = Primary80,
                         modifier = Modifier.weight(1f)
                     )
                 }
             }
 
-            // SOS Confirmation Banner
+            // SOS Confirmation Feedback Banner
             item {
                 AnimatedVisibility(
                     visible = uiState.sosState == SOSState.SENT,
                     enter = fadeIn() + expandVertically(),
                     exit = fadeOut() + shrinkVertically()
                 ) {
-                    GlassCard(
-                        backgroundColor = SeverityCritical.copy(alpha = 0.18f),
-                        borderColor = SeverityCritical.copy(alpha = 0.6f)
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                        color = SeverityCritical.copy(alpha = 0.15f),
+                        border = BorderStroke(1.dp, SeverityCritical.copy(alpha = 0.5f))
                     ) {
                         Row(
-                            modifier = Modifier.padding(16.dp),
+                            modifier = Modifier.padding(12.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(14.dp)
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(40.dp)
+                                    .size(32.dp)
                                     .clip(CircleShape)
                                     .background(SeverityCritical),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Icon(Icons.Default.Check, null, tint = Color.White, modifier = Modifier.size(24.dp))
+                                Icon(Icons.Default.Check, null, tint = Color.White, modifier = Modifier.size(20.dp))
                             }
                             Column {
                                 Text(
                                     "EMERGENCY SOS DISPATCHED",
                                     fontWeight = FontWeight.ExtraBold,
-                                    fontSize = 14.sp,
+                                    fontSize = 13.sp,
                                     color = SeverityCritical,
                                     letterSpacing = 0.5.sp
                                 )
                                 Text(
                                     "Your GPS telemetry has been relayed to SDRF / NDMA quick-response teams.",
                                     style = MaterialTheme.typography.bodySmall,
-                                    color = OnBackgroundDark.copy(alpha = 0.8f)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Emergency SOS Dispatch Action Card (Embedded, Never Overlaps Content)
-            item {
-                Surface(
-                    onClick = { showSOSDialog = true },
-                    shape = RoundedCornerShape(14.dp),
-                    color = SeverityCritical.copy(alpha = 0.14f),
-                    border = BorderStroke(1.2.dp, SeverityCritical.copy(alpha = 0.55f)),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 14.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(CircleShape)
-                                    .background(SeverityCritical),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Emergency,
-                                    contentDescription = "SOS",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                            Column {
-                                Text(
-                                    text = "EMERGENCY SOS DISPATCH",
-                                    fontWeight = FontWeight.Black,
-                                    fontSize = 13.sp,
-                                    letterSpacing = 0.6.sp,
-                                    color = SeverityCritical
-                                )
-                                Text(
-                                    text = "One-tap GNSS broadcast to SDRF / NDMA",
-                                    style = MaterialTheme.typography.bodySmall,
                                     fontSize = 11.sp,
-                                    color = TextMuted
+                                    color = OnBackgroundDark
                                 )
                             }
-                        }
-                        Surface(
-                            shape = RoundedCornerShape(16.dp),
-                            color = SeverityCritical
-                        ) {
-                            Text(
-                                text = "TRANSMIT",
-                                fontWeight = FontWeight.ExtraBold,
-                                fontSize = 10.sp,
-                                letterSpacing = 0.8.sp,
-                                color = Color.White,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
-                            )
                         }
                     }
                 }
             }
 
-            // Hero AI Prediction Quick Launcher Card
+            // Embedded Emergency SOS Dispatch Action Bar (Tactile Crimson Treatment)
+            item {
+                EmergencySOSBar(onTriggerSOS = { showSOSDialog = true })
+            }
+
+            // Secondary Utility: AI Hazard Neural Core
             item {
                 HeroAiFeatureCard(
                     onRunPredict = onNavigateToPrediction,
@@ -380,32 +319,113 @@ fun HomeScreen(
                 )
             }
 
-            // Section Header: Live Disaster Alerts
+            // Section Header: Regional Hazard Feed with Severity Filters
             item {
                 Spacer(Modifier.height(4.dp))
-                SectionHeader(
-                    title = "Regional Hazard Feed",
-                    subtitle = "${uiState.alerts.size} active alert(s) across Eastern Himalayas",
-                    trailingContent = {
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = SurfaceElevated,
-                            border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.06f))
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SectionHeader(
+                        title = "Regional Hazard Feed",
+                        subtitle = "${uiState.alerts.size} active alert(s) across Eastern Himalayas",
+                        trailingContent = {
+                            Surface(
+                                shape = RoundedCornerShape(4.dp),
+                                color = SurfaceVariantDark,
+                                border = BorderStroke(1.dp, BorderSubtle)
                             ) {
-                                Icon(Icons.Default.Sensors, null, tint = CyberCyan, modifier = Modifier.size(13.dp))
-                                Text("LIVE FEED", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = CyberCyan)
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Icon(Icons.Default.Sensors, null, tint = Primary80, modifier = Modifier.size(11.dp))
+                                    Text("LIVE FEED", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Primary80)
+                                }
                             }
                         }
+                    )
+
+                    // Severity Filter Tabs Row
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.horizontalScroll(rememberScrollState())
+                    ) {
+                        // All Filter
+                        Surface(
+                            onClick = { selectedSeverityFilter = null },
+                            shape = RoundedCornerShape(6.dp),
+                            color = if (selectedSeverityFilter == null) Primary80.copy(alpha = 0.18f) else SurfaceDark,
+                            border = BorderStroke(1.dp, if (selectedSeverityFilter == null) Primary80 else BorderSubtle)
+                        ) {
+                            Text(
+                                text = "All (${uiState.alerts.size})",
+                                fontSize = 11.sp,
+                                fontWeight = if (selectedSeverityFilter == null) FontWeight.Bold else FontWeight.Medium,
+                                color = if (selectedSeverityFilter == null) Primary80 else TextMuted,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+
+                        // Critical Filter
+                        val critCount = uiState.alerts.count { it.severity == AlertSeverity.CRITICAL }
+                        Surface(
+                            onClick = { selectedSeverityFilter = AlertSeverity.CRITICAL },
+                            shape = RoundedCornerShape(6.dp),
+                            color = if (selectedSeverityFilter == AlertSeverity.CRITICAL) SeverityCritical.copy(alpha = 0.18f) else SurfaceDark,
+                            border = BorderStroke(1.dp, if (selectedSeverityFilter == AlertSeverity.CRITICAL) SeverityCritical else BorderSubtle)
+                        ) {
+                            Text(
+                                text = "Critical ($critCount)",
+                                fontSize = 11.sp,
+                                fontWeight = if (selectedSeverityFilter == AlertSeverity.CRITICAL) FontWeight.Bold else FontWeight.Medium,
+                                color = if (selectedSeverityFilter == AlertSeverity.CRITICAL) SeverityCritical else TextMuted,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+
+                        // High Filter
+                        val highCount = uiState.alerts.count { it.severity == AlertSeverity.HIGH }
+                        Surface(
+                            onClick = { selectedSeverityFilter = AlertSeverity.HIGH },
+                            shape = RoundedCornerShape(6.dp),
+                            color = if (selectedSeverityFilter == AlertSeverity.HIGH) SeverityHigh.copy(alpha = 0.18f) else SurfaceDark,
+                            border = BorderStroke(1.dp, if (selectedSeverityFilter == AlertSeverity.HIGH) SeverityHigh else BorderSubtle)
+                        ) {
+                            Text(
+                                text = "Warning ($highCount)",
+                                fontSize = 11.sp,
+                                fontWeight = if (selectedSeverityFilter == AlertSeverity.HIGH) FontWeight.Bold else FontWeight.Medium,
+                                color = if (selectedSeverityFilter == AlertSeverity.HIGH) SeverityHigh else TextMuted,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+
+                        // Moderate Filter
+                        val modCount = uiState.alerts.count { it.severity == AlertSeverity.MODERATE }
+                        Surface(
+                            onClick = { selectedSeverityFilter = AlertSeverity.MODERATE },
+                            shape = RoundedCornerShape(6.dp),
+                            color = if (selectedSeverityFilter == AlertSeverity.MODERATE) SeverityModerate.copy(alpha = 0.18f) else SurfaceDark,
+                            border = BorderStroke(1.dp, if (selectedSeverityFilter == AlertSeverity.MODERATE) SeverityModerate else BorderSubtle)
+                        ) {
+                            Text(
+                                text = "Advisory ($modCount)",
+                                fontSize = 11.sp,
+                                fontWeight = if (selectedSeverityFilter == AlertSeverity.MODERATE) FontWeight.Bold else FontWeight.Medium,
+                                color = if (selectedSeverityFilter == AlertSeverity.MODERATE) SeverityModerate else TextMuted,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
                     }
-                )
+                }
             }
 
-            // Alerts Feed / Empty State
+            // Filtered Alerts List
+            val displayedAlerts = if (selectedSeverityFilter != null) {
+                uiState.alerts.filter { it.severity == selectedSeverityFilter }
+            } else {
+                uiState.alerts
+            }
+
             if (uiState.isLoading) {
                 item {
                     Box(
@@ -414,48 +434,51 @@ fun HomeScreen(
                             .padding(40.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator(color = Primary80, strokeWidth = 3.dp)
+                        CircularProgressIndicator(color = Primary80, strokeWidth = 2.5.dp, modifier = Modifier.size(32.dp))
                     }
                 }
-            } else if (uiState.alerts.isEmpty()) {
+            } else if (displayedAlerts.isEmpty()) {
                 item {
-                    GlassCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        backgroundColor = SurfaceDark.copy(alpha = 0.7f)
-                    ) {
+                    FieldCard(modifier = Modifier.fillMaxWidth()) {
                         Column(
                             modifier = Modifier
-                                .padding(32.dp)
+                                .padding(24.dp)
                                 .fillMaxWidth(),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            PulsingStatusDot(color = Primary80, size = 12.dp)
-                            Spacer(Modifier.height(16.dp))
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .clip(CircleShape)
+                                    .background(Primary80)
+                            )
+                            Spacer(Modifier.height(10.dp))
                             Text(
-                                "ALL CORRIDORS NOMINAL",
+                                "SECTORS NOMINAL",
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.ExtraBold,
-                                letterSpacing = 1.sp,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp,
+                                letterSpacing = 0.5.sp,
                                 color = OnBackgroundDark
                             )
-                            Spacer(Modifier.height(4.dp))
+                            Spacer(Modifier.height(3.dp))
                             Text(
-                                "No critical slope deformations detected in Gangtok, Sevoke, or Mangan sectors.",
+                                "No active slope failures matching this filter across monitored corridors.",
                                 style = MaterialTheme.typography.bodySmall,
+                                fontSize = 11.sp,
                                 color = TextMuted,
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                                lineHeight = 18.sp
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
                             )
                         }
                     }
                 }
             } else {
-                items(uiState.alerts, key = { it.id }) { alert ->
+                items(displayedAlerts, key = { it.id }) { alert ->
                     AlertCard(alert = alert)
                 }
             }
 
-            // Bottom clearance padding
+            // Bottom clearance padding above navigation dock
             item { Spacer(Modifier.height(24.dp)) }
         }
     }
@@ -463,69 +486,65 @@ fun HomeScreen(
 
 @Composable
 private fun MissionUserProfileCard(user: User) {
-    GlassCard(
-        modifier = Modifier.fillMaxWidth(),
-        backgroundColor = SurfaceDark.copy(alpha = 0.9f)
-    ) {
+    FieldCard(modifier = Modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Box(contentAlignment = Alignment.BottomEnd) {
                 Box(
                     modifier = Modifier
-                        .size(46.dp)
+                        .size(40.dp)
                         .clip(CircleShape)
-                        .background(
-                            Brush.linearGradient(listOf(BrandIndigo, CyberCyan))
-                        ),
+                        .background(SurfaceVariantDark)
+                        .border(1.dp, BorderSubtle, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = user.name.take(1).uppercase(),
                         fontWeight = FontWeight.ExtraBold,
-                        fontSize = 18.sp,
-                        color = Color.White
+                        fontSize = 16.sp,
+                        color = OnBackgroundDark
                     )
                 }
                 Box(
                     modifier = Modifier
-                        .size(12.dp)
+                        .size(10.dp)
                         .clip(CircleShape)
                         .background(Primary80)
-                        .border(2.dp, SurfaceDark, CircleShape)
+                        .border(1.5.dp, SurfaceDark, CircleShape)
                 )
             }
 
             Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(
-                        text = user.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = OnBackgroundDark
-                    )
-                }
+                Text(
+                    text = user.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    color = OnBackgroundDark
+                )
                 Text(
                     text = "SECTOR: Eastern Himalayas (Sikkim / Assam Corridor)",
                     style = MaterialTheme.typography.labelSmall,
-                    fontSize = 11.sp,
+                    fontSize = 10.sp,
                     color = TextMuted
                 )
             }
 
             Surface(
-                shape = RoundedCornerShape(20.dp),
-                color = Primary80.copy(alpha = 0.12f),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Primary80.copy(alpha = 0.4f))
+                shape = RoundedCornerShape(4.dp),
+                color = SurfaceVariantDark,
+                border = BorderStroke(1.dp, BorderSubtle)
             ) {
                 Text(
-                    text = user.role.name.replace("_", " "),
-                    fontSize = 10.sp,
+                    text = user.role.name,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontSize = 9.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Primary80,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    color = TextMuted,
+                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
                 )
             }
         }
@@ -537,101 +556,87 @@ private fun HeroAiFeatureCard(
     onRunPredict: () -> Unit,
     onOpenDoppler: () -> Unit
 ) {
-    Surface(
-        shape = RoundedCornerShape(18.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, Brush.horizontalGradient(listOf(BrandIndigo.copy(alpha = 0.6f), CyberCyan.copy(alpha = 0.3f)))),
-        shadowElevation = 8.dp,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Box(
-            modifier = Modifier
-                .background(
-                    Brush.verticalGradient(
-                        listOf(
-                            Color(0xFF162038),
-                            Color(0xFF0F172A)
-                        )
-                    )
-                )
-                .padding(18.dp)
+    FieldCard(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(SurfaceVariantDark),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(34.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(BrandIndigo.copy(alpha = 0.25f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(Icons.Default.Psychology, null, tint = BrandIndigo, modifier = Modifier.size(20.dp))
-                        }
-                        Text(
-                            text = "AI HAZARD NEURAL CORE",
-                            fontWeight = FontWeight.Black,
-                            fontSize = 13.sp,
-                            letterSpacing = 1.sp,
-                            color = OnBackgroundDark
-                        )
+                        Icon(Icons.Default.Psychology, null, tint = Primary80, modifier = Modifier.size(17.dp))
                     }
-
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = Color.White.copy(alpha = 0.08f)
-                    ) {
-                        Text(
-                            text = "v2.4 ONLINE",
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = CyberCyan,
-                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
-                        )
-                    }
+                    Text(
+                        text = "AI HAZARD NEURAL CORE",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp,
+                        letterSpacing = 0.5.sp,
+                        color = OnBackgroundDark
+                    )
                 }
 
-                Text(
-                    text = "Evaluate geotechnical slope failure probability using live 24h rainfall saturation, antecedent precipitation index, and digital elevation models.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextMuted,
-                    lineHeight = 18.sp
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                Surface(
+                    shape = RoundedCornerShape(4.dp),
+                    color = SurfaceVariantDark,
+                    border = BorderStroke(1.dp, BorderSubtle)
                 ) {
-                    Button(
-                        onClick = onRunPredict,
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Primary80),
-                        modifier = Modifier.weight(1.3f).height(44.dp)
-                    ) {
-                        Icon(Icons.Default.Bolt, null, modifier = Modifier.size(16.dp), tint = ObsidianBase)
-                        Spacer(Modifier.width(6.dp))
-                        Text("Calculate Risk", fontWeight = FontWeight.ExtraBold, color = ObsidianBase, fontSize = 13.sp)
-                    }
+                    Text(
+                        text = "ONLINE",
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Primary80,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+            }
 
-                    OutlinedButton(
-                        onClick = onOpenDoppler,
-                        shape = RoundedCornerShape(12.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.2f)),
-                        modifier = Modifier.weight(1f).height(44.dp)
-                    ) {
-                        Icon(Icons.Default.Radar, null, modifier = Modifier.size(16.dp), tint = CyberCyan)
-                        Spacer(Modifier.width(6.dp))
-                        Text("Doppler", fontWeight = FontWeight.Bold, color = OnBackgroundDark, fontSize = 13.sp)
-                    }
+            Text(
+                text = "Evaluate geotechnical slope failure probability using live 24h rainfall saturation, antecedent precipitation index, and digital elevation models.",
+                style = MaterialTheme.typography.bodySmall,
+                fontSize = 11.sp,
+                color = TextMuted,
+                lineHeight = 16.sp
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Button(
+                    onClick = onRunPredict,
+                    shape = RoundedCornerShape(6.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Primary80),
+                    modifier = Modifier.weight(1.2f).height(40.dp)
+                ) {
+                    Icon(Icons.Default.Bolt, null, modifier = Modifier.size(15.dp), tint = Color.White)
+                    Spacer(Modifier.width(6.dp))
+                    Text("Calculate Risk", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 12.sp)
+                }
+
+                OutlinedButton(
+                    onClick = onOpenDoppler,
+                    shape = RoundedCornerShape(6.dp),
+                    border = BorderStroke(1.dp, BorderSubtle),
+                    modifier = Modifier.weight(1f).height(40.dp)
+                ) {
+                    Icon(Icons.Default.Radar, null, modifier = Modifier.size(15.dp), tint = CyberCyan)
+                    Spacer(Modifier.width(6.dp))
+                    Text("Doppler", fontWeight = FontWeight.SemiBold, color = OnBackgroundDark, fontSize = 12.sp)
                 }
             }
         }
     }
 }
-
