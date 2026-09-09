@@ -19,8 +19,11 @@ def load_model():
 
     possible_paths = [
         settings.ml_model_path,
+        os.path.join(os.path.dirname(__file__), "..", "..", "bhurakshak_pipeline.pkl"),
         os.path.join(os.path.dirname(__file__), "..", "..", "landslide_model.joblib"),
+        "bhurakshak_pipeline.pkl",
         "landslide_model.joblib",
+        "../bhurakshak_pipeline.pkl",
         "models/landslide_model.joblib"
     ]
 
