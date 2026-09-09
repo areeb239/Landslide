@@ -187,24 +187,24 @@ fun TelemetryMetricItem(
 ) {
     GlassCard(
         modifier = modifier,
-        shape = RoundedCornerShape(14.dp),
-        backgroundColor = SurfaceDark.copy(alpha = 0.85f)
+        shape = RoundedCornerShape(12.dp),
+        backgroundColor = SurfaceDark.copy(alpha = 0.88f)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 10.dp),
+                .padding(horizontal = 6.dp, vertical = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.spacedBy(3.dp)
         ) {
             Box(
                 modifier = Modifier
-                    .size(28.dp)
-                    .clip(RoundedCornerShape(8.dp))
+                    .size(26.dp)
+                    .clip(RoundedCornerShape(6.dp))
                     .background(iconColor.copy(alpha = 0.15f)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(icon, contentDescription = null, tint = iconColor, modifier = Modifier.size(16.dp))
+                Icon(icon, contentDescription = null, tint = iconColor, modifier = Modifier.size(15.dp))
             }
             Text(
                 text = title.uppercase(),
@@ -212,25 +212,33 @@ fun TelemetryMetricItem(
                 fontSize = 9.sp,
                 fontWeight = FontWeight.Bold,
                 color = TextMuted,
-                letterSpacing = 0.4.sp,
-                maxLines = 1
+                letterSpacing = 0.3.sp,
+                maxLines = 1,
+                softWrap = false,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
             )
-            Row(verticalAlignment = Alignment.Bottom) {
+            Row(
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.Center
+            ) {
                 Text(
                     text = value,
-                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Black,
-                    fontSize = 15.sp,
-                    color = OnBackgroundDark
+                    fontSize = 14.sp,
+                    color = OnBackgroundDark,
+                    maxLines = 1,
+                    softWrap = false
                 )
                 if (unit.isNotBlank()) {
                     Spacer(Modifier.width(2.dp))
                     Text(
                         text = unit,
-                        style = MaterialTheme.typography.bodySmall,
                         fontSize = 9.sp,
+                        fontWeight = FontWeight.Medium,
                         color = TextSubtle,
-                        modifier = Modifier.padding(bottom = 1.dp)
+                        modifier = Modifier.padding(bottom = 1.dp),
+                        maxLines = 1,
+                        softWrap = false
                     )
                 }
             }

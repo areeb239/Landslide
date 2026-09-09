@@ -225,48 +225,38 @@ fun MapScreen(viewModel: MapViewModel = hiltViewModel()) {
                 }
             }
 
-            // Bottom Corridor Status & Legend Card
+            // Bottom Corridor Status & Legend Card - Slim single-row indicator
             GlassCard(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(horizontal = 14.dp, vertical = 16.dp)
+                    .padding(horizontal = 14.dp, vertical = 8.dp)
                     .fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
                 backgroundColor = SurfaceDark.copy(alpha = 0.92f),
                 borderColor = Color.White.copy(alpha = 0.1f)
             ) {
-                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(5.dp)
                     ) {
-                        Text(
-                            "LIVE CORRIDOR TELEMETRY",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.ExtraBold,
-                            letterSpacing = 0.8.sp,
-                            color = TextMuted
-                        )
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            PulsingStatusDot(color = Primary80, size = 5.dp)
-                            Text("8 SECTORS", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Primary80)
-                        }
+                        PulsingStatusDot(color = Primary80, size = 5.dp)
+                        Text("8 SECTORS LIVE", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Primary80)
                     }
 
-                    // Compact Hazard Legend Row
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         MapLegendPill(color = SeverityLow, label = "Nominal")
                         MapLegendPill(color = SeverityModerate, label = "Advisory")
-                        MapLegendPill(color = SeverityHigh, label = "Warning")
-                        MapLegendPill(color = SeverityCritical, label = "Evacuate")
-                        MapLegendPill(color = SeverityCritical, label = "Blocked Road", isRoad = true)
+                        MapLegendPill(color = SeverityCritical, label = "Hazard")
                     }
                 }
             }

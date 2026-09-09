@@ -3,6 +3,7 @@ package com.ner.landslide.presentation.ui.home
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -211,9 +212,6 @@ fun HomeScreen(
                     }
                 }
             }
-        },
-        floatingActionButton = {
-            SOSFab(onClick = { showSOSDialog = true })
         }
     ) { paddingValues ->
         LazyColumn(
@@ -307,6 +305,73 @@ fun HomeScreen(
                 }
             }
 
+            // Emergency SOS Dispatch Action Card (Embedded, Never Overlaps Content)
+            item {
+                Surface(
+                    onClick = { showSOSDialog = true },
+                    shape = RoundedCornerShape(14.dp),
+                    color = SeverityCritical.copy(alpha = 0.14f),
+                    border = BorderStroke(1.2.dp, SeverityCritical.copy(alpha = 0.55f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(SeverityCritical),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Emergency,
+                                    contentDescription = "SOS",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Column {
+                                Text(
+                                    text = "EMERGENCY SOS DISPATCH",
+                                    fontWeight = FontWeight.Black,
+                                    fontSize = 13.sp,
+                                    letterSpacing = 0.6.sp,
+                                    color = SeverityCritical
+                                )
+                                Text(
+                                    text = "One-tap GNSS broadcast to SDRF / NDMA",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontSize = 11.sp,
+                                    color = TextMuted
+                                )
+                            }
+                        }
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            color = SeverityCritical
+                        ) {
+                            Text(
+                                text = "TRANSMIT",
+                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 10.sp,
+                                letterSpacing = 0.8.sp,
+                                color = Color.White,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
             // Hero AI Prediction Quick Launcher Card
             item {
                 HeroAiFeatureCard(
@@ -390,8 +455,8 @@ fun HomeScreen(
                 }
             }
 
-            // Bottom FAB clearance padding
-            item { Spacer(Modifier.height(84.dp)) }
+            // Bottom clearance padding
+            item { Spacer(Modifier.height(24.dp)) }
         }
     }
 }
