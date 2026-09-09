@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -242,7 +243,7 @@ fun ReportScreen(
                                     }
                                 }
 
-                                Divider(color = BorderSubtle, thickness = 0.8.dp)
+                                HorizontalDivider(color = BorderSubtle, thickness = 0.8.dp)
 
                                 // District / Location manual refinement
                                 OutlinedTextField(
@@ -424,7 +425,7 @@ fun ReportScreen(
                                                         IncidentType.ROAD_BLOCKAGE -> Icons.Default.Block
                                                         IncidentType.FLASH_FLOOD -> Icons.Default.WaterDrop
                                                         IncidentType.SLOPE_MOVEMENT -> Icons.Default.SouthEast
-                                                        IncidentType.OTHER -> Icons.Default.HelpOutline
+                                                        IncidentType.OTHER -> Icons.AutoMirrored.Filled.HelpOutline
                                                     },
                                                     contentDescription = null,
                                                     modifier = Modifier.size(16.dp),

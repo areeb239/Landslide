@@ -7,13 +7,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -39,12 +39,12 @@ fun WeatherScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text("Doppler & Weather Radar", fontWeight = FontWeight.Bold, fontSize = 18.sp, color = OnBackgroundDark)
-                        Text("Real-Time Precipitation Telemetry", style = MaterialTheme.typography.labelSmall, color = CyberCyan)
+                        Text("Doppler & Weather Radar", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = OnBackgroundDark)
+                        Text("Real-Time Precipitation Telemetry", style = MaterialTheme.typography.labelSmall, fontSize = 11.sp, color = Primary80)
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) { Icon(Icons.Default.ArrowBack, "Back", tint = OnBackgroundDark) }
+                    IconButton(onClick = onNavigateBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = OnBackgroundDark) }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = ObsidianBase)
             )
@@ -68,50 +68,48 @@ fun WeatherScreen(
                         .padding(horizontal = 16.dp, vertical = 14.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Location Banner
-                    GlassCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        backgroundColor = SurfaceDark.copy(alpha = 0.85f)
-                    ) {
+                    // Location Banner Card
+                    FieldCard(modifier = Modifier.fillMaxWidth()) {
                         Row(
-                            modifier = Modifier.padding(14.dp),
+                            modifier = Modifier.padding(12.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             Box(
                                 modifier = Modifier
                                     .size(36.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(CyberCyan.copy(alpha = 0.15f)),
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(SurfaceVariantDark),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Icon(Icons.Default.LocationOn, null, tint = CyberCyan, modifier = Modifier.size(20.dp))
+                                Icon(Icons.Default.LocationOn, null, tint = Primary80, modifier = Modifier.size(18.dp))
                             }
                             Column {
                                 Text(
                                     "EASTERN HIMALAYAS MET STATION",
                                     style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.ExtraBold,
+                                    fontWeight = FontWeight.Bold,
                                     fontSize = 10.sp,
-                                    letterSpacing = 0.8.sp,
-                                    color = CyberCyan
+                                    letterSpacing = 0.6.sp,
+                                    color = Primary80
                                 )
                                 Text(
                                     "Lat: %.2f°N, Lon: %.2f°E".format(forecast.latitude, forecast.longitude),
                                     style = MaterialTheme.typography.bodySmall,
+                                    fontSize = 12.sp,
                                     color = OnBackgroundDark
                                 )
                             }
                         }
                     }
 
-                    // Hourly Forecast Cards
+                    // Hourly Forecast Section
                     SectionHeader(
                         title = "72-Hour Precipitation Radar",
                         subtitle = "Continuous Open-Meteo satellite & rain gauge feed"
                     )
 
-                    LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         items(forecast.hourlyData.take(72)) { hour ->
                             HourlyWeatherCard(hour = hour)
                         }
@@ -119,29 +117,29 @@ fun WeatherScreen(
 
                     // Peak Rainfall Alert Card
                     val maxRain = forecast.hourlyData.maxOfOrNull { it.rainfallMm } ?: 0.0
+                    val isPeakCritical = maxRain > 100
                     val alertColor = when {
                         maxRain > 100 -> SeverityCritical
                         maxRain > 50 -> SeverityHigh
                         maxRain > 20 -> SeverityModerate
-                        else -> SeverityLow
+                        else -> Primary80
                     }
 
                     SectionHeader(title = "Peak Precipitation Window")
 
-                    GlassCard(
+                    FieldCard(
                         modifier = Modifier.fillMaxWidth(),
-                        glowAccent = alertColor,
-                        backgroundColor = SurfaceDark.copy(alpha = 0.9f)
+                        borderColor = if (isPeakCritical) SeverityCritical.copy(alpha = 0.5f) else BorderSubtle
                     ) {
                         Row(
-                            modifier = Modifier.padding(18.dp),
+                            modifier = Modifier.padding(16.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                            horizontalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(54.dp)
-                                    .clip(CircleShape)
+                                    .size(48.dp)
+                                    .clip(RoundedCornerShape(8.dp))
                                     .background(alertColor.copy(alpha = 0.15f)),
                                 contentAlignment = Alignment.Center
                             ) {
@@ -149,13 +147,13 @@ fun WeatherScreen(
                                     Icons.Default.WaterDrop,
                                     contentDescription = null,
                                     tint = alertColor,
-                                    modifier = Modifier.size(32.dp)
+                                    modifier = Modifier.size(26.dp)
                                 )
                             }
                             Column {
                                 Text(
                                     "%.1f mm/h".format(maxRain),
-                                    fontSize = 32.sp,
+                                    fontSize = 26.sp,
                                     fontWeight = FontWeight.Black,
                                     color = alertColor
                                 )
@@ -167,6 +165,7 @@ fun WeatherScreen(
                                         else -> "Nominal rainfall — Hill slopes stable"
                                     },
                                     style = MaterialTheme.typography.bodySmall,
+                                    fontSize = 11.sp,
                                     color = OnBackgroundDark
                                 )
                             }
@@ -177,11 +176,11 @@ fun WeatherScreen(
                     Text(
                         "Telemetry powered by Open-Meteo High-Resolution Numerical Weather Models",
                         style = MaterialTheme.typography.labelSmall,
-                        fontSize = 11.sp,
+                        fontSize = 10.sp,
                         color = TextSubtle
                     )
 
-                    Spacer(Modifier.height(32.dp))
+                    Spacer(Modifier.height(24.dp))
                 }
             }
         }
@@ -197,50 +196,49 @@ private fun HourlyWeatherCard(hour: HourlyWeather) {
         else -> Primary80
     }
 
-    GlassCard(
-        shape = RoundedCornerShape(14.dp),
-        backgroundColor = SurfaceDark.copy(alpha = 0.85f),
-        borderColor = if (hour.rainfallMm > 20) rainColor.copy(alpha = 0.5f) else Color.White.copy(alpha = 0.08f)
+    FieldCard(
+        shape = RoundedCornerShape(8.dp),
+        borderColor = if (hour.rainfallMm > 20) rainColor.copy(alpha = 0.4f) else BorderSubtle
     ) {
         Column(
-            modifier = Modifier.padding(14.dp).width(80.dp),
+            modifier = Modifier.padding(10.dp).width(74.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Text(
                 hour.time.takeLast(5),
                 style = MaterialTheme.typography.labelSmall,
-                fontSize = 11.sp,
+                fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
                 color = TextMuted
             )
             Box(
                 modifier = Modifier
-                    .size(32.dp)
+                    .size(28.dp)
                     .clip(CircleShape)
-                    .background(rainColor.copy(alpha = 0.15f)),
+                    .background(rainColor.copy(alpha = 0.12f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = if (hour.rainfallMm > 0) Icons.Default.Umbrella else Icons.Default.WbSunny,
                     contentDescription = null,
                     tint = rainColor,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(15.dp)
                 )
             }
             Text(
                 "%.1f mm".format(hour.rainfallMm),
                 style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.ExtraBold,
+                fontWeight = FontWeight.Bold,
+                fontSize = 11.sp,
                 color = rainColor
             )
             Text(
                 "%.0f°C".format(hour.temperature),
                 style = MaterialTheme.typography.labelSmall,
-                fontSize = 11.sp,
+                fontSize = 10.sp,
                 color = OnBackgroundDark
             )
         }
     }
 }
-

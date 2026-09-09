@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -68,7 +69,7 @@ fun PredictionScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = OnBackgroundDark)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = OnBackgroundDark)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -129,9 +130,8 @@ fun PredictionScreen(
             }
 
             // Input Telemetry Section
-            GlassCard(
-                modifier = Modifier.fillMaxWidth(),
-                backgroundColor = SurfaceDark.copy(alpha = 0.85f)
+            FieldCard(
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     Text(
@@ -350,10 +350,9 @@ private fun HeroRiskAssessmentDisplay(result: PredictionResult) {
         )
     }
 
-    GlassCard(
+    FieldCard(
         modifier = Modifier.fillMaxWidth(),
-        glowAccent = riskColor,
-        backgroundColor = SurfaceDark.copy(alpha = 0.95f)
+        borderColor = if (result.riskLevel.equals("CRITICAL", ignoreCase = true)) SeverityCritical.copy(alpha = 0.5f) else BorderSubtle
     ) {
         Column(
             modifier = Modifier.padding(20.dp),
@@ -458,7 +457,7 @@ private fun HeroRiskAssessmentDisplay(result: PredictionResult) {
 
             // Geotechnical Factor Breakdown (Explainable AI)
             if (result.factors.isNotEmpty()) {
-                Divider(color = Color.White.copy(alpha = 0.08f))
+                HorizontalDivider(color = BorderSubtle, thickness = 0.8.dp)
 
                 Column(
                     modifier = Modifier.fillMaxWidth(),
@@ -508,7 +507,7 @@ private fun HeroRiskAssessmentDisplay(result: PredictionResult) {
 
             // Official NDMA / GSI Directive
             if (result.recommendation.isNotBlank()) {
-                Divider(color = Color.White.copy(alpha = 0.08f))
+                HorizontalDivider(color = BorderSubtle, thickness = 0.8.dp)
 
                 Surface(
                     shape = RoundedCornerShape(12.dp),

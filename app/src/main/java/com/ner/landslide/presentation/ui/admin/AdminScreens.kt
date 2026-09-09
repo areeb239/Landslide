@@ -7,6 +7,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Assignment
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
@@ -64,7 +67,7 @@ fun AdminDashboardScreen(
                                 .clip(CircleShape)
                                 .background(SurfaceDark)
                         ) {
-                            Icon(Icons.Default.ArrowBack, "Back", tint = OnBackgroundDark, modifier = Modifier.size(20.dp))
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = OnBackgroundDark, modifier = Modifier.size(20.dp))
                         }
                         Column {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -136,7 +139,7 @@ fun AdminDashboardScreen(
                     onClick = { selectedTab = 0 },
                     text = {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Icon(Icons.Default.Assignment, null, modifier = Modifier.size(16.dp))
+                            Icon(Icons.AutoMirrored.Filled.Assignment, null, modifier = Modifier.size(16.dp))
                             Text(
                                 "Field Reports (${uiState.reports.size})",
                                 fontWeight = if (selectedTab == 0) FontWeight.Bold else FontWeight.Normal,
@@ -355,7 +358,7 @@ fun BroadcastAlertScreen(
                             .clip(CircleShape)
                             .background(SurfaceDark)
                     ) {
-                        Icon(Icons.Default.ArrowBack, "Back", tint = OnBackgroundDark, modifier = Modifier.size(20.dp))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = OnBackgroundDark, modifier = Modifier.size(20.dp))
                     }
                     Column {
                         Text(
@@ -524,7 +527,7 @@ fun BroadcastAlertScreen(
                         if (uiState.isBroadcasting) {
                             CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                         } else {
-                            Icon(Icons.Default.Send, null, modifier = Modifier.size(18.dp), tint = Color.White)
+                            Icon(Icons.AutoMirrored.Filled.Send, null, modifier = Modifier.size(18.dp), tint = Color.White)
                             Spacer(Modifier.width(8.dp))
                             Text("DISPATCH EMERGENCY BROADCAST", fontWeight = FontWeight.Bold, fontSize = 13.sp, letterSpacing = 0.5.sp)
                         }
