@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: landslide-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: APP_ENV
+        value: production
+      - key: ALLOWED_ORIGINS
+        value: "*"
+      - key: WEATHER_API_BASE_URL
+        value: https://api.open-meteo.com/v1/forecast
+      - key: FIREBASE_PROJECT_ID
+        value: landslide-5dcb9
