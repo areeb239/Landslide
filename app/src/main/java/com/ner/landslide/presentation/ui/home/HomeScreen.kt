@@ -114,7 +114,7 @@ fun HomeScreen(
                     .statusBarsPadding()
                     .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
-                // Top telemetry status line
+                // Top telemetry status & global utility controls line
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -135,75 +135,42 @@ fun HomeScreen(
                         )
                     }
 
-                    // Admin panel shortcut if authorized
-                    if (uiState.currentUser?.role == UserRole.ADMIN) {
+                    // Global utility controls: Admin, Language Selector, Theme Switcher
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        if (uiState.currentUser?.role == UserRole.ADMIN) {
+                            Surface(
+                                onClick = onNavigateToAdmin,
+                                shape = RoundedCornerShape(12.dp),
+                                color = colors.bgSurface,
+                                border = BorderStroke(1.dp, colors.borderDefault)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Icon(Icons.Default.AdminPanelSettings, null, tint = colors.textSecondary, modifier = Modifier.size(12.dp))
+                                    Text("ADMIN", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = colors.textPrimary)
+                                }
+                            }
+                        }
+
+                        // Compact Language Selector Pill
                         Surface(
-                            onClick = onNavigateToAdmin,
-                            shape = RoundedCornerShape(14.dp),
+                            onClick = { showLanguageDialog = true },
+                            shape = RoundedCornerShape(16.dp),
                             color = colors.bgSurface,
                             border = BorderStroke(1.dp, colors.borderDefault)
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
-                                Icon(Icons.Default.AdminPanelSettings, null, tint = colors.textSecondary, modifier = Modifier.size(13.dp))
-                                Text("ADMIN", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = colors.textPrimary)
-                            }
-                        }
-                    }
-                }
-
-                Spacer(Modifier.height(8.dp))
-
-                // Main App Header Bar
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text(
-                                text = "BHURAKSHAK",
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Black,
-                                letterSpacing = 1.sp,
-                                color = colors.textPrimary
-                            )
-                            Surface(
-                                shape = RoundedCornerShape(4.dp),
-                                color = colors.accent.copy(alpha = 0.15f),
-                                border = BorderStroke(1.dp, colors.accent.copy(alpha = 0.35f))
-                            ) {
-                                Text(
-                                    text = "NER 2.0",
-                                    fontSize = 9.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = colors.accent,
-                                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
-                                )
-                            }
-                        }
-                        Text(
-                            text = "Himalayan Landslide Early Warning & Response",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontSize = 11.sp,
-                            color = colors.textSecondary
-                        )
-                    }
-
-                    // Top Action Controls: Language Selector, Theme Switcher, Weather Radar, AI Predictor
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Surface(
-                            onClick = { showLanguageDialog = true },
-                            shape = CircleShape,
-                            color = colors.bgSurface,
-                            border = BorderStroke(1.dp, colors.borderDefault),
-                            modifier = Modifier.size(36.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
+                                Icon(Icons.Default.Language, null, tint = colors.accent, modifier = Modifier.size(13.dp))
                                 Text(
                                     text = localeController.currentLanguage.value.badgeCode,
                                     color = colors.accent,
@@ -213,40 +180,86 @@ fun HomeScreen(
                             }
                         }
 
-                        IconButton(
+                        // Compact Theme Switcher Button
+                        Surface(
                             onClick = { themeController.toggleTheme() },
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(colors.bgSurface)
-                                .border(1.dp, colors.borderDefault, CircleShape)
+                            shape = CircleShape,
+                            color = colors.bgSurface,
+                            border = BorderStroke(1.dp, colors.borderDefault),
+                            modifier = Modifier.size(30.dp)
                         ) {
-                            Icon(
-                                imageVector = if (colors.isDark) Icons.Default.LightMode else Icons.Default.DarkMode,
-                                contentDescription = if (colors.isDark) "Switch to Field Daylight Theme" else "Switch to Control-Room Blue Theme",
-                                tint = colors.accent,
-                                modifier = Modifier.size(18.dp)
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = if (colors.isDark) Icons.Default.LightMode else Icons.Default.DarkMode,
+                                    contentDescription = if (colors.isDark) "Switch to Field Daylight Theme" else "Switch to Control-Room Blue Theme",
+                                    tint = colors.accent,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(10.dp))
+
+                // Main App Header Bar
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f, fill = false)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(
+                                text = "BHURAKSHAK",
+                                fontSize = 20.sp,
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = 1.sp,
+                                color = colors.textPrimary
                             )
+                            
+                                Text(
+                                    text = "NER 2.0",
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colors.accent,
+                                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
+                                )
                         }
-                        IconButton(
+                        Text(
+                            text = "Himalayan Landslide Early Warning & Response",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 11.sp,
+                            color = colors.textSecondary
+                        )
+                    }
+
+                    // Tactical Action Shortcuts: Weather Radar & AI Predictor
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Surface(
                             onClick = onNavigateToWeather,
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(colors.bgSurface)
-                                .border(1.dp, colors.borderDefault, CircleShape)
+                            shape = RoundedCornerShape(10.dp),
+                            color = colors.bgSurface,
+                            border = BorderStroke(1.dp, colors.borderDefault),
+                            modifier = Modifier.size(36.dp)
                         ) {
-                            Icon(Icons.Default.Cloud, "Weather Radar", tint = colors.accent, modifier = Modifier.size(18.dp))
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(Icons.Default.Cloud, "Weather Radar", tint = colors.accent, modifier = Modifier.size(18.dp))
+                            }
                         }
-                        IconButton(
+                        Surface(
                             onClick = onNavigateToPrediction,
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(colors.bgSurface)
-                                .border(1.dp, colors.borderDefault, CircleShape)
+                            shape = RoundedCornerShape(10.dp),
+                            color = colors.bgSurface,
+                            border = BorderStroke(1.dp, colors.borderDefault),
+                            modifier = Modifier.size(36.dp)
                         ) {
-                            Icon(Icons.Default.Psychology, "AI Predictor", tint = colors.accent, modifier = Modifier.size(18.dp))
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(Icons.Default.Psychology, "AI Predictor", tint = colors.accent, modifier = Modifier.size(18.dp))
+                            }
                         }
                     }
                 }
@@ -649,7 +662,7 @@ private fun HeroAiFeatureCard(
                         fontSize = 9.sp,
                         fontWeight = FontWeight.Bold,
                         color = colors.accent,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        modifier = Modifier.padding(horizontal = 3.dp, vertical = 2.dp)
                     )
                 }
             }
