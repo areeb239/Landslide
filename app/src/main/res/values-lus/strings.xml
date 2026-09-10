@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NER Leimin Hriattirna</string>
+
+    <!-- Auth -->
+    <string name="welcome_back">Chibai, lo kir leh rawh</string>
+    <string name="sign_in">Lut rawh</string>
+    <string name="register">Account thar siam rawh</string>
+    <string name="email">Email Address</string>
+    <string name="password">Thuruk (Password)</string>
+    <string name="full_name">Hming pum</string>
+    <string name="select_role">I mawhphurhna thlang rawh</string>
+    <string name="citizen">Khawtlang mi</string>
+    <string name="field_officer">Field Officer</string>
+    <string name="admin">Enkawltu (Admin)</string>
+
+    <!-- Home -->
+    <string name="active_alerts">Hriattirna awm mekte</string>
+    <string name="no_active_alerts">Hriattirna a awm rih lo</string>
+    <string name="sos">Chhiatrupna SOS</string>
+    <string name="sos_confirm_title">SOS thawn i duh em?</string>
+    <string name="sos_confirm_body">Hei hian i GPS awmna hmun District Disaster Rescue Team hnenah a thawn ang. Harsatna tak takah chauh hman tur a ni.</string>
+    <string name="sos_sent">SOS hriattirna District Emergency Team hnenah thawn a ni ta.</string>
+
+    <!-- Map -->
+    <string name="map_title">GIS Leimin Map</string>
+    <string name="risk_zones_layer">Hmun hlauhawmte</string>
+    <string name="roads_layer">Kawngpui</string>
+    <string name="layers">Map Thlang rawh</string>
+    <string name="risk_level">Hlauhawm Dan</string>
+
+    <!-- Report -->
+    <string name="report_title">Thil thleng report rawh</string>
+    <string name="incident_type">Chhiatna Chi</string>
+    <string name="severity">Hlauhawm Dan Level</string>
+    <string name="description">A chanchin chipchiar</string>
+    <string name="district">District</string>
+    <string name="village">Khua / Veng</string>
+    <string name="submit_report">Report Thawn Rawh</string>
+    <string name="save_offline">Offline-in Vawng Rawh</string>
+    <string name="offline_queue_notice">Internet i nei lo. I report hi phone-ah a in-save ang a, network a awm veleh a thawn ang.</string>
+    <string name="select_photos">Thlalak thlang rawh</string>
+
+    <!-- Prediction -->
+    <string name="prediction_title">AI Leimin Hrilhlawkna</string>
+    <string name="rainfall">Ruah sur zat (mm)</string>
+    <string name="slope_angle">Tlang awn zawng (°)</string>
+    <string name="soil_moisture">Lei hnawng zat (%)</string>
+    <string name="antecedent_rain">Ni 3 chhung ruah sur zat (mm)</string>
+    <string name="predict">Hlauhawm Chhut Rawh</string>
+
+    <!-- Weather -->
+    <string name="weather_title">Khawchin Hrilhlawkna</string>
+    <string name="hourly_forecast">Darkar tina Khawchin</string>
+    <string name="peak_rainfall">Ruahsur Nasa Hriattirna</string>
+
+    <!-- Admin -->
+    <string name="admin_dashboard">Admin Dashboard</string>
+    <string name="broadcast_alert">Hriattirna Puangzar Rawh</string>
+    <string name="send_alert">Mi zawng zawng hnenah thawn rawh</string>
+    <string name="resolve">Siamfel tawh a ni</string>
+
+    <!-- Profile -->
+    <string name="profile">Profile</string>
+    <string name="sign_out">Chhuak rawh</string>
+</resources>

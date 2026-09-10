@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NER पहिरो चेतावनी</string>
+
+    <!-- Auth -->
+    <string name="welcome_back">पुनः स्वागत छ</string>
+    <string name="sign_in">साइन इन गर्नुहोस्</string>
+    <string name="register">खाता खोल्नुहोस्</string>
+    <string name="email">इमेल ठेगाना</string>
+    <string name="password">पासवर्ड</string>
+    <string name="full_name">पूरा नाम</string>
+    <string name="select_role">आफ्नो भूमिका छान्नुहोस्</string>
+    <string name="citizen">नागरिक</string>
+    <string name="field_officer">फिल्ड अफिसर</string>
+    <string name="admin">प्रशासक</string>
+
+    <!-- Home -->
+    <string name="active_alerts">सक्रिय चेतावनीहरू</string>
+    <string name="no_active_alerts">कुनै सक्रिय चेतावनी छैन</string>
+    <string name="sos">आपतकालीन SOS</string>
+    <string name="sos_confirm_title">SOS चेतावनी पठाउने?</string>
+    <string name="sos_confirm_body">यसले तपाईंको हालको GPS स्थान जिल्ला आपतकालीन टोलीलाई पठाउनेछ। वास्तविक आपतकालमा मात्र प्रयोग गर्नुहोस्।</string>
+    <string name="sos_sent">SOS चेतावनी जिल्ला आपतकालीन टोलीलाई पठाइयो।</string>
+
+    <!-- Map -->
+    <string name="map_title">GIS जोखिम नक्सा</string>
+    <string name="risk_zones_layer">जोखिम क्षेत्रहरू</string>
+    <string name="roads_layer">सडकहरू</string>
+    <string name="layers">तहहरू</string>
+    <string name="risk_level">जोखिम स्तर</string>
+
+    <!-- Report -->
+    <string name="report_title">घटना रिपोर्ट गर्नुहोस्</string>
+    <string name="incident_type">घटनाको प्रकार</string>
+    <string name="severity">गम्भीरता स्तर</string>
+    <string name="description">विवरण</string>
+    <string name="district">जिल्ला</string>
+    <string name="village">गाउँ / क्षेत्र</string>
+    <string name="submit_report">रिपोर्ट पठाउनुहोस्</string>
+    <string name="save_offline">अफलाइन सुरक्षित गर्नुहोस्</string>
+    <string name="offline_queue_notice">तपाईं अफलाइन हुनुहुन्छ। रिपोर्ट स्थानीय रूपमा सुरक्षित हुनेछ र जडान हुँदा स्वतः सिंक हुनेछ।</string>
+    <string name="select_photos">तस्बिरहरू छान्न ट्याप गर्नुहोस्</string>
+
+    <!-- Prediction -->
+    <string name="prediction_title">AI जोखिम भविष्यवाणी</string>
+    <string name="rainfall">वर्षा (मिमी)</string>
+    <string name="slope_angle">भिरालो कोण (°)</string>
+    <string name="soil_moisture">माटोको ओसिलोपन (%)</string>
+    <string name="antecedent_rain">अघिल्लो ३ दिनको वर्षा (मिमी)</string>
+    <string name="predict">जोखिम गणना गर्नुहोस्</string>
+
+    <!-- Weather -->
+    <string name="weather_title">मौसम पूर्वानुमान</string>
+    <string name="hourly_forecast">प्रतिघण्टा पूर्वानुमान</string>
+    <string name="peak_rainfall">उच्च वर्षा चेतावनी</string>
+
+    <!-- Admin -->
+    <string name="admin_dashboard">प्रशासक ड्यासबोर्ड</string>
+    <string name="broadcast_alert">चेतावनी प्रसारण गर्नुहोस्</string>
+    <string name="send_alert">सबै प्रयोगकर्ताहरूलाई चेतावनी पठाउनुहोस्</string>
+    <string name="resolve">समाधान भएको चिन्ह लगाउनुहोस्</string>
+
+    <!-- Profile -->
+    <string name="profile">प्रोफाइल</string>
+    <string name="sign_out">साइन आउट</string>
+</resources>

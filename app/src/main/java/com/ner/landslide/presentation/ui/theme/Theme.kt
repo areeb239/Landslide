@@ -2,83 +2,103 @@ package com.ner.landslide.presentation.ui.theme
 
 import android.app.Activity
 import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.*
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Primary80,
-    onPrimary = OnPrimary,
-    primaryContainer = SurfaceVariantDark,
-    onPrimaryContainer = PrimaryLight,
-    secondary = Secondary80,
-    onSecondary = ObsidianBase,
-    secondaryContainer = SurfaceVariantDark,
-    onSecondaryContainer = Secondary80,
-    background = BackgroundDark,
-    surface = SurfaceDark,
-    surfaceVariant = SurfaceVariantDark,
-    onBackground = OnBackgroundDark,
-    onSurface = OnSurfaceDark,
-    onSurfaceVariant = TextMuted,
-    outline = BorderSubtle,
-    error = ErrorRed,
-    onError = OnError
-)
+class ThemeController(
+    val isDarkState: MutableState<Boolean>
+) {
+    val isDark: Boolean get() = isDarkState.value
+    fun toggleTheme() {
+        isDarkState.value = !isDarkState.value
+    }
+    fun setDark(dark: Boolean) {
+        isDarkState.value = dark
+    }
+}
 
-private val LightColorScheme = lightColorScheme(
-    primary = Primary40,
-    onPrimary = OnPrimary,
-    secondary = Secondary40,
-    onSecondary = OnSecondary,
-    background = BackgroundLight,
-    surface = SurfaceLight,
-    surfaceVariant = SurfaceVariantLight,
-    onBackground = OnBackgroundLight,
-    onSurface = OnSurfaceLight,
-    error = ErrorRed,
-    onError = OnError
-)
+val LocalThemeController = staticCompositionLocalOf<ThemeController> {
+    error("No ThemeController provided")
+}
 
 @Composable
 fun NERLandslideTheme(
-    darkTheme: Boolean = true, // Default to Dark Theme First for Mission-Critical Telemetry
-    // Dynamic color is available on Android 12+; disabled to preserve our precision hazard palette
+    darkTheme: Boolean = true,
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+    val isDarkState = remember { mutableStateOf(darkTheme) }
+    val themeController = remember { ThemeController(isDarkState) }
+    val isDark = isDarkState.value
+    val tokens = if (isDark) DarkColorTokens else LightColorTokens
+
+    val colorScheme = if (isDark) {
+        darkColorScheme(
+            primary = tokens.accent,
+            onPrimary = Color.White,
+            primaryContainer = tokens.bgSurface,
+            onPrimaryContainer = tokens.accent,
+            secondary = tokens.warning,
+            onSecondary = tokens.bgBase,
+            secondaryContainer = tokens.bgSurface,
+            onSecondaryContainer = tokens.warning,
+            background = tokens.bgBase,
+            surface = tokens.bgSurface,
+            surfaceVariant = tokens.bgSurface,
+            onBackground = tokens.textPrimary,
+            onSurface = tokens.textPrimary,
+            onSurfaceVariant = tokens.textSecondary,
+            outline = tokens.borderDefault,
+            error = tokens.critical,
+            onError = Color.White
+        )
+    } else {
+        lightColorScheme(
+            primary = tokens.accent,
+            onPrimary = Color.White,
+            primaryContainer = tokens.bgSurface,
+            onPrimaryContainer = tokens.accent,
+            secondary = tokens.warning,
+            onSecondary = Color.White,
+            secondaryContainer = tokens.bgSurface,
+            onSecondaryContainer = tokens.warning,
+            background = tokens.bgBase,
+            surface = tokens.bgSurface,
+            surfaceVariant = tokens.bgBase,
+            onBackground = tokens.textPrimary,
+            onSurface = tokens.textPrimary,
+            onSurfaceVariant = tokens.textSecondary,
+            outline = tokens.borderDefault,
+            error = tokens.critical,
+            onError = Color.White
+        )
     }
 
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.background.toArgb()
-            window.navigationBarColor = colorScheme.background.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
-            WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = !darkTheme
+            window.statusBarColor = tokens.bgBase.toArgb()
+            window.navigationBarColor = tokens.bgBase.toArgb()
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !isDark
+            WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = !isDark
         }
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+    CompositionLocalProvider(
+        LocalBhurakshakColors provides tokens,
+        LocalThemeController provides themeController
+    ) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = Typography,
+            content = content
+        )
+    }
 }

@@ -6,9 +6,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -39,6 +36,7 @@ fun ReportScreen(
     viewModel: ReportViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val colors = BhurakshakTheme.colors
     var currentStep by remember { mutableIntStateOf(1) } // Step 1: Location/Evidence, Step 2: Classification/Severity
 
     val photoPicker = rememberLauncherForActivityResult(
@@ -50,7 +48,7 @@ fun ReportScreen(
     }
 
     Scaffold(
-        containerColor = BackgroundDark,
+        containerColor = colors.bgBase,
         topBar = {
             TopAppBar(
                 title = {
@@ -60,23 +58,23 @@ fun ReportScreen(
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp,
                             letterSpacing = 0.6.sp,
-                            color = OnBackgroundDark
+                            color = colors.textPrimary
                         )
                         Text(
                             "Step $currentStep of 2 • Field Telemetry Intake",
                             style = MaterialTheme.typography.labelSmall,
                             fontSize = 11.sp,
-                            color = TextMuted
+                            color = colors.textSecondary
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = ObsidianBase
+                    containerColor = colors.bgBase
                 ),
                 actions = {
                     if (currentStep == 2) {
                         TextButton(onClick = { currentStep = 1 }) {
-                            Text("Edit Step 1", color = Primary80, fontSize = 12.sp)
+                            Text("Edit Step 1", color = colors.accent, fontSize = 12.sp)
                         }
                     }
                 }
@@ -86,7 +84,7 @@ fun ReportScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(BackgroundDark)
+                .background(colors.bgBase)
                 .padding(paddingValues)
         ) {
             // Offline sync notification banner
@@ -103,11 +101,14 @@ fun ReportScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 // Step 1 Pill
+                val isStep1Active = currentStep == 1
+                val isStep1Completed = currentStep > 1
                 Surface(
                     onClick = { currentStep = 1 },
                     shape = RoundedCornerShape(8.dp),
-                    color = if (currentStep == 1) Primary80 else SurfaceDark,
-                    border = BorderStroke(1.dp, if (currentStep == 1) Primary80 else BorderSubtle),
+                    color = if (isStep1Active) colors.accent else colors.bgSurface,
+                    border = BorderStroke(1.dp, if (isStep1Active) colors.accent else colors.borderDefault),
+                    shadowElevation = if (colors.isDark) 0.dp else 1.dp,
                     modifier = Modifier.weight(1f)
                 ) {
                     Row(
@@ -121,14 +122,14 @@ fun ReportScreen(
                                 .clip(CircleShape)
                                 .background(
                                     when {
-                                        currentStep > 1 -> SeverityLow
-                                        currentStep == 1 -> Color.White.copy(alpha = 0.25f)
-                                        else -> SurfaceVariantDark
+                                        isStep1Completed -> colors.success
+                                        isStep1Active -> Color.White.copy(alpha = 0.25f)
+                                        else -> colors.borderDefault
                                     }
                                 ),
                             contentAlignment = Alignment.Center
                         ) {
-                            if (currentStep > 1) {
+                            if (isStep1Completed) {
                                 Icon(Icons.Default.Check, null, tint = Color.White, modifier = Modifier.size(12.dp))
                             } else {
                                 Text("1", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.White)
@@ -137,18 +138,20 @@ fun ReportScreen(
                         Text(
                             text = "Location & Evidence",
                             fontSize = 11.sp,
-                            fontWeight = if (currentStep == 1) FontWeight.Bold else FontWeight.Medium,
-                            color = if (currentStep == 1) Color.White else TextMuted
+                            fontWeight = if (isStep1Active) FontWeight.Bold else FontWeight.Medium,
+                            color = if (isStep1Active) Color.White else colors.textSecondary
                         )
                     }
                 }
 
                 // Step 2 Pill
+                val isStep2Active = currentStep == 2
                 Surface(
                     onClick = { currentStep = 2 },
                     shape = RoundedCornerShape(8.dp),
-                    color = if (currentStep == 2) Primary80 else SurfaceDark,
-                    border = BorderStroke(1.dp, if (currentStep == 2) Primary80 else BorderSubtle),
+                    color = if (isStep2Active) colors.accent else colors.bgSurface,
+                    border = BorderStroke(1.dp, if (isStep2Active) colors.accent else colors.borderDefault),
+                    shadowElevation = if (colors.isDark) 0.dp else 1.dp,
                     modifier = Modifier.weight(1f)
                 ) {
                     Row(
@@ -160,21 +163,21 @@ fun ReportScreen(
                             modifier = Modifier
                                 .size(18.dp)
                                 .clip(CircleShape)
-                                .background(if (currentStep == 2) Color.White.copy(alpha = 0.25f) else SurfaceVariantDark),
+                                .background(if (isStep2Active) Color.White.copy(alpha = 0.25f) else colors.borderDefault),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 "2",
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (currentStep == 2) Color.White else TextSubtle
+                                color = if (isStep2Active) Color.White else colors.textSecondary
                             )
                         }
                         Text(
                             text = "Classification",
                             fontSize = 11.sp,
-                            fontWeight = if (currentStep == 2) FontWeight.Bold else FontWeight.Medium,
-                            color = if (currentStep == 2) Color.White else TextMuted
+                            fontWeight = if (isStep2Active) FontWeight.Bold else FontWeight.Medium,
+                            color = if (isStep2Active) Color.White else colors.textSecondary
                         )
                     }
                 }
@@ -214,24 +217,24 @@ fun ReportScreen(
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 12.sp,
                                         letterSpacing = 0.5.sp,
-                                        color = TextMuted
+                                        color = colors.textSecondary
                                     )
                                     Surface(
                                         shape = RoundedCornerShape(4.dp),
-                                        color = Primary80.copy(alpha = 0.15f),
-                                        border = BorderStroke(1.dp, Primary80.copy(alpha = 0.3f))
+                                        color = colors.accent.copy(alpha = 0.15f),
+                                        border = BorderStroke(1.dp, colors.accent.copy(alpha = 0.3f))
                                     ) {
                                         Row(
                                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                                             verticalAlignment = Alignment.CenterVertically,
                                             horizontalArrangement = Arrangement.spacedBy(4.dp)
                                         ) {
-                                            PulsingStatusDot(color = Primary80, size = 5.dp)
+                                            PulsingStatusDot(color = colors.accent, size = 5.dp)
                                             Text(
                                                 "GNSS LOCKED ±3.2m",
                                                 fontSize = 10.sp,
                                                 fontWeight = FontWeight.Bold,
-                                                color = Primary80
+                                                color = colors.accent
                                             )
                                         }
                                     }
@@ -245,16 +248,16 @@ fun ReportScreen(
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Column {
-                                        Text("COORDINATES", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = TextSubtle)
-                                        Text("$latDisplay, $lonDisplay", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = OnBackgroundDark)
+                                        Text("COORDINATES", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = colors.textSecondary)
+                                        Text("$latDisplay, $lonDisplay", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = colors.textPrimary)
                                     }
                                     Column(horizontalAlignment = Alignment.End) {
-                                        Text("ELEVATION", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = TextSubtle)
-                                        Text("1,420 m MSL", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = OnBackgroundDark)
+                                        Text("ELEVATION", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = colors.textSecondary)
+                                        Text("1,420 m MSL", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = colors.textPrimary)
                                     }
                                 }
 
-                                HorizontalDivider(color = BorderSubtle, thickness = 0.8.dp)
+                                HorizontalDivider(color = colors.borderDefault, thickness = 0.8.dp)
 
                                 // District / Location manual refinement
                                 OutlinedTextField(
@@ -266,15 +269,15 @@ fun ReportScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = RoundedCornerShape(8.dp),
                                     colors = OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = Primary80,
-                                        unfocusedBorderColor = BorderSubtle,
-                                        focusedLabelColor = Primary80,
-                                        unfocusedLabelColor = TextMuted,
-                                        focusedTextColor = OnBackgroundDark,
-                                        unfocusedTextColor = OnBackgroundDark,
-                                        focusedContainerColor = SurfaceDark,
-                                        unfocusedContainerColor = SurfaceDark,
-                                        cursorColor = Primary80
+                                        focusedBorderColor = colors.accent,
+                                        unfocusedBorderColor = colors.borderDefault,
+                                        focusedLabelColor = colors.accent,
+                                        unfocusedLabelColor = colors.textSecondary,
+                                        focusedTextColor = colors.textPrimary,
+                                        unfocusedTextColor = colors.textPrimary,
+                                        focusedContainerColor = colors.bgSurface,
+                                        unfocusedContainerColor = colors.bgSurface,
+                                        cursorColor = colors.accent
                                     )
                                 )
                             }
@@ -288,7 +291,7 @@ fun ReportScreen(
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 12.sp,
                                     letterSpacing = 0.5.sp,
-                                    color = TextMuted
+                                    color = colors.textSecondary
                                 )
                                 OutlinedTextField(
                                     value = uiState.description,
@@ -297,7 +300,7 @@ fun ReportScreen(
                                         Text(
                                             "Describe slope movement, tension crack widening, water seepage, rockfall volume, or highway obstruction...",
                                             fontSize = 12.sp,
-                                            color = TextSubtle,
+                                            color = colors.textSecondary,
                                             lineHeight = 17.sp
                                         )
                                     },
@@ -306,13 +309,13 @@ fun ReportScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = RoundedCornerShape(8.dp),
                                     colors = OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = Primary80,
-                                        unfocusedBorderColor = BorderSubtle,
-                                        focusedTextColor = OnBackgroundDark,
-                                        unfocusedTextColor = OnBackgroundDark,
-                                        focusedContainerColor = SurfaceDark,
-                                        unfocusedContainerColor = SurfaceDark,
-                                        cursorColor = Primary80
+                                        focusedBorderColor = colors.accent,
+                                        unfocusedBorderColor = colors.borderDefault,
+                                        focusedTextColor = colors.textPrimary,
+                                        unfocusedTextColor = colors.textPrimary,
+                                        focusedContainerColor = colors.bgSurface,
+                                        unfocusedContainerColor = colors.bgSurface,
+                                        cursorColor = colors.accent
                                     )
                                 )
                             }
@@ -331,12 +334,12 @@ fun ReportScreen(
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 12.sp,
                                         letterSpacing = 0.5.sp,
-                                        color = TextMuted
+                                        color = colors.textSecondary
                                     )
                                     Text(
                                         "${uiState.photoUris.size} attached",
                                         fontSize = 11.sp,
-                                        color = TextSubtle
+                                        color = colors.textSecondary
                                     )
                                 }
 
@@ -354,7 +357,7 @@ fun ReportScreen(
                                                     modifier = Modifier
                                                         .fillMaxSize()
                                                         .clip(RoundedCornerShape(8.dp))
-                                                        .border(1.dp, BorderSubtle, RoundedCornerShape(8.dp))
+                                                        .border(1.dp, colors.borderDefault, RoundedCornerShape(8.dp))
                                                 )
                                             }
                                         }
@@ -365,8 +368,8 @@ fun ReportScreen(
                                 Surface(
                                     onClick = { photoPicker.launch("image/*") },
                                     shape = RoundedCornerShape(8.dp),
-                                    color = SurfaceVariantDark,
-                                    border = BorderStroke(1.dp, BorderSubtle),
+                                    color = colors.bgSurface,
+                                    border = BorderStroke(1.dp, colors.borderDefault),
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Row(
@@ -374,13 +377,13 @@ fun ReportScreen(
                                         horizontalArrangement = Arrangement.Center,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Icon(Icons.Default.CameraAlt, null, tint = Primary80, modifier = Modifier.size(18.dp))
+                                        Icon(Icons.Default.CameraAlt, null, tint = colors.accent, modifier = Modifier.size(18.dp))
                                         Spacer(Modifier.width(8.dp))
                                         Text(
                                             "Attach Photo Evidence from Field",
                                             fontWeight = FontWeight.SemiBold,
                                             fontSize = 12.sp,
-                                            color = OnSurfaceDark
+                                            color = colors.textPrimary
                                         )
                                     }
                                 }
@@ -392,7 +395,8 @@ fun ReportScreen(
                         // Step 1 Primary CTA
                         PrimaryActionButton(
                             text = "Continue to Classification (Step 2) →",
-                            onClick = { currentStep = 2 }
+                            onClick = { currentStep = 2 },
+                            containerColor = colors.accent
                         )
 
                         Spacer(Modifier.height(24.dp))
@@ -425,11 +429,12 @@ fun ReportScreen(
                                         Surface(
                                             onClick = { viewModel.onIncidentTypeChange(type) },
                                             shape = RoundedCornerShape(8.dp),
-                                            color = if (isSelected) Primary80 else SurfaceDark,
+                                            color = if (isSelected) colors.accent else colors.bgSurface,
                                             border = BorderStroke(
                                                 1.dp,
-                                                if (isSelected) Primary80 else BorderSubtle
+                                                if (isSelected) colors.accent else colors.borderDefault
                                             ),
+                                            shadowElevation = if (colors.isDark) 0.dp else 1.dp,
                                             modifier = Modifier.weight(1f)
                                         ) {
                                             Row(
@@ -448,13 +453,13 @@ fun ReportScreen(
                                                     },
                                                     contentDescription = null,
                                                     modifier = Modifier.size(16.dp),
-                                                    tint = if (isSelected) Color.White else TextMuted
+                                                    tint = if (isSelected) Color.White else colors.textSecondary
                                                 )
                                                 Text(
                                                     text = type.name.replace("_", " "),
                                                     fontSize = 11.sp,
                                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                                    color = if (isSelected) Color.White else TextMuted
+                                                    color = if (isSelected) Color.White else colors.textSecondary
                                                 )
                                             }
                                         }
@@ -475,11 +480,12 @@ fun ReportScreen(
                             onSeveritySelected = { viewModel.onSeverityChange(it) }
                         )
 
-                        // Action Directive Banner (Amber accent only per design system, zero glow)
+                        // Action Directive Banner (Warning amber tone shift, zero glow)
                         Surface(
                             shape = RoundedCornerShape(8.dp),
-                            color = SurfaceDark,
-                            border = BorderStroke(1.dp, SeverityModerate.copy(alpha = 0.6f)),
+                            color = colors.bgSurface,
+                            border = BorderStroke(1.dp, colors.warning.copy(alpha = 0.6f)),
+                            shadowElevation = if (colors.isDark) 0.dp else 1.dp,
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Row(
@@ -490,7 +496,7 @@ fun ReportScreen(
                                 Icon(
                                     Icons.Default.Shield,
                                     contentDescription = null,
-                                    tint = SeverityModerate,
+                                    tint = colors.warning,
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Column {
@@ -498,13 +504,13 @@ fun ReportScreen(
                                         "PROTOCOL DIRECTIVE",
                                         fontSize = 9.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = SeverityModerate
+                                        color = colors.warning
                                     )
                                     Text(
                                         uiState.severity.toActionGuideline(),
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.SemiBold,
-                                        color = OnBackgroundDark
+                                        color = colors.textPrimary
                                     )
                                 }
                             }
@@ -526,7 +532,7 @@ fun ReportScreen(
                                 text = if (uiState.isSubmitting) "TRANSMITTING..." else "TRANSMIT DISASTER REPORT",
                                 onClick = { viewModel.submitReport() },
                                 enabled = !uiState.isSubmitting,
-                                containerColor = if (uiState.severity == AlertSeverity.CRITICAL) SeverityCritical else Primary80,
+                                containerColor = if (uiState.severity == AlertSeverity.CRITICAL) colors.critical else colors.accent,
                                 modifier = Modifier.weight(0.65f)
                             )
                         }
@@ -534,7 +540,7 @@ fun ReportScreen(
                         Text(
                             text = "Direct encrypted dispatch to State Disaster Response Force (SDRF) Command",
                             fontSize = 10.sp,
-                            color = TextSubtle,
+                            color = colors.textSecondary,
                             modifier = Modifier.fillMaxWidth(),
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
                         )

@@ -37,8 +37,6 @@ import com.ner.landslide.domain.model.PredictionResult
 import com.ner.landslide.presentation.ui.components.*
 import com.ner.landslide.presentation.ui.theme.*
 import com.ner.landslide.presentation.viewmodel.PredictionViewModel
-import kotlin.math.cos
-import kotlin.math.sin
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,10 +45,11 @@ fun PredictionScreen(
     viewModel: PredictionViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val colors = BhurakshakTheme.colors
     var selectedScenario by remember { mutableStateOf<String?>("Monsoon Cloudburst") }
 
     Scaffold(
-        containerColor = BackgroundDark,
+        containerColor = colors.bgBase,
         topBar = {
             TopAppBar(
                 title = {
@@ -59,22 +58,22 @@ fun PredictionScreen(
                             "AI Hazard Inference",
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp,
-                            color = OnBackgroundDark
+                            color = colors.textPrimary
                         )
                         Text(
                             "Geotechnical XGBoost & ML Pipeline",
                             style = MaterialTheme.typography.labelSmall,
-                            color = Primary80
+                            color = colors.accent
                         )
                     }
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = OnBackgroundDark)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = colors.textPrimary)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = ObsidianBase
+                    containerColor = colors.bgBase
                 )
             )
         }
@@ -82,7 +81,7 @@ fun PredictionScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(BackgroundDark)
+                .background(colors.bgBase)
                 .verticalScroll(rememberScrollState())
                 .padding(padding)
                 .padding(horizontal = 16.dp, vertical = 14.dp),
@@ -100,7 +99,7 @@ fun PredictionScreen(
             ) {
                 ScenarioChip(
                     title = "Monsoon Cloudburst",
-                    accent = SeverityCritical,
+                    accent = colors.critical,
                     isSelected = selectedScenario == "Monsoon Cloudburst",
                     onClick = {
                         selectedScenario = "Monsoon Cloudburst"
@@ -112,7 +111,7 @@ fun PredictionScreen(
                 )
                 ScenarioChip(
                     title = "Moderate Hill Shower",
-                    accent = SeverityModerate,
+                    accent = colors.warning,
                     isSelected = selectedScenario == "Moderate Hill Shower",
                     onClick = {
                         selectedScenario = "Moderate Hill Shower"
@@ -124,7 +123,7 @@ fun PredictionScreen(
                 )
                 ScenarioChip(
                     title = "Dry Hill Slope",
-                    accent = Primary80,
+                    accent = colors.accent,
                     isSelected = selectedScenario == "Dry Hill Slope",
                     onClick = {
                         selectedScenario = "Dry Hill Slope"
@@ -146,14 +145,14 @@ fun PredictionScreen(
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.ExtraBold,
                         letterSpacing = 1.sp,
-                        color = Primary80
+                        color = colors.accent
                     )
 
                     PredictionInputField(
                         label = "Current 24h Precipitation",
                         unit = "mm",
                         icon = Icons.Default.WaterDrop,
-                        iconColor = Primary80,
+                        iconColor = colors.accent,
                         value = uiState.rainfallMm,
                         onValueChange = {
                             selectedScenario = null
@@ -166,7 +165,7 @@ fun PredictionScreen(
                         label = "Slope Angle Inclination",
                         unit = "degrees (°)",
                         icon = Icons.Default.Terrain,
-                        iconColor = SeverityModerate,
+                        iconColor = colors.warning,
                         value = uiState.slopeDeg,
                         onValueChange = {
                             selectedScenario = null
@@ -179,7 +178,7 @@ fun PredictionScreen(
                         label = "Volumetric Soil Moisture",
                         unit = "% saturation",
                         icon = Icons.Default.Grass,
-                        iconColor = Primary80,
+                        iconColor = colors.accent,
                         value = uiState.soilMoisturePct,
                         onValueChange = {
                             selectedScenario = null
@@ -192,7 +191,7 @@ fun PredictionScreen(
                         label = "3-Day Antecedent Rainfall Index",
                         unit = "mm accumulated",
                         icon = Icons.Default.CloudSync,
-                        iconColor = Primary80,
+                        iconColor = colors.accent,
                         value = uiState.antecedentRain3d,
                         onValueChange = {
                             selectedScenario = null
@@ -209,23 +208,23 @@ fun PredictionScreen(
                 onClick = { viewModel.predict() },
                 enabled = !uiState.isLoading,
                 icon = Icons.Default.Bolt,
-                containerColor = Primary80
+                containerColor = colors.accent
             )
 
             // Error Message
             uiState.error?.let {
                 Surface(
                     shape = RoundedCornerShape(12.dp),
-                    color = SeverityCritical.copy(alpha = 0.15f),
-                    border = BorderStroke(1.dp, SeverityCritical.copy(alpha = 0.5f))
+                    color = colors.critical.copy(alpha = 0.15f),
+                    border = BorderStroke(1.dp, colors.critical.copy(alpha = 0.5f))
                 ) {
                     Row(
                         modifier = Modifier.padding(14.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Icon(Icons.Default.ErrorOutline, null, tint = SeverityCritical)
-                        Text(it, color = SeverityCritical, style = MaterialTheme.typography.bodySmall)
+                        Icon(Icons.Default.ErrorOutline, null, tint = colors.critical)
+                        Text(it, color = colors.critical, style = MaterialTheme.typography.bodySmall)
                     }
                 }
             }
@@ -252,11 +251,13 @@ private fun ScenarioChip(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
+    val colors = BhurakshakTheme.colors
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(8.dp),
-        color = if (isSelected) accent else SurfaceDark,
-        border = BorderStroke(1.dp, if (isSelected) accent else BorderSubtle)
+        color = if (isSelected) accent else colors.bgSurface,
+        border = BorderStroke(1.dp, if (isSelected) accent else colors.borderDefault),
+        shadowElevation = if (colors.isDark) 0.dp else 1.dp
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
@@ -273,7 +274,7 @@ private fun ScenarioChip(
                 text = title,
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                color = if (isSelected) Color.White else TextMuted
+                color = if (isSelected) Color.White else colors.textSecondary
             )
         }
     }
@@ -289,6 +290,7 @@ private fun PredictionInputField(
     onValueChange: (String) -> Unit,
     placeholder: String
 ) {
+    val colors = BhurakshakTheme.colors
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -299,32 +301,32 @@ private fun PredictionInputField(
                 text = label,
                 style = MaterialTheme.typography.bodySmall,
                 fontWeight = FontWeight.Medium,
-                color = OnBackgroundDark
+                color = colors.textPrimary
             )
             Text(
                 text = unit,
                 style = MaterialTheme.typography.labelSmall,
                 fontSize = 11.sp,
-                color = TextSubtle
+                color = colors.textSecondary
             )
         }
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
             leadingIcon = { Icon(icon, null, tint = iconColor, modifier = Modifier.size(18.dp)) },
-            placeholder = { Text(placeholder, color = TextSubtle, fontSize = 13.sp) },
+            placeholder = { Text(placeholder, color = colors.textSecondary, fontSize = 13.sp) },
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(8.dp),
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Primary80,
-                unfocusedBorderColor = BorderSubtle,
-                focusedContainerColor = SurfaceDark,
-                unfocusedContainerColor = SurfaceDark,
-                focusedTextColor = OnBackgroundDark,
-                unfocusedTextColor = OnBackgroundDark,
-                cursorColor = Primary80
+                focusedBorderColor = colors.accent,
+                unfocusedBorderColor = colors.borderDefault,
+                focusedContainerColor = colors.bgSurface,
+                unfocusedContainerColor = colors.bgSurface,
+                focusedTextColor = colors.textPrimary,
+                unfocusedTextColor = colors.textPrimary,
+                cursorColor = colors.accent
             )
         )
     }
@@ -332,7 +334,12 @@ private fun PredictionInputField(
 
 @Composable
 private fun HeroRiskAssessmentDisplay(result: PredictionResult) {
-    val riskColor = result.riskLevel.toAlertSeverityColor()
+    val colors = BhurakshakTheme.colors
+    val riskColor = when (result.riskLevel.uppercase()) {
+        "CRITICAL" -> colors.critical
+        "HIGH", "MODERATE" -> colors.warning
+        else -> colors.success
+    }
     val animatedProgress = remember { Animatable(0f) }
 
     LaunchedEffect(result.probability) {
@@ -345,7 +352,7 @@ private fun HeroRiskAssessmentDisplay(result: PredictionResult) {
 
     FieldCard(
         modifier = Modifier.fillMaxWidth(),
-        borderColor = if (result.riskLevel.equals("CRITICAL", ignoreCase = true)) SeverityCritical.copy(alpha = 0.5f) else BorderSubtle
+        borderColor = if (result.riskLevel.equals("CRITICAL", ignoreCase = true)) colors.critical.copy(alpha = 0.5f) else colors.borderDefault
     ) {
         Column(
             modifier = Modifier.padding(20.dp),
@@ -374,13 +381,14 @@ private fun HeroRiskAssessmentDisplay(result: PredictionResult) {
 
                 Surface(
                     shape = RoundedCornerShape(6.dp),
-                    color = SurfaceElevated
+                    color = colors.bgSurface,
+                    border = BorderStroke(1.dp, colors.borderDefault)
                 ) {
                     Text(
                         text = if (result.isMock) "SIMULATION" else "LIVE XGBOOST",
                         fontSize = 9.sp,
                         fontWeight = FontWeight.Bold,
-                        color = TextMuted,
+                        color = colors.textSecondary,
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                     )
                 }
@@ -393,6 +401,9 @@ private fun HeroRiskAssessmentDisplay(result: PredictionResult) {
                     .size(190.dp)
                     .padding(8.dp)
             ) {
+                val trackColor = if (colors.isDark) Color.White.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.08f)
+                val gradientColors = listOf(colors.success, colors.warning, colors.warning, colors.critical)
+
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     val strokeWidth = 14.dp.toPx()
                     val arcSize = Size(size.width - strokeWidth, size.height - strokeWidth)
@@ -400,7 +411,7 @@ private fun HeroRiskAssessmentDisplay(result: PredictionResult) {
 
                     // Track arc (240 degrees sweep from 150 to 390)
                     drawArc(
-                        color = Color.White.copy(alpha = 0.08f),
+                        color = trackColor,
                         startAngle = 150f,
                         sweepAngle = 240f,
                         useCenter = false,
@@ -411,9 +422,7 @@ private fun HeroRiskAssessmentDisplay(result: PredictionResult) {
 
                     // Active risk gradient arc
                     drawArc(
-                        brush = Brush.sweepGradient(
-                            listOf(SeverityLow, SeverityModerate, SeverityHigh, SeverityCritical)
-                        ),
+                        brush = Brush.sweepGradient(gradientColors),
                         startAngle = 150f,
                         sweepAngle = 240f * animatedProgress.value,
                         useCenter = false,
@@ -430,7 +439,7 @@ private fun HeroRiskAssessmentDisplay(result: PredictionResult) {
                         text = "${"%.0f".format(animatedProgress.value * 100)}%",
                         fontSize = 38.sp,
                         fontWeight = FontWeight.Black,
-                        color = OnBackgroundDark
+                        color = colors.textPrimary
                     )
                     Text(
                         text = result.riskLevel.uppercase(),
@@ -443,14 +452,14 @@ private fun HeroRiskAssessmentDisplay(result: PredictionResult) {
                         text = "Confidence: ${"%.0f".format(result.confidence * 100)}%",
                         style = MaterialTheme.typography.labelSmall,
                         fontSize = 10.sp,
-                        color = TextSubtle
+                        color = colors.textSecondary
                     )
                 }
             }
 
             // Geotechnical Factor Breakdown (Explainable AI)
             if (result.factors.isNotEmpty()) {
-                HorizontalDivider(color = BorderSubtle, thickness = 0.8.dp)
+                HorizontalDivider(color = colors.borderDefault, thickness = 0.8.dp)
 
                 Column(
                     modifier = Modifier.fillMaxWidth(),
@@ -461,7 +470,7 @@ private fun HeroRiskAssessmentDisplay(result: PredictionResult) {
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.ExtraBold,
                         letterSpacing = 0.8.sp,
-                        color = TextMuted
+                        color = colors.textSecondary
                     )
 
                     result.factors.forEach { (factor, value) ->
@@ -475,13 +484,13 @@ private fun HeroRiskAssessmentDisplay(result: PredictionResult) {
                                     text = factor.replace("_", " ").replaceFirstChar { it.uppercase() },
                                     style = MaterialTheme.typography.bodySmall,
                                     fontSize = 12.sp,
-                                    color = OnBackgroundDark
+                                    color = colors.textPrimary
                                 )
                                 Text(
                                     text = "$factorPercent%",
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (factorPercent > 60) riskColor else TextMuted
+                                    color = if (factorPercent > 60) riskColor else colors.textSecondary
                                 )
                             }
                             LinearProgressIndicator(
@@ -490,8 +499,8 @@ private fun HeroRiskAssessmentDisplay(result: PredictionResult) {
                                     .fillMaxWidth()
                                     .height(6.dp)
                                     .clip(RoundedCornerShape(3.dp)),
-                                color = if (factorPercent > 60) riskColor else Primary80,
-                                trackColor = SurfaceElevated
+                                color = if (factorPercent > 60) riskColor else colors.accent,
+                                trackColor = colors.borderDefault
                             )
                         }
                     }
@@ -500,7 +509,7 @@ private fun HeroRiskAssessmentDisplay(result: PredictionResult) {
 
             // Official NDMA / GSI Directive
             if (result.recommendation.isNotBlank()) {
-                HorizontalDivider(color = BorderSubtle, thickness = 0.8.dp)
+                HorizontalDivider(color = colors.borderDefault, thickness = 0.8.dp)
 
                 Surface(
                     shape = RoundedCornerShape(12.dp),
@@ -531,7 +540,7 @@ private fun HeroRiskAssessmentDisplay(result: PredictionResult) {
                             Text(
                                 text = result.recommendation,
                                 style = MaterialTheme.typography.bodySmall,
-                                color = OnBackgroundDark,
+                                color = colors.textPrimary,
                                 lineHeight = 18.sp
                             )
                         }
@@ -541,4 +550,3 @@ private fun HeroRiskAssessmentDisplay(result: PredictionResult) {
         }
     }
 }
-

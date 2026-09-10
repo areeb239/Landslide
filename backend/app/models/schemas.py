@@ -38,24 +38,38 @@ class RoadStatus(str, Enum):
 # ─── Prediction ───────────────────────────────────────────────────────────────
 
 class PredictionRequest(BaseModel):
-    rainfall_mm: float = Field(..., ge=0, le=1000, description="Rainfall in last 24 hours (mm)")
-    slope_deg: float = Field(..., ge=0, le=90, description="Slope angle in degrees")
-    soil_moisture_pct: float = Field(..., ge=0, le=100, description="Soil moisture percentage")
-    antecedent_rain_3d: float = Field(..., ge=0, le=2000, description="Antecedent rainfall over 3 days (mm)")
+    # Geotechnical & Meteorological Inputs (Manual / Mobile Telemetry)
+    rainfall_mm: Optional[float] = Field(default=None, ge=0, le=1000, description="Rainfall in last 24 hours (mm)")
+    slope_deg: Optional[float] = Field(default=None, ge=0, le=90, description="Slope angle in degrees")
+    soil_moisture_pct: Optional[float] = Field(default=None, ge=0, le=100, description="Soil moisture percentage")
+    antecedent_rain_3d: Optional[float] = Field(default=None, ge=0, le=2000, description="Antecedent rainfall over 3 days (mm)")
+
+    # BhuRakshak ML Pipeline Features (From GIS feature_extraction.py)
+    elevation: Optional[float] = Field(default=None, description="Elevation in meters MSL")
+    slope: Optional[float] = Field(default=None, description="Slope angle in degrees")
+    rainfall_previous_1d: Optional[float] = Field(default=None, description="Precipitation previous 1 day (mm)")
+    rainfall_previous_3d: Optional[float] = Field(default=None, description="Precipitation previous 3 days (mm)")
+    rainfall_previous_7d: Optional[float] = Field(default=None, description="Precipitation previous 7 days (mm)")
+    lithology_group: Optional[str] = Field(default=None, description="GLiM lithological group")
+    land_cover: Optional[str] = Field(default=None, description="ESA WorldCover land cover class")
+
+    # Spatial & Temporal Coordinates
     latitude: float = Field(default=0.0, description="Latitude of the location")
     longitude: float = Field(default=0.0, description="Longitude of the location")
+    date: Optional[str] = Field(default=None, description="Date for rainfall calculation (YYYY-MM-DD)")
 
     class Config:
         json_schema_extra = {
             "example": {
-                "rainfall_mm": 120.0,
-                "slope_deg": 35.0,
+                "latitude": 27.3389,
+                "longitude": 88.6065,
+                "rainfall_mm": 85.0,
+                "slope_deg": 38.5,
                 "soil_moisture_pct": 78.0,
-                "antecedent_rain_3d": 250.0,
-                "latitude": 27.33,
-                "longitude": 88.61
+                "antecedent_rain_3d": 195.0
             }
         }
+
 
 
 class PredictionResponse(BaseModel):

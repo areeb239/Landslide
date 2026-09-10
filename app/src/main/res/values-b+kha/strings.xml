@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NER Jingmaham Twit Khyndew</string>
+
+    <!-- Auth -->
+    <string name="welcome_back">Pdiang sngewbha</string>
+    <string name="sign_in">Pynrung (Sign In)</string>
+    <string name="register">Thoh kyrteng (Register)</string>
+    <string name="email">Email Address</string>
+    <string name="password">Password</string>
+    <string name="full_name">Kyrteng pura</string>
+    <string name="select_role">Jied ia ka bynta jong phi</string>
+    <string name="citizen">Nongshongshnong</string>
+    <string name="field_officer">Field Officer</string>
+    <string name="admin">Nongpyniaid (Admin)</string>
+
+    <!-- Home -->
+    <string name="active_alerts">Ki jingmaham ba mynta</string>
+    <string name="no_active_alerts">Ym don jingmaham mynta</string>
+    <string name="sos">Jingkyrpad Kynsan SOS</string>
+    <string name="sos_confirm_title">Phah ia ka SOS Alert?</string>
+    <string name="sos_confirm_body">Kane kan phah ia ka jaka ba phi don ha ka District Emergency Rescue Team. Pyndonkam tang haba don jingsniew kynsan.</string>
+    <string name="sos_sent">La phah ia ka SOS sha ka District Emergency Team.</string>
+
+    <!-- Map -->
+    <string name="map_title">GIS Map ba Shong Syier</string>
+    <string name="risk_zones_layer">Ki jaka ba shong syier</string>
+    <string name="roads_layer">Ki surok</string>
+    <string name="layers">Ki Bynta jong ka Map</string>
+    <string name="risk_level">Kylliang ka jingma</string>
+
+    <!-- Report -->
+    <string name="report_title">Ai burom/kaiphod halor ka jingsniew</string>
+    <string name="incident_type">Jait jingsniew</string>
+    <string name="severity">Ka jingkhraw ka jingma</string>
+    <string name="description">Batai bniah</string>
+    <string name="district">Distrik</string>
+    <string name="village">Shnong / Dong</string>
+    <string name="submit_report">Phah ia ka Kaiphod</string>
+    <string name="save_offline">Kynshew Offline</string>
+    <string name="offline_queue_notice">Ym don internet. Ka kaiphod kan sah ha phone bad kan leit ynda la don internet.</string>
+    <string name="select_photos">Khyndiat ban jied dur</string>
+
+    <!-- Prediction -->
+    <string name="prediction_title">AI Jingiathuhlpa ia ka jingma</string>
+    <string name="rainfall">Jinghap slap (mm)</string>
+    <string name="slope_angle">Ka jingran ka lum (°)</string>
+    <string name="soil_moisture">Ka jingsngem ka khyndew (%)</string>
+    <string name="antecedent_rain">Slap 3 sngi ba la dep (mm)</string>
+    <string name="predict">Khein ia ka jingma</string>
+
+    <!-- Weather -->
+    <string name="weather_title">Ka jingiathuhlpa ka suiñbneng</string>
+    <string name="hourly_forecast">Man ka kynta</string>
+    <string name="peak_rainfall">Slap jur palat</string>
+
+    <!-- Admin -->
+    <string name="admin_dashboard">Admin Dashboard</string>
+    <string name="broadcast_alert">Pynbna ia ka jingmaham</string>
+    <string name="send_alert">Phah sha baroh ki nongpyndonkam</string>
+    <string name="resolve">Pynkut / La dep pynbna</string>
+
+    <!-- Profile -->
+    <string name="profile">Profile</string>
+    <string name="sign_out">Mih noh (Sign Out)</string>
+</resources>

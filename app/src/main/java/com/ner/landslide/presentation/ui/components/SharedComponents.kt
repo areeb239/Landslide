@@ -14,7 +14,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -28,6 +27,17 @@ import com.ner.landslide.presentation.ui.theme.*
 import com.ner.landslide.util.toRelativeTimeString
 
 // ─── Semantic Severity Color & Label Mappings ────────────────────────────────
+
+@Composable
+fun AlertSeverity.toThemeColor(): Color {
+    val colors = BhurakshakTheme.colors
+    return when (this) {
+        AlertSeverity.LOW -> colors.success
+        AlertSeverity.MODERATE -> colors.warning
+        AlertSeverity.HIGH -> colors.warning
+        AlertSeverity.CRITICAL -> colors.critical
+    }
+}
 
 fun AlertSeverity.toColor(): Color = when (this) {
     AlertSeverity.LOW -> SeverityLow
@@ -62,10 +72,11 @@ fun String.toAlertSeverityColor(): Color = when (this.uppercase()) {
 
 @Composable
 fun PulsingStatusDot(
-    color: Color = Primary80,
+    color: Color? = null,
     size: Dp = 8.dp,
     modifier: Modifier = Modifier
 ) {
+    val effectiveColor = color ?: BhurakshakTheme.colors.accent
     val infiniteTransition = rememberInfiniteTransition(label = "pulse_beacon")
     val waveScale by infiniteTransition.animateFloat(
         initialValue = 1f,
@@ -92,29 +103,35 @@ fun PulsingStatusDot(
                 .size(size)
                 .scale(waveScale)
                 .clip(CircleShape)
-                .background(color.copy(alpha = waveAlpha))
+                .background(effectiveColor.copy(alpha = waveAlpha))
         )
         Box(
             modifier = Modifier
                 .size(size)
                 .clip(CircleShape)
-                .background(color)
+                .background(effectiveColor)
         )
     }
 }
 
-// ─── Purpose-Built Field Card Container (Zero Neon Glow) ────────────────────
+// ─── Purpose-Built Field Card Container (Zero Neon Glow, Dynamic Token Set) ─
 
 @Composable
 fun FieldCard(
     modifier: Modifier = Modifier,
     shape: Shape = RoundedCornerShape(12.dp),
-    backgroundColor: Color = SurfaceDark,
-    borderColor: Color = BorderSubtle,
+    backgroundColor: Color? = null,
+    borderColor: Color? = null,
     borderWidth: Dp = 1.dp,
+    elevation: Dp? = null,
     onClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    val colors = BhurakshakTheme.colors
+    val effectiveBg = backgroundColor ?: colors.bgSurface
+    val effectiveBorder = borderColor ?: colors.borderDefault
+    val effectiveElevation = elevation ?: if (colors.isDark) 0.dp else 1.dp
+
     val baseModifier = if (onClick != null) {
         modifier.clickable(onClick = onClick)
     } else modifier
@@ -122,32 +139,33 @@ fun FieldCard(
     Surface(
         modifier = baseModifier,
         shape = shape,
-        color = backgroundColor,
-        border = BorderStroke(borderWidth, borderColor),
+        color = effectiveBg,
+        border = BorderStroke(borderWidth, effectiveBorder),
         tonalElevation = 0.dp,
-        shadowElevation = 0.dp
+        shadowElevation = effectiveElevation
     ) {
         Column(content = content)
     }
 }
 
-// Backward-compatible alias for existing references
 @Composable
 fun GlassCard(
     modifier: Modifier = Modifier,
     shape: Shape = RoundedCornerShape(12.dp),
-    backgroundColor: Color = SurfaceDark,
-    borderColor: Color = BorderSubtle,
+    backgroundColor: Color? = null,
+    borderColor: Color? = null,
     borderWidth: Dp = 1.dp,
     glowAccent: Color? = null,
     onClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    val colors = BhurakshakTheme.colors
+    val effectiveBorder = if (glowAccent != null) glowAccent.copy(alpha = 0.4f) else (borderColor ?: colors.borderDefault)
     FieldCard(
         modifier = modifier,
         shape = shape,
-        backgroundColor = backgroundColor,
-        borderColor = if (glowAccent != null) glowAccent.copy(alpha = 0.4f) else borderColor,
+        backgroundColor = backgroundColor ?: colors.bgSurface,
+        borderColor = effectiveBorder,
         borderWidth = borderWidth,
         onClick = onClick,
         content = content
@@ -163,7 +181,8 @@ fun SeverityAccentCard(
     onClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    val accentColor = severity.toColor()
+    val colors = BhurakshakTheme.colors
+    val accentColor = severity.toThemeColor()
     val isCritical = severity == AlertSeverity.CRITICAL
 
     val barWidth = when (severity) {
@@ -180,14 +199,14 @@ fun SeverityAccentCard(
     Surface(
         modifier = baseModifier.fillMaxWidth(),
         shape = RoundedCornerShape(10.dp),
-        color = SurfaceDark,
+        color = colors.bgSurface,
         border = BorderStroke(
             1.dp,
-            if (isCritical) SeverityCritical.copy(alpha = 0.6f) else BorderSubtle
-        )
+            if (isCritical) colors.critical.copy(alpha = 0.6f) else colors.borderDefault
+        ),
+        shadowElevation = if (colors.isDark) 0.dp else 1.dp
     ) {
         Row(modifier = Modifier.fillMaxWidth()) {
-            // Graduated Solid Left Semantic Accent Bar
             Box(
                 modifier = Modifier
                     .width(barWidth)
@@ -212,7 +231,7 @@ fun HazardBadge(
     severity: AlertSeverity,
     modifier: Modifier = Modifier
 ) {
-    val color = severity.toColor()
+    val color = severity.toThemeColor()
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(4.dp),
@@ -254,14 +273,17 @@ fun TelemetryInstrumentTile(
     title: String,
     value: String,
     unit: String,
-    progressFraction: Float, // 0.0f to 1.0f relative to danger threshold
-    indicatorColor: Color = Primary80,
+    progressFraction: Float,
+    indicatorColor: Color? = null,
     modifier: Modifier = Modifier
 ) {
+    val colors = BhurakshakTheme.colors
+    val effectiveColor = indicatorColor ?: colors.accent
+
     FieldCard(
         modifier = modifier,
         shape = RoundedCornerShape(10.dp),
-        backgroundColor = SurfaceDark
+        backgroundColor = colors.bgSurface
     ) {
         Column(
             modifier = Modifier
@@ -269,20 +291,18 @@ fun TelemetryInstrumentTile(
                 .padding(horizontal = 10.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            // Label
             Text(
                 text = title.uppercase(),
                 style = MaterialTheme.typography.labelSmall,
                 fontSize = 9.sp,
                 fontWeight = FontWeight.Bold,
-                color = TextSubtle,
+                color = colors.textSecondary,
                 letterSpacing = 0.4.sp,
                 maxLines = 1,
                 softWrap = false,
                 overflow = TextOverflow.Ellipsis
             )
 
-            // Numeric Value Readout
             Row(
                 verticalAlignment = Alignment.Bottom,
                 modifier = Modifier.padding(vertical = 1.dp)
@@ -291,7 +311,7 @@ fun TelemetryInstrumentTile(
                     text = value,
                     fontWeight = FontWeight.Black,
                     fontSize = 16.sp,
-                    color = OnBackgroundDark,
+                    color = colors.textPrimary,
                     maxLines = 1,
                     softWrap = false
                 )
@@ -301,7 +321,7 @@ fun TelemetryInstrumentTile(
                         text = unit,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Medium,
-                        color = TextMuted,
+                        color = colors.textSecondary,
                         modifier = Modifier.padding(bottom = 1.dp),
                         maxLines = 1,
                         softWrap = false
@@ -309,34 +329,32 @@ fun TelemetryInstrumentTile(
                 }
             }
 
-            // Precision Inline Micro-Bar
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(3.dp)
                     .clip(RoundedCornerShape(2.dp))
-                    .background(BorderSubtle)
+                    .background(colors.borderDefault)
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth(progressFraction.coerceIn(0.05f, 1f))
                         .fillMaxHeight()
                         .clip(RoundedCornerShape(2.dp))
-                        .background(indicatorColor)
+                        .background(effectiveColor)
                 )
             }
         }
     }
 }
 
-// Backward-compatible alias for existing references
 @Composable
 fun TelemetryMetricItem(
     title: String,
     value: String,
     unit: String,
     icon: ImageVector,
-    iconColor: Color = Primary80,
+    iconColor: Color? = null,
     modifier: Modifier = Modifier
 ) {
     val fraction = when {
@@ -362,7 +380,7 @@ fun AlertCard(
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {}
 ) {
-    val severityColor = alert.severity.toColor()
+    val colors = BhurakshakTheme.colors
     val isCritical = alert.severity == AlertSeverity.CRITICAL
 
     SeverityAccentCard(
@@ -370,7 +388,6 @@ fun AlertCard(
         modifier = modifier,
         onClick = onClick
     ) {
-        // Top Row: Severity Badge + Timestamp
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -385,36 +402,34 @@ fun AlertCard(
                     imageVector = Icons.Default.AccessTime,
                     contentDescription = null,
                     modifier = Modifier.size(12.dp),
-                    tint = TextSubtle
+                    tint = colors.textSecondary
                 )
                 Text(
                     text = alert.issuedAt.toRelativeTimeString(),
                     style = MaterialTheme.typography.labelSmall,
                     fontSize = 11.sp,
-                    color = TextSubtle
+                    color = colors.textSecondary
                 )
             }
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Alert Headline
         Text(
             text = alert.title,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             fontSize = 15.sp,
-            color = OnBackgroundDark,
+            color = colors.textPrimary,
             lineHeight = 20.sp
         )
 
-        // Description
         if (alert.description.isNotBlank()) {
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = alert.description,
                 style = MaterialTheme.typography.bodySmall,
-                color = TextMuted,
+                color = colors.textSecondary,
                 lineHeight = 17.sp,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
@@ -423,7 +438,6 @@ fun AlertCard(
 
         Spacer(modifier = Modifier.height(10.dp))
 
-        // Bottom Row: Location Tag & Action Directive
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -432,8 +446,8 @@ fun AlertCard(
             if (alert.affectedDistrict.isNotBlank()) {
                 Surface(
                     shape = RoundedCornerShape(4.dp),
-                    color = SurfaceVariantDark,
-                    border = BorderStroke(1.dp, BorderSubtle)
+                    color = colors.bgSurface,
+                    border = BorderStroke(1.dp, colors.borderDefault)
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
@@ -444,30 +458,29 @@ fun AlertCard(
                             imageVector = Icons.Default.LocationOn,
                             contentDescription = null,
                             modifier = Modifier.size(11.dp),
-                            tint = TextMuted
+                            tint = colors.textSecondary
                         )
                         Text(
                             text = alert.affectedDistrict,
                             style = MaterialTheme.typography.labelSmall,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Medium,
-                            color = OnSurfaceDark
+                            color = colors.textPrimary
                         )
                     }
                 }
             }
 
-            // Directive guidance banner
             Surface(
                 shape = RoundedCornerShape(4.dp),
-                color = if (isCritical) SeverityCritical.copy(alpha = 0.15f) else Color.Transparent
+                color = if (isCritical) colors.critical.copy(alpha = 0.15f) else Color.Transparent
             ) {
                 Text(
                     text = alert.severity.toActionGuideline(),
                     style = MaterialTheme.typography.labelSmall,
                     fontSize = 11.sp,
                     fontWeight = if (isCritical) FontWeight.Bold else FontWeight.Medium,
-                    color = if (isCritical) SeverityCritical else TextMuted,
+                    color = if (isCritical) colors.critical else colors.textSecondary,
                     modifier = Modifier.padding(horizontal = if (isCritical) 6.dp else 0.dp, vertical = 2.dp),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -485,6 +498,8 @@ fun GraduatedSeveritySelector(
     onSeveritySelected: (AlertSeverity) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val colors = BhurakshakTheme.colors
+
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -492,7 +507,7 @@ fun GraduatedSeveritySelector(
     ) {
         AlertSeverity.values().forEach { severity ->
             val isSelected = selectedSeverity == severity
-            val color = severity.toColor()
+            val color = severity.toThemeColor()
             val height = when (severity) {
                 AlertSeverity.LOW -> 62.dp
                 AlertSeverity.MODERATE -> 70.dp
@@ -507,14 +522,15 @@ fun GraduatedSeveritySelector(
                     .height(height),
                 shape = RoundedCornerShape(8.dp),
                 color = when {
-                    isSelected && severity == AlertSeverity.CRITICAL -> SeverityCritical.copy(alpha = 0.25f)
+                    isSelected && severity == AlertSeverity.CRITICAL -> colors.critical.copy(alpha = 0.25f)
                     isSelected -> color.copy(alpha = 0.2f)
-                    else -> SurfaceDark
+                    else -> colors.bgSurface
                 },
                 border = BorderStroke(
                     if (isSelected) 1.5.dp else 1.dp,
-                    if (isSelected) color else BorderSubtle
-                )
+                    if (isSelected) color else colors.borderDefault
+                ),
+                shadowElevation = if (colors.isDark) 0.dp else 1.dp
             ) {
                 Column(
                     modifier = Modifier
@@ -523,7 +539,6 @@ fun GraduatedSeveritySelector(
                     verticalArrangement = Arrangement.SpaceBetween,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Indicator beacon
                     Box(
                         modifier = Modifier
                             .size(if (severity == AlertSeverity.CRITICAL) 8.dp else 6.dp)
@@ -531,13 +546,12 @@ fun GraduatedSeveritySelector(
                             .background(if (isSelected) color else color.copy(alpha = 0.4f))
                     )
 
-                    // Severity Label
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
                             text = severity.name,
                             fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.SemiBold,
                             fontSize = if (severity == AlertSeverity.CRITICAL) 11.sp else 10.sp,
-                            color = if (isSelected) color else TextMuted,
+                            color = if (isSelected) color else colors.textSecondary,
                             letterSpacing = 0.4.sp,
                             maxLines = 1
                         )
@@ -546,7 +560,7 @@ fun GraduatedSeveritySelector(
                                 text = "EVACUATE",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 8.sp,
-                                color = SeverityCritical,
+                                color = colors.critical,
                                 maxLines = 1
                             )
                         }
@@ -559,7 +573,6 @@ fun GraduatedSeveritySelector(
 
 // ─── 3-Tier Button System ───────────────────────────────────────────────────
 
-// Tier 1: Primary Action Button (Single dominant CTA per screen)
 @Composable
 fun PrimaryActionButton(
     text: String,
@@ -567,8 +580,9 @@ fun PrimaryActionButton(
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
     enabled: Boolean = true,
-    containerColor: Color = Primary80
+    containerColor: Color? = null
 ) {
+    val effectiveColor = containerColor ?: BhurakshakTheme.colors.accent
     Button(
         onClick = onClick,
         enabled = enabled,
@@ -577,9 +591,9 @@ fun PrimaryActionButton(
             .height(48.dp),
         shape = RoundedCornerShape(8.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = containerColor,
+            containerColor = effectiveColor,
             contentColor = Color.White,
-            disabledContainerColor = containerColor.copy(alpha = 0.4f),
+            disabledContainerColor = effectiveColor.copy(alpha = 0.4f),
             disabledContentColor = Color.White.copy(alpha = 0.5f)
         )
     ) {
@@ -600,7 +614,6 @@ fun PrimaryActionButton(
     }
 }
 
-// Tier 2: Secondary / Ghost Button (Subtle hairline outline)
 @Composable
 fun GhostSecondaryButton(
     text: String,
@@ -608,13 +621,14 @@ fun GhostSecondaryButton(
     modifier: Modifier = Modifier,
     icon: ImageVector? = null
 ) {
+    val colors = BhurakshakTheme.colors
     OutlinedButton(
         onClick = onClick,
         modifier = modifier.height(48.dp),
         shape = RoundedCornerShape(8.dp),
-        border = BorderStroke(1.dp, BorderSubtle),
+        border = BorderStroke(1.dp, colors.borderDefault),
         colors = ButtonDefaults.outlinedButtonColors(
-            contentColor = OnSurfaceDark
+            contentColor = colors.textPrimary
         )
     ) {
         Row(
@@ -622,7 +636,7 @@ fun GhostSecondaryButton(
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             if (icon != null) {
-                Icon(icon, contentDescription = null, modifier = Modifier.size(16.dp), tint = TextMuted)
+                Icon(icon, contentDescription = null, modifier = Modifier.size(16.dp), tint = colors.textSecondary)
             }
             Text(
                 text = text,
@@ -639,11 +653,14 @@ fun EmergencySOSBar(
     onTriggerSOS: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val colors = BhurakshakTheme.colors
+
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(10.dp),
-        color = SurfaceDark,
-        border = BorderStroke(1.dp, SeverityCritical.copy(alpha = 0.6f))
+        color = colors.bgSurface,
+        border = BorderStroke(1.dp, colors.critical.copy(alpha = 0.6f)),
+        shadowElevation = if (colors.isDark) 0.dp else 2.dp
     ) {
         Row(
             modifier = Modifier
@@ -661,13 +678,13 @@ fun EmergencySOSBar(
                     modifier = Modifier
                         .size(34.dp)
                         .clip(RoundedCornerShape(6.dp))
-                        .background(SeverityCritical.copy(alpha = 0.2f)),
+                        .background(colors.critical.copy(alpha = 0.2f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         Icons.Default.Emergency,
                         contentDescription = "SOS",
-                        tint = SeverityCritical,
+                        tint = colors.critical,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -677,20 +694,20 @@ fun EmergencySOSBar(
                         fontWeight = FontWeight.ExtraBold,
                         fontSize = 12.sp,
                         letterSpacing = 0.5.sp,
-                        color = SeverityCritical
+                        color = colors.critical
                     )
                     Text(
                         text = "One-tap GNSS broadcast to SDRF / NDMA",
                         style = MaterialTheme.typography.bodySmall,
                         fontSize = 11.sp,
-                        color = TextMuted
+                        color = colors.textSecondary
                     )
                 }
             }
 
             Button(
                 onClick = onTriggerSOS,
-                colors = ButtonDefaults.buttonColors(containerColor = SeverityCritical),
+                colors = ButtonDefaults.buttonColors(containerColor = colors.critical),
                 shape = RoundedCornerShape(6.dp),
                 contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
             ) {
@@ -715,6 +732,7 @@ fun SectionHeader(
     trailingContent: (@Composable () -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    val colors = BhurakshakTheme.colors
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -726,14 +744,14 @@ fun SectionHeader(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 fontSize = 15.sp,
-                color = OnBackgroundDark
+                color = colors.textPrimary
             )
             if (subtitle != null) {
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
                     fontSize = 11.sp,
-                    color = TextSubtle
+                    color = colors.textSecondary
                 )
             }
         }
@@ -747,6 +765,7 @@ fun SectionHeader(
 
 @Composable
 fun OfflineBanner(pendingCount: Int, modifier: Modifier = Modifier) {
+    val colors = BhurakshakTheme.colors
     AnimatedVisibility(
         visible = pendingCount > 0,
         enter = slideInVertically() + fadeIn(),
@@ -755,8 +774,8 @@ fun OfflineBanner(pendingCount: Int, modifier: Modifier = Modifier) {
     ) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            color = SeverityModerate.copy(alpha = 0.12f),
-            border = BorderStroke(1.dp, SeverityModerate.copy(alpha = 0.35f))
+            color = colors.warning.copy(alpha = 0.12f),
+            border = BorderStroke(1.dp, colors.warning.copy(alpha = 0.35f))
         ) {
             Row(
                 modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
@@ -766,14 +785,14 @@ fun OfflineBanner(pendingCount: Int, modifier: Modifier = Modifier) {
                 Icon(
                     imageVector = Icons.Default.WifiOff,
                     contentDescription = null,
-                    tint = SeverityModerate,
+                    tint = colors.warning,
                     modifier = Modifier.size(16.dp)
                 )
                 Text(
                     text = "$pendingCount report(s) cached offline • Will transmit upon reconnection",
                     style = MaterialTheme.typography.bodySmall,
                     fontSize = 11.sp,
-                    color = SeverityModerate,
+                    color = colors.warning,
                     fontWeight = FontWeight.SemiBold
                 )
             }
@@ -785,10 +804,11 @@ fun OfflineBanner(pendingCount: Int, modifier: Modifier = Modifier) {
 
 @Composable
 fun LoadingContent(modifier: Modifier = Modifier) {
+    val colors = BhurakshakTheme.colors
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             CircularProgressIndicator(
-                color = Primary80,
+                color = colors.accent,
                 strokeWidth = 2.5.dp,
                 modifier = Modifier.size(36.dp)
             )
@@ -799,7 +819,7 @@ fun LoadingContent(modifier: Modifier = Modifier) {
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.sp,
-                color = TextSubtle
+                color = colors.textSecondary
             )
         }
     }
@@ -807,6 +827,7 @@ fun LoadingContent(modifier: Modifier = Modifier) {
 
 @Composable
 fun ErrorContent(message: String, onRetry: (() -> Unit)? = null, modifier: Modifier = Modifier) {
+    val colors = BhurakshakTheme.colors
     Column(
         modifier = modifier.fillMaxSize().padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -816,13 +837,13 @@ fun ErrorContent(message: String, onRetry: (() -> Unit)? = null, modifier: Modif
             modifier = Modifier
                 .size(48.dp)
                 .clip(CircleShape)
-                .background(SeverityCritical.copy(alpha = 0.15f)),
+                .background(colors.critical.copy(alpha = 0.15f)),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = Icons.Default.WarningAmber,
                 contentDescription = null,
-                tint = SeverityCritical,
+                tint = colors.critical,
                 modifier = Modifier.size(28.dp)
             )
         }
@@ -831,13 +852,13 @@ fun ErrorContent(message: String, onRetry: (() -> Unit)? = null, modifier: Modif
             text = "Telemetry Disconnect",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
-            color = OnBackgroundDark
+            color = colors.textPrimary
         )
         Spacer(Modifier.height(4.dp))
         Text(
             text = message,
             style = MaterialTheme.typography.bodySmall,
-            color = TextMuted,
+            color = colors.textSecondary,
             lineHeight = 18.sp,
             modifier = Modifier.padding(horizontal = 16.dp)
         )
@@ -845,7 +866,7 @@ fun ErrorContent(message: String, onRetry: (() -> Unit)? = null, modifier: Modif
             Spacer(Modifier.height(16.dp))
             Button(
                 onClick = onRetry,
-                colors = ButtonDefaults.buttonColors(containerColor = Primary80),
+                colors = ButtonDefaults.buttonColors(containerColor = colors.accent),
                 shape = RoundedCornerShape(6.dp)
             ) {
                 Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -860,17 +881,16 @@ fun ErrorContent(message: String, onRetry: (() -> Unit)? = null, modifier: Modif
 
 @Composable
 fun GradientBackground(modifier: Modifier = Modifier, content: @Composable BoxScope.() -> Unit) {
+    val colors = BhurakshakTheme.colors
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(BackgroundDark),
+            .background(colors.bgBase),
         content = content
     )
 }
 
-// Backward-compatible alias for existing SOSFab references
 @Composable
 fun SOSFab(onClick: () -> Unit) {
-    // Deprecated floating button replaced by embedded EmergencySOSBar
     EmergencySOSBar(onTriggerSOS = onClick)
 }

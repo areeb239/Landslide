@@ -32,21 +32,22 @@ fun WeatherScreen(
     viewModel: WeatherViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val colors = BhurakshakTheme.colors
 
     Scaffold(
-        containerColor = BackgroundDark,
+        containerColor = colors.bgBase,
         topBar = {
             TopAppBar(
                 title = {
                     Column {
-                        Text("Doppler & Weather Radar", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = OnBackgroundDark)
-                        Text("Real-Time Precipitation Telemetry", style = MaterialTheme.typography.labelSmall, fontSize = 11.sp, color = Primary80)
+                        Text("Doppler & Weather Radar", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = colors.textPrimary)
+                        Text("Real-Time Precipitation Telemetry", style = MaterialTheme.typography.labelSmall, fontSize = 11.sp, color = colors.accent)
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = OnBackgroundDark) }
+                    IconButton(onClick = onNavigateBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = colors.textPrimary) }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = ObsidianBase)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = colors.bgBase)
             )
         }
     ) { padding ->
@@ -62,7 +63,7 @@ fun WeatherScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(BackgroundDark)
+                        .background(colors.bgBase)
                         .verticalScroll(rememberScrollState())
                         .padding(padding)
                         .padding(horizontal = 16.dp, vertical = 14.dp),
@@ -79,10 +80,10 @@ fun WeatherScreen(
                                 modifier = Modifier
                                     .size(36.dp)
                                     .clip(RoundedCornerShape(6.dp))
-                                    .background(SurfaceVariantDark),
+                                    .background(colors.accent.copy(alpha = 0.12f)),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Icon(Icons.Default.LocationOn, null, tint = Primary80, modifier = Modifier.size(18.dp))
+                                Icon(Icons.Default.LocationOn, null, tint = colors.accent, modifier = Modifier.size(18.dp))
                             }
                             Column {
                                 Text(
@@ -91,13 +92,13 @@ fun WeatherScreen(
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 10.sp,
                                     letterSpacing = 0.6.sp,
-                                    color = Primary80
+                                    color = colors.accent
                                 )
                                 Text(
                                     "Lat: %.2f°N, Lon: %.2f°E".format(forecast.latitude, forecast.longitude),
                                     style = MaterialTheme.typography.bodySmall,
                                     fontSize = 12.sp,
-                                    color = OnBackgroundDark
+                                    color = colors.textPrimary
                                 )
                             }
                         }
@@ -119,17 +120,17 @@ fun WeatherScreen(
                     val maxRain = forecast.hourlyData.maxOfOrNull { it.rainfallMm } ?: 0.0
                     val isPeakCritical = maxRain > 100
                     val alertColor = when {
-                        maxRain > 100 -> SeverityCritical
-                        maxRain > 50 -> SeverityHigh
-                        maxRain > 20 -> SeverityModerate
-                        else -> Primary80
+                        maxRain > 100 -> colors.critical
+                        maxRain > 50 -> colors.warning
+                        maxRain > 20 -> colors.warning
+                        else -> colors.accent
                     }
 
                     SectionHeader(title = "Peak Precipitation Window")
 
                     FieldCard(
                         modifier = Modifier.fillMaxWidth(),
-                        borderColor = if (isPeakCritical) SeverityCritical.copy(alpha = 0.5f) else BorderSubtle
+                        borderColor = if (isPeakCritical) colors.critical.copy(alpha = 0.5f) else colors.borderDefault
                     ) {
                         Row(
                             modifier = Modifier.padding(16.dp),
@@ -155,7 +156,7 @@ fun WeatherScreen(
                                     "%.1f mm/h".format(maxRain),
                                     fontSize = 26.sp,
                                     fontWeight = FontWeight.Black,
-                                    color = Primary80
+                                    color = alertColor
                                 )
                                 Text(
                                     when {
@@ -166,7 +167,7 @@ fun WeatherScreen(
                                     },
                                     style = MaterialTheme.typography.bodySmall,
                                     fontSize = 11.sp,
-                                    color = OnBackgroundDark
+                                    color = colors.textPrimary
                                 )
                             }
                         }
@@ -177,7 +178,7 @@ fun WeatherScreen(
                         "Telemetry powered by Open-Meteo High-Resolution Numerical Weather Models",
                         style = MaterialTheme.typography.labelSmall,
                         fontSize = 10.sp,
-                        color = TextSubtle
+                        color = colors.textSecondary
                     )
 
                     Spacer(Modifier.height(24.dp))
@@ -189,16 +190,17 @@ fun WeatherScreen(
 
 @Composable
 private fun HourlyWeatherCard(hour: HourlyWeather) {
+    val colors = BhurakshakTheme.colors
     val rainColor = when {
-        hour.rainfallMm > 50 -> SeverityCritical
-        hour.rainfallMm > 20 -> SeverityModerate
-        hour.rainfallMm > 5 -> SeverityModerate
-        else -> Primary80
+        hour.rainfallMm > 50 -> colors.critical
+        hour.rainfallMm > 20 -> colors.warning
+        hour.rainfallMm > 5 -> colors.warning
+        else -> colors.accent
     }
 
     FieldCard(
         shape = RoundedCornerShape(8.dp),
-        borderColor = if (hour.rainfallMm > 50) SeverityCritical.copy(alpha = 0.5f) else BorderSubtle
+        borderColor = if (hour.rainfallMm > 50) colors.critical.copy(alpha = 0.5f) else colors.borderDefault
     ) {
         Column(
             modifier = Modifier.padding(10.dp).width(74.dp),
@@ -210,7 +212,7 @@ private fun HourlyWeatherCard(hour: HourlyWeather) {
                 style = MaterialTheme.typography.labelSmall,
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
-                color = TextMuted
+                color = colors.textSecondary
             )
             Box(
                 modifier = Modifier
@@ -237,7 +239,7 @@ private fun HourlyWeatherCard(hour: HourlyWeather) {
                 "%.0f°C".format(hour.temperature),
                 style = MaterialTheme.typography.labelSmall,
                 fontSize = 10.sp,
-                color = OnBackgroundDark
+                color = colors.textPrimary
             )
         }
     }

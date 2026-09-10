@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NER ভূমিধস সতর্কতা</string>
+
+    <!-- Auth -->
+    <string name="welcome_back">স্বাগতম</string>
+    <string name="sign_in">সাইন ইন করুন</string>
+    <string name="register">অ্যাকাউন্ট তৈরি করুন</string>
+    <string name="email">ইমেল ঠিকানা</string>
+    <string name="password">পাসওয়ার্ড</string>
+    <string name="full_name">পুরো নাম</string>
+    <string name="select_role">আপনার ভূমিকা নির্বাচন করুন</string>
+    <string name="citizen">নাগরিক</string>
+    <string name="field_officer">ফিল্ড অফিসার</string>
+    <string name="admin">প্রশাসক</string>
+
+    <!-- Home -->
+    <string name="active_alerts">সক্রিয় সতর্কতা</string>
+    <string name="no_active_alerts">কোনো সক্রিয় সতর্কতা নেই</string>
+    <string name="sos">জরুরি SOS</string>
+    <string name="sos_confirm_title">SOS সতর্কতা পাঠাবেন?</string>
+    <string name="sos_confirm_body">এটি আপনার বর্তমান জিপিএস অবস্থান জেলা জরুরি প্রতিক্রিয়া দলের কাছে পাঠাবে। শুধুমাত্র প্রকৃত জরুরি অবস্থায় ব্যবহার করুন।</string>
+    <string name="sos_sent">SOS সতর্কতা জেলা জরুরি প্রতিক্রিয়া দলের কাছে পাঠানো হয়েছে।</string>
+
+    <!-- Map -->
+    <string name="map_title">GIS ঝুঁকি মানচিত্র</string>
+    <string name="risk_zones_layer">ঝুঁকিপূর্ণ অঞ্চল</string>
+    <string name="roads_layer">সড়কসমূহ</string>
+    <string name="layers">স্তরসমূহ</string>
+    <string name="risk_level">ঝুঁকির স্তর</string>
+
+    <!-- Report -->
+    <string name="report_title">ঘটনার বিবরণ দিন</string>
+    <string name="incident_type">ঘটনার ধরন</string>
+    <string name="severity">তীব্রতার মাত্রা</string>
+    <string name="description">বিবরণ</string>
+    <string name="district">জেলা</string>
+    <string name="village">গ্রাম / এলাকা</string>
+    <string name="submit_report">প্রতিবেদন জমা দিন</string>
+    <string name="save_offline">অফলাইনে সংরক্ষণ করুন</string>
+    <string name="offline_queue_notice">আপনি অফলাইনে আছেন। প্রতিবেদনটি স্থানীয়ভাবে সংরক্ষিত হবে এবং নেটওয়ার্ক পেলে স্বয়ংক্রিয়ভাবে সিঙ্ক হবে।</string>
+    <string name="select_photos">ছবি নির্বাচন করতে ট্যাপ করুন</string>
+
+    <!-- Prediction -->
+    <string name="prediction_title">AI ঝুঁকি পূর্বাভাস</string>
+    <string name="rainfall">বৃষ্টিপাত (মিমি)</string>
+    <string name="slope_angle">ঢালের কোণ (°)</string>
+    <string name="soil_moisture">মাটির আর্দ্রতা (%)</string>
+    <string name="antecedent_rain">পূর্ববর্তী ৩ দিনের বৃষ্টিপাত (মিমি)</string>
+    <string name="predict">ঝুঁকি নির্ণয় করুন</string>
+
+    <!-- Weather -->
+    <string name="weather_title">আবহাওয়া পূর্বাভাস</string>
+    <string name="hourly_forecast">প্রতি ঘণ্টার পূর্বাভাস</string>
+    <string name="peak_rainfall">সর্বোচ্চ বৃষ্টিপাত সতর্কতা</string>
+
+    <!-- Admin -->
+    <string name="admin_dashboard">প্রশাসক ড্যাশবোর্ড</string>
+    <string name="broadcast_alert">সতর্কতা প্রচার করুন</string>
+    <string name="send_alert">সকল ব্যবহারকারীকে সতর্কতা পাঠান</string>
+    <string name="resolve">সমাধান হিসেবে চিহ্নিত করুন</string>
+
+    <!-- Profile -->
+    <string name="profile">প্রোফাইল</string>
+    <string name="sign_out">সাইন আউট</string>
+</resources>

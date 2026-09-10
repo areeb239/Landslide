@@ -34,6 +34,10 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val colors = BhurakshakTheme.colors
+    val themeController = LocalThemeController.current
+    val localeController = LocalLocaleController.current
+    var showLanguageDialog by remember { mutableStateOf(false) }
     var showSOSDialog by remember { mutableStateOf(false) }
     var selectedSeverityFilter by remember { mutableStateOf<AlertSeverity?>(null) }
 
@@ -44,19 +48,23 @@ fun HomeScreen(
         }
     }
 
+    if (showLanguageDialog) {
+        LanguageSelectionDialog(onDismissRequest = { showLanguageDialog = false })
+    }
+
     if (showSOSDialog) {
         AlertDialog(
             onDismissRequest = { showSOSDialog = false },
-            containerColor = SurfaceDark,
+            containerColor = colors.bgSurface,
             icon = {
                 Box(
                     modifier = Modifier
                         .size(48.dp)
                         .clip(CircleShape)
-                        .background(SeverityCritical.copy(alpha = 0.15f)),
+                        .background(colors.critical.copy(alpha = 0.15f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Default.Emergency, null, tint = SeverityCritical, modifier = Modifier.size(28.dp))
+                    Icon(Icons.Default.Emergency, null, tint = colors.critical, modifier = Modifier.size(28.dp))
                 }
             },
             title = {
@@ -64,7 +72,7 @@ fun HomeScreen(
                     "TRIGGER EMERGENCY SOS?",
                     fontWeight = FontWeight.ExtraBold,
                     fontSize = 17.sp,
-                    color = OnBackgroundDark,
+                    color = colors.textPrimary,
                     letterSpacing = 0.5.sp
                 )
             },
@@ -72,7 +80,7 @@ fun HomeScreen(
                 Text(
                     "This broadcasts your verified GPS coordinates directly to the State Disaster Management Authority (SDMA) and District Incident Response Teams.\n\nUse solely in case of immediate slope failure, structural collapse, or life hazard.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = TextMuted,
+                    color = colors.textSecondary,
                     lineHeight = 19.sp
                 )
             },
@@ -82,27 +90,27 @@ fun HomeScreen(
                         showSOSDialog = false
                         viewModel.onSOSTrigger()
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = SeverityCritical),
+                    colors = ButtonDefaults.buttonColors(containerColor = colors.critical),
                     shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text("TRANSMIT SOS", fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    Text("TRANSMIT SOS", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color.White)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showSOSDialog = false }) {
-                    Text("Cancel", color = TextMuted, fontSize = 12.sp)
+                    Text("Cancel", color = colors.textSecondary, fontSize = 12.sp)
                 }
             }
         )
     }
 
     Scaffold(
-        containerColor = BackgroundDark,
+        containerColor = colors.bgBase,
         topBar = {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(ObsidianBase)
+                    .background(colors.bgBase)
                     .statusBarsPadding()
                     .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
@@ -116,13 +124,13 @@ fun HomeScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        PulsingStatusDot(color = Primary80, size = 6.dp)
+                        PulsingStatusDot(color = colors.accent, size = 6.dp)
                         Text(
                             text = "TELEMETRY RADAR: ACTIVE",
                             style = MaterialTheme.typography.labelSmall,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Primary80,
+                            color = colors.accent,
                             letterSpacing = 0.8.sp
                         )
                     }
@@ -132,16 +140,16 @@ fun HomeScreen(
                         Surface(
                             onClick = onNavigateToAdmin,
                             shape = RoundedCornerShape(14.dp),
-                            color = SurfaceVariantDark,
-                            border = BorderStroke(1.dp, BorderSubtle)
+                            color = colors.bgSurface,
+                            border = BorderStroke(1.dp, colors.borderDefault)
                         ) {
                             Row(
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
-                                Icon(Icons.Default.AdminPanelSettings, null, tint = TextMuted, modifier = Modifier.size(13.dp))
-                                Text("ADMIN", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = OnSurfaceDark)
+                                Icon(Icons.Default.AdminPanelSettings, null, tint = colors.textSecondary, modifier = Modifier.size(13.dp))
+                                Text("ADMIN", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = colors.textPrimary)
                             }
                         }
                     }
@@ -162,18 +170,18 @@ fun HomeScreen(
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Black,
                                 letterSpacing = 1.sp,
-                                color = OnBackgroundDark
+                                color = colors.textPrimary
                             )
                             Surface(
                                 shape = RoundedCornerShape(4.dp),
-                                color = Primary80.copy(alpha = 0.15f),
-                                border = BorderStroke(1.dp, Primary80.copy(alpha = 0.35f))
+                                color = colors.accent.copy(alpha = 0.15f),
+                                border = BorderStroke(1.dp, colors.accent.copy(alpha = 0.35f))
                             ) {
                                 Text(
                                     text = "NER 2.0",
                                     fontSize = 9.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Primary80,
+                                    color = colors.accent,
                                     modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
                                 )
                             }
@@ -182,30 +190,63 @@ fun HomeScreen(
                             text = "Himalayan Landslide Early Warning & Response",
                             style = MaterialTheme.typography.bodySmall,
                             fontSize = 11.sp,
-                            color = TextMuted
+                            color = colors.textSecondary
                         )
                     }
 
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    // Top Action Controls: Language Selector, Theme Switcher, Weather Radar, AI Predictor
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Surface(
+                            onClick = { showLanguageDialog = true },
+                            shape = CircleShape,
+                            color = colors.bgSurface,
+                            border = BorderStroke(1.dp, colors.borderDefault),
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(
+                                    text = localeController.currentLanguage.value.badgeCode,
+                                    color = colors.accent,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Black
+                                )
+                            }
+                        }
+
+                        IconButton(
+                            onClick = { themeController.toggleTheme() },
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(colors.bgSurface)
+                                .border(1.dp, colors.borderDefault, CircleShape)
+                        ) {
+                            Icon(
+                                imageVector = if (colors.isDark) Icons.Default.LightMode else Icons.Default.DarkMode,
+                                contentDescription = if (colors.isDark) "Switch to Field Daylight Theme" else "Switch to Control-Room Blue Theme",
+                                tint = colors.accent,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                         IconButton(
                             onClick = onNavigateToWeather,
                             modifier = Modifier
                                 .size(36.dp)
                                 .clip(CircleShape)
-                                .background(SurfaceVariantDark)
-                                .border(1.dp, BorderSubtle, CircleShape)
+                                .background(colors.bgSurface)
+                                .border(1.dp, colors.borderDefault, CircleShape)
                         ) {
-                            Icon(Icons.Default.Cloud, "Weather Radar", tint = Primary80, modifier = Modifier.size(18.dp))
+                            Icon(Icons.Default.Cloud, "Weather Radar", tint = colors.accent, modifier = Modifier.size(18.dp))
                         }
                         IconButton(
                             onClick = onNavigateToPrediction,
                             modifier = Modifier
                                 .size(36.dp)
                                 .clip(CircleShape)
-                                .background(SurfaceVariantDark)
-                                .border(1.dp, BorderSubtle, CircleShape)
+                                .background(colors.bgSurface)
+                                .border(1.dp, colors.borderDefault, CircleShape)
                         ) {
-                            Icon(Icons.Default.Psychology, "AI Predictor", tint = Primary80, modifier = Modifier.size(18.dp))
+                            Icon(Icons.Default.Psychology, "AI Predictor", tint = colors.accent, modifier = Modifier.size(18.dp))
                         }
                     }
                 }
@@ -237,7 +278,7 @@ fun HomeScreen(
                         value = "48.2",
                         unit = "mm",
                         progressFraction = 0.48f,
-                        indicatorColor = Primary80,
+                        indicatorColor = colors.accent,
                         modifier = Modifier.weight(1f)
                     )
                     TelemetryInstrumentTile(
@@ -245,7 +286,7 @@ fun HomeScreen(
                         value = "64%",
                         unit = "Sat",
                         progressFraction = 0.64f,
-                        indicatorColor = SeverityModerate,
+                        indicatorColor = colors.warning,
                         modifier = Modifier.weight(1f)
                     )
                     TelemetryInstrumentTile(
@@ -253,7 +294,7 @@ fun HomeScreen(
                         value = "8",
                         unit = "Live",
                         progressFraction = 0.80f,
-                        indicatorColor = Primary80,
+                        indicatorColor = colors.accent,
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -269,8 +310,8 @@ fun HomeScreen(
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(8.dp),
-                        color = SeverityCritical.copy(alpha = 0.15f),
-                        border = BorderStroke(1.dp, SeverityCritical.copy(alpha = 0.5f))
+                        color = colors.critical.copy(alpha = 0.15f),
+                        border = BorderStroke(1.dp, colors.critical.copy(alpha = 0.5f))
                     ) {
                         Row(
                             modifier = Modifier.padding(12.dp),
@@ -281,7 +322,7 @@ fun HomeScreen(
                                 modifier = Modifier
                                     .size(32.dp)
                                     .clip(CircleShape)
-                                    .background(SeverityCritical),
+                                    .background(colors.critical),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(Icons.Default.Check, null, tint = Color.White, modifier = Modifier.size(20.dp))
@@ -291,14 +332,14 @@ fun HomeScreen(
                                     "EMERGENCY SOS DISPATCHED",
                                     fontWeight = FontWeight.ExtraBold,
                                     fontSize = 13.sp,
-                                    color = SeverityCritical,
+                                    color = colors.critical,
                                     letterSpacing = 0.5.sp
                                 )
                                 Text(
                                     "Your GPS telemetry has been relayed to SDRF / NDMA quick-response teams.",
                                     style = MaterialTheme.typography.bodySmall,
                                     fontSize = 11.sp,
-                                    color = OnBackgroundDark
+                                    color = colors.textPrimary
                                 )
                             }
                         }
@@ -329,16 +370,16 @@ fun HomeScreen(
                         trailingContent = {
                             Surface(
                                 shape = RoundedCornerShape(4.dp),
-                                color = SurfaceVariantDark,
-                                border = BorderStroke(1.dp, BorderSubtle)
+                                color = colors.bgSurface,
+                                border = BorderStroke(1.dp, colors.borderDefault)
                             ) {
                                 Row(
                                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
-                                    Icon(Icons.Default.Sensors, null, tint = Primary80, modifier = Modifier.size(11.dp))
-                                    Text("LIVE FEED", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Primary80)
+                                    Icon(Icons.Default.Sensors, null, tint = colors.accent, modifier = Modifier.size(11.dp))
+                                    Text("LIVE FEED", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = colors.accent)
                                 }
                             }
                         }
@@ -354,14 +395,15 @@ fun HomeScreen(
                         Surface(
                             onClick = { selectedSeverityFilter = null },
                             shape = RoundedCornerShape(6.dp),
-                            color = if (isAllSelected) Primary80 else SurfaceDark,
-                            border = BorderStroke(1.dp, if (isAllSelected) Primary80 else BorderSubtle)
+                            color = if (isAllSelected) colors.accent else colors.bgSurface,
+                            border = BorderStroke(1.dp, if (isAllSelected) colors.accent else colors.borderDefault),
+                            shadowElevation = if (colors.isDark) 0.dp else 1.dp
                         ) {
                             Text(
                                 text = "All (${uiState.alerts.size})",
                                 fontSize = 11.sp,
                                 fontWeight = if (isAllSelected) FontWeight.Bold else FontWeight.Medium,
-                                color = if (isAllSelected) Color.White else TextMuted,
+                                color = if (isAllSelected) Color.White else colors.textSecondary,
                                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
                             )
                         }
@@ -372,14 +414,15 @@ fun HomeScreen(
                         Surface(
                             onClick = { selectedSeverityFilter = AlertSeverity.CRITICAL },
                             shape = RoundedCornerShape(6.dp),
-                            color = if (isCritSelected) SeverityCritical else SurfaceDark,
-                            border = BorderStroke(1.dp, if (isCritSelected) SeverityCritical else BorderSubtle)
+                            color = if (isCritSelected) colors.critical else colors.bgSurface,
+                            border = BorderStroke(1.dp, if (isCritSelected) colors.critical else colors.borderDefault),
+                            shadowElevation = if (colors.isDark) 0.dp else 1.dp
                         ) {
                             Text(
                                 text = "Critical ($critCount)",
                                 fontSize = 11.sp,
                                 fontWeight = if (isCritSelected) FontWeight.Bold else FontWeight.Medium,
-                                color = if (isCritSelected) Color.White else TextMuted,
+                                color = if (isCritSelected) Color.White else colors.textSecondary,
                                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
                             )
                         }
@@ -390,14 +433,15 @@ fun HomeScreen(
                         Surface(
                             onClick = { selectedSeverityFilter = AlertSeverity.HIGH },
                             shape = RoundedCornerShape(6.dp),
-                            color = if (isHighSelected) SeverityHigh else SurfaceDark,
-                            border = BorderStroke(1.dp, if (isHighSelected) SeverityHigh else BorderSubtle)
+                            color = if (isHighSelected) colors.warning else colors.bgSurface,
+                            border = BorderStroke(1.dp, if (isHighSelected) colors.warning else colors.borderDefault),
+                            shadowElevation = if (colors.isDark) 0.dp else 1.dp
                         ) {
                             Text(
                                 text = "Warning ($highCount)",
                                 fontSize = 11.sp,
                                 fontWeight = if (isHighSelected) FontWeight.Bold else FontWeight.Medium,
-                                color = if (isHighSelected) Color.White else TextMuted,
+                                color = if (isHighSelected) Color.White else colors.textSecondary,
                                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
                             )
                         }
@@ -408,14 +452,15 @@ fun HomeScreen(
                         Surface(
                             onClick = { selectedSeverityFilter = AlertSeverity.MODERATE },
                             shape = RoundedCornerShape(6.dp),
-                            color = if (isModSelected) SeverityModerate else SurfaceDark,
-                            border = BorderStroke(1.dp, if (isModSelected) SeverityModerate else BorderSubtle)
+                            color = if (isModSelected) colors.warning else colors.bgSurface,
+                            border = BorderStroke(1.dp, if (isModSelected) colors.warning else colors.borderDefault),
+                            shadowElevation = if (colors.isDark) 0.dp else 1.dp
                         ) {
                             Text(
                                 text = "Advisory ($modCount)",
                                 fontSize = 11.sp,
                                 fontWeight = if (isModSelected) FontWeight.Bold else FontWeight.Medium,
-                                color = if (isModSelected) Color.White else TextMuted,
+                                color = if (isModSelected) Color.White else colors.textSecondary,
                                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
                             )
                         }
@@ -438,7 +483,7 @@ fun HomeScreen(
                             .padding(40.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator(color = Primary80, strokeWidth = 2.5.dp, modifier = Modifier.size(32.dp))
+                        CircularProgressIndicator(color = colors.accent, strokeWidth = 2.5.dp, modifier = Modifier.size(32.dp))
                     }
                 }
             } else if (displayedAlerts.isEmpty()) {
@@ -454,7 +499,7 @@ fun HomeScreen(
                                 modifier = Modifier
                                     .size(8.dp)
                                     .clip(CircleShape)
-                                    .background(Primary80)
+                                    .background(colors.accent)
                             )
                             Spacer(Modifier.height(10.dp))
                             Text(
@@ -463,14 +508,14 @@ fun HomeScreen(
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 13.sp,
                                 letterSpacing = 0.5.sp,
-                                color = OnBackgroundDark
+                                color = colors.textPrimary
                             )
                             Spacer(Modifier.height(3.dp))
                             Text(
                                 "No active slope failures matching this filter across monitored corridors.",
                                 style = MaterialTheme.typography.bodySmall,
                                 fontSize = 11.sp,
-                                color = TextMuted,
+                                color = colors.textSecondary,
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
                             )
                         }
@@ -490,6 +535,7 @@ fun HomeScreen(
 
 @Composable
 private fun MissionUserProfileCard(user: User) {
+    val colors = BhurakshakTheme.colors
     FieldCard(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.padding(12.dp),
@@ -501,23 +547,23 @@ private fun MissionUserProfileCard(user: User) {
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
-                        .background(SurfaceVariantDark)
-                        .border(1.dp, BorderSubtle, CircleShape),
+                        .background(colors.bgSurface)
+                        .border(1.dp, colors.borderDefault, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = user.name.take(1).uppercase(),
                         fontWeight = FontWeight.ExtraBold,
                         fontSize = 16.sp,
-                        color = OnBackgroundDark
+                        color = colors.textPrimary
                     )
                 }
                 Box(
                     modifier = Modifier
                         .size(10.dp)
                         .clip(CircleShape)
-                        .background(Primary80)
-                        .border(1.5.dp, SurfaceDark, CircleShape)
+                        .background(colors.accent)
+                        .border(1.5.dp, colors.bgSurface, CircleShape)
                 )
             }
 
@@ -527,27 +573,27 @@ private fun MissionUserProfileCard(user: User) {
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
-                    color = OnBackgroundDark
+                    color = colors.textPrimary
                 )
                 Text(
                     text = "SECTOR: Eastern Himalayas (Sikkim / Assam Corridor)",
                     style = MaterialTheme.typography.labelSmall,
                     fontSize = 10.sp,
-                    color = TextMuted
+                    color = colors.textSecondary
                 )
             }
 
             Surface(
                 shape = RoundedCornerShape(4.dp),
-                color = SurfaceVariantDark,
-                border = BorderStroke(1.dp, BorderSubtle)
+                color = colors.bgSurface,
+                border = BorderStroke(1.dp, colors.borderDefault)
             ) {
                 Text(
                     text = user.role.name,
                     style = MaterialTheme.typography.labelSmall,
                     fontSize = 9.sp,
                     fontWeight = FontWeight.Bold,
-                    color = TextMuted,
+                    color = colors.textSecondary,
                     modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
                 )
             }
@@ -560,6 +606,7 @@ private fun HeroAiFeatureCard(
     onRunPredict: () -> Unit,
     onOpenDoppler: () -> Unit
 ) {
+    val colors = BhurakshakTheme.colors
     FieldCard(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(14.dp),
@@ -578,30 +625,30 @@ private fun HeroAiFeatureCard(
                         modifier = Modifier
                             .size(28.dp)
                             .clip(RoundedCornerShape(6.dp))
-                            .background(SurfaceVariantDark),
+                            .background(colors.accent.copy(alpha = 0.12f)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.Psychology, null, tint = Primary80, modifier = Modifier.size(17.dp))
+                        Icon(Icons.Default.Psychology, null, tint = colors.accent, modifier = Modifier.size(17.dp))
                     }
                     Text(
                         text = "AI HAZARD NEURAL CORE",
                         fontWeight = FontWeight.Bold,
                         fontSize = 12.sp,
                         letterSpacing = 0.5.sp,
-                        color = OnBackgroundDark
+                        color = colors.textPrimary
                     )
                 }
 
                 Surface(
                     shape = RoundedCornerShape(4.dp),
-                    color = SurfaceVariantDark,
-                    border = BorderStroke(1.dp, BorderSubtle)
+                    color = colors.accent.copy(alpha = 0.12f),
+                    border = BorderStroke(1.dp, colors.accent.copy(alpha = 0.3f))
                 ) {
                     Text(
                         text = "ONLINE",
                         fontSize = 9.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Primary80,
+                        color = colors.accent,
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                     )
                 }
@@ -611,7 +658,7 @@ private fun HeroAiFeatureCard(
                 text = "Evaluate geotechnical slope failure probability using live 24h rainfall saturation, antecedent precipitation index, and digital elevation models.",
                 style = MaterialTheme.typography.bodySmall,
                 fontSize = 11.sp,
-                color = TextMuted,
+                color = colors.textSecondary,
                 lineHeight = 16.sp
             )
 
@@ -622,7 +669,7 @@ private fun HeroAiFeatureCard(
                 Button(
                     onClick = onRunPredict,
                     shape = RoundedCornerShape(6.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Primary80),
+                    colors = ButtonDefaults.buttonColors(containerColor = colors.accent),
                     modifier = Modifier.weight(1.2f).height(40.dp)
                 ) {
                     Icon(Icons.Default.Bolt, null, modifier = Modifier.size(15.dp), tint = Color.White)
@@ -633,12 +680,13 @@ private fun HeroAiFeatureCard(
                 OutlinedButton(
                     onClick = onOpenDoppler,
                     shape = RoundedCornerShape(6.dp),
-                    border = BorderStroke(1.dp, BorderSubtle),
+                    border = BorderStroke(1.dp, colors.borderDefault),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textPrimary),
                     modifier = Modifier.weight(1f).height(40.dp)
                 ) {
-                    Icon(Icons.Default.Radar, null, modifier = Modifier.size(15.dp), tint = Primary80)
+                    Icon(Icons.Default.Radar, null, modifier = Modifier.size(15.dp), tint = colors.accent)
                     Spacer(Modifier.width(6.dp))
-                    Text("Doppler", fontWeight = FontWeight.SemiBold, color = OnBackgroundDark, fontSize = 12.sp)
+                    Text("Doppler", fontWeight = FontWeight.SemiBold, color = colors.textPrimary, fontSize = 12.sp)
                 }
             }
         }

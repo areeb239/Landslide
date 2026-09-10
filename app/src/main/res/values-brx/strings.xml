@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NER हा खनाय सांग्रांथि</string>
+
+    <!-- Auth -->
+    <string name="welcome_back">बरायबाय</string>
+    <string name="sign_in">हाबनाय (Sign In)</string>
+    <string name="register">खाथा खुलि (Register)</string>
+    <string name="email">इमेल थिसनाय</string>
+    <string name="password">पासवर्ड</string>
+    <string name="full_name">गासै मुं</string>
+    <string name="select_role">नोंथांनि बिबान सायख\'</string>
+    <string name="citizen">सुबुं (Citizen)</string>
+    <string name="field_officer">फिल्ड अफिसार</string>
+    <string name="admin">सामलायगिरि (Admin)</string>
+
+    <!-- Home -->
+    <string name="active_alerts">थांखिनाय सांग्रांथिफोर</string>
+    <string name="no_active_alerts">जेबो सांग्रांथि गैया</string>
+    <string name="sos">गोनांथार SOS</string>
+    <string name="sos_confirm_title">SOS सांग्रांथि थिनहरगोन?</string>
+    <string name="sos_confirm_body">बेयो नोंथांनि दासिमनि GPS जायगानि खौरां जिला खौरां टीमनो थिनहरगोन। थार आपतकाल आव ल\' बाहाय।</string>
+    <string name="sos_sent">SOS सांग्रांथि आपतकाल हान्जायाव थिनहरनाय जाबाय।</string>
+
+    <!-- Map -->
+    <string name="map_title">GIS हा खनाय मानसिबि</string>
+    <string name="risk_zones_layer">खैफोद गोग्लैनाय ओनसोल</string>
+    <string name="roads_layer">लामाफोर</string>
+    <string name="layers">मानसिबि रोखोम</string>
+    <string name="risk_level">खैफोद थाखो</string>
+
+    <!-- Report -->
+    <string name="report_title">जाथायनि खौरां हो</string>
+    <string name="incident_type">जाथायनि रोखोम</string>
+    <string name="severity">खैफोदनि गेबेंथि</string>
+    <string name="description">गुवार खौरां</string>
+    <string name="district">जिला</string>
+    <string name="village">गामी / ओनसोल</string>
+    <string name="submit_report">खौरां थिनहर</string>
+    <string name="save_offline">अफलाइन दोनथुम</string>
+    <string name="offline_queue_notice">नोंथाङा अफलाइन आव दङ। खौरांखौ दोनथुमनाय जागोन आरो नेट मोनब्ला गावनो गाब सिंक जागोन।</string>
+    <string name="select_photos">फोटो सायख\'नो थु</string>
+
+    <!-- Prediction -->
+    <string name="prediction_title">AI खैफोद सिगां-फोरमायनाय</string>
+    <string name="rainfall">अखा हानाय (मिमि)</string>
+    <string name="slope_angle">हाला खोलोब (°)</string>
+    <string name="soil_moisture">हा लोमनाय (%)</string>
+    <string name="antecedent_rain">सिगां ३ साननि अखा (मिमि)</string>
+    <string name="predict">खैफोद साननाय</string>
+
+    <!-- Weather -->
+    <string name="weather_title">बोथोरनि सिगां-खौरां</string>
+    <string name="hourly_forecast">घन्टाफानि सिगां-खौरां</string>
+    <string name="peak_rainfall">गोख्रों अखा सांग्रांथि</string>
+
+    <!-- Admin -->
+    <string name="admin_dashboard">सामलायगिरि डेशबोर्ड</string>
+    <string name="broadcast_alert">सांग्रांथि फोसाव</string>
+    <string name="send_alert">गासै बाहायगिरिनो थिनहर</string>
+    <string name="resolve">मोजां जाबाय होन्ना दिन्थिफुल</string>
+
+    <!-- Profile -->
+    <string name="profile">प्रफाइल</string>
+    <string name="sign_out">ओंखारलां (Sign Out)</string>
+</resources>

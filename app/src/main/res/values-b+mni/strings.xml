@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NER চিংলেপ চেক্সিন-ৱা</string>
+
+    <!-- Auth -->
+    <string name="welcome_back">তরাম্না ওকচরি</string>
+    <string name="sign_in">চংবা (Sign In)</string>
+    <string name="register">একাউন্ট শেম্বা</string>
+    <string name="email">ইমেল ঠিকনা</string>
+    <string name="password">পাসৱার্দ</string>
+    <string name="full_name">অচুম্বা মিং</string>
+    <string name="select_role">নহাক্কী থৌদাং খনবিয়ু</string>
+    <string name="citizen">লৈবাক মীয়াম (Citizen)</string>
+    <string name="field_officer">ফিল্ড ওফিসার</string>
+    <string name="admin">মপু (Admin)</string>
+
+    <!-- Home -->
+    <string name="active_alerts">হৌজিক লৈরিবা চেক্সিন-ৱা</string>
+    <string name="no_active_alerts">চেক্সিন-ৱা অমত্তা লৈতবনি</string>
+    <string name="sos">খুদক্তা তেংবাং SOS</string>
+    <string name="sos_confirm_title">SOS চেক্সিন-ৱা থাগদরা?</string>
+    <string name="sos_confirm_body">মসিনা নহাক্কী GPS লৈফম দিস্ত্রিক ইমার্জেন্সী টিমদা থাগনি। তশেংবা খুদোংথিবদা খক্তা শীজিন্নবীয়ু।</string>
+    <string name="sos_sent">SOS চেক্সিন-ৱা দিস্ত্রিক ইমার্জেন্সী তিমদা থাখ্রে।</string>
+
+    <!-- Map -->
+    <string name="map_title">GIS চিংলেপ ম্যাপ</string>
+    <string name="risk_zones_layer">খুদোংথিনিংঙাই মফম</string>
+    <string name="roads_layer">লম্বীশিং</string>
+    <string name="layers">ম্যাপ লেয়ার</string>
+    <string name="risk_level">খুদোংথিবগী থাক</string>
+
+    <!-- Report -->
+    <string name="report_title">খুদোংথিবগী পাউ পীবা</string>
+    <string name="incident_type">থৌদোক্কী মখল</string>
+    <string name="severity">খুদোংথিবগী থৌনা</string>
+    <string name="description">অকুপ্পা মরোল</string>
+    <string name="district">দিস্ত্রিক</string>
+    <string name="village">খুঙ্গং / মফম</string>
+    <string name="submit_report">পাউ থাগৎপা</string>
+    <string name="save_offline">ওফলাইনদা থমজিনবা</string>
+    <string name="offline_queue_notice">নহাক ওফলাইনদা লৈরে। পাউ অসি ফোনদা লৈহৌগনি অমসুং নেত লৈরকপদা মশামক থাগনি।</string>
+    <string name="select_photos">ফোতো খননবা থুবিয়ু</string>
+
+    <!-- Prediction -->
+    <string name="prediction_title">AI খুদোংথিবগী মাংজৌননা খঙহনবা</string>
+    <string name="rainfall">নোং চুবগী চাং (মিমি)</string>
+    <string name="slope_angle">চিংখৈগী এঙ্গেল (°)</string>
+    <string name="soil_moisture">লৈবাক্কী অচেংবা (%)</string>
+    <string name="antecedent_rain">হৌখিবা ৩ নিগী নোং (মিমি)</string>
+    <string name="predict">খুদোংথিবা শিংথাবা</string>
+
+    <!-- Weather -->
+    <string name="weather_title">নোং-চিংগী ফীভম</string>
+    <string name="hourly_forecast">পুং খুদিংগী পাউ</string>
+    <string name="peak_rainfall">নোং কন্না চুবগী চেক্সিন-ৱা</string>
+
+    <!-- Admin -->
+    <string name="admin_dashboard">মপুগী দেশবোর্ড</string>
+    <string name="broadcast_alert">চেক্সিন-ৱা সান্থোকপা</string>
+    <string name="send_alert">মীয়াম পুম্নমক্তা থাবা</string>
+    <string name="resolve">লোইশিনখ্রে হায়না খঙহনবা</string>
+
+    <!-- Profile -->
+    <string name="profile">প্রোফাইল</string>
+    <string name="sign_out">থোকখিবা (Sign Out)</string>
+</resources>

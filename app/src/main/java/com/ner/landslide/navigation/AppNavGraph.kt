@@ -54,17 +54,19 @@ fun AppNavGraph() {
     val currentRoute = navBackStackEntry?.destination?.route
     val showBottomBar = currentRoute in tabRoutes
 
+    val colors = BhurakshakTheme.colors
+
     Scaffold(
-        containerColor = BackgroundDark,
+        containerColor = colors.bgBase,
         bottomBar = {
             if (showBottomBar) {
                 Surface(
-                    color = SurfaceDark,
-                    border = androidx.compose.foundation.BorderStroke(1.dp, BorderSubtle),
-                    shadowElevation = 0.dp
+                    color = colors.bgSurface,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, colors.borderDefault),
+                    shadowElevation = if (colors.isDark) 0.dp else 2.dp
                 ) {
                     NavigationBar(
-                        containerColor = SurfaceDark,
+                        containerColor = colors.bgSurface,
                         tonalElevation = 0.dp
                     ) {
                         val currentDestination = navBackStackEntry?.destination
@@ -87,11 +89,11 @@ fun AppNavGraph() {
                                 },
                                 selected = isSelected,
                                 colors = NavigationBarItemDefaults.colors(
-                                    selectedIconColor = Primary80,
-                                    selectedTextColor = Primary80,
-                                    indicatorColor = Primary80.copy(alpha = 0.18f),
-                                    unselectedIconColor = TextMuted,
-                                    unselectedTextColor = TextSubtle
+                                    selectedIconColor = colors.accent,
+                                    selectedTextColor = colors.accent,
+                                    indicatorColor = colors.accent.copy(alpha = 0.18f),
+                                    unselectedIconColor = colors.textSecondary,
+                                    unselectedTextColor = colors.textSecondary
                                 ),
                                 onClick = {
                                     navController.navigate(item.screen.route) {

@@ -41,6 +41,7 @@ private val REGION_HOTSPOTS = listOf(
 @Composable
 fun MapScreen(viewModel: MapViewModel = hiltViewModel()) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val colors = BhurakshakTheme.colors
     val coroutineScope = rememberCoroutineScope()
 
     var mapType by remember { mutableStateOf(MapType.TERRAIN) }
@@ -50,7 +51,7 @@ fun MapScreen(viewModel: MapViewModel = hiltViewModel()) {
         position = CameraPosition.fromLatLngZoom(LatLng(26.95, 88.85), 7.8f)
     }
 
-    Box(modifier = Modifier.fillMaxSize().background(ObsidianBase)) {
+    Box(modifier = Modifier.fillMaxSize().background(colors.bgBase)) {
         if (uiState.isLoading) {
             LoadingContent()
         } else {
@@ -70,7 +71,11 @@ fun MapScreen(viewModel: MapViewModel = hiltViewModel()) {
                 // Risk Zone Polygons
                 if (uiState.showRiskLayer) {
                     uiState.riskZones.forEach { zone ->
-                        val zoneColor = zone.severity.toMapColor()
+                        val zoneColor = when (zone.severity) {
+                            AlertSeverity.LOW -> colors.success
+                            AlertSeverity.MODERATE, AlertSeverity.HIGH -> colors.warning
+                            AlertSeverity.CRITICAL -> colors.critical
+                        }
                         Polygon(
                             points = zone.polygonPoints.map { LatLng(it.latitude, it.longitude) },
                             fillColor = zoneColor.copy(alpha = if (zone.severity == AlertSeverity.CRITICAL) 0.45f else 0.30f),
@@ -87,9 +92,15 @@ fun MapScreen(viewModel: MapViewModel = hiltViewModel()) {
                 // Road Segments
                 if (uiState.showRoadLayer) {
                     uiState.roadSegments.forEach { segment ->
+                        val roadColor = when (segment.status) {
+                            RoadStatus.OPEN -> colors.success
+                            RoadStatus.BLOCKED -> colors.critical
+                            RoadStatus.PARTIALLY_BLOCKED -> colors.warning
+                            RoadStatus.UNKNOWN -> colors.textSecondary
+                        }
                         Polyline(
                             points = segment.points.map { LatLng(it.latitude, it.longitude) },
-                            color = segment.status.toColor(),
+                            color = roadColor,
                             width = 8f
                         )
                     }
@@ -101,7 +112,7 @@ fun MapScreen(viewModel: MapViewModel = hiltViewModel()) {
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .fillMaxWidth()
-                    .background(ObsidianBase)
+                    .background(colors.bgBase)
                     .statusBarsPadding()
                     .padding(horizontal = 14.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -116,13 +127,13 @@ fun MapScreen(viewModel: MapViewModel = hiltViewModel()) {
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        PulsingStatusDot(color = Primary80, size = 6.dp)
+                        PulsingStatusDot(color = colors.accent, size = 6.dp)
                         Text(
                             "GIS TACTICAL SURVEILLANCE",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 0.6.sp,
-                            color = OnBackgroundDark
+                            color = colors.textPrimary
                         )
                     }
 
@@ -136,8 +147,9 @@ fun MapScreen(viewModel: MapViewModel = hiltViewModel()) {
                                 mapType = if (mapType == MapType.TERRAIN) MapType.HYBRID else MapType.TERRAIN
                             },
                             shape = RoundedCornerShape(4.dp),
-                            color = SurfaceVariantDark,
-                            border = BorderStroke(1.dp, BorderSubtle)
+                            color = colors.bgSurface,
+                            border = BorderStroke(1.dp, colors.borderDefault),
+                            shadowElevation = if (colors.isDark) 0.dp else 1.dp
                         ) {
                             Row(
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
@@ -147,14 +159,14 @@ fun MapScreen(viewModel: MapViewModel = hiltViewModel()) {
                                 Icon(
                                     imageVector = if (mapType == MapType.TERRAIN) Icons.Default.SatelliteAlt else Icons.Default.Landscape,
                                     contentDescription = "Map Style",
-                                    tint = Primary80,
+                                    tint = colors.accent,
                                     modifier = Modifier.size(13.dp)
                                 )
                                 Text(
                                     if (mapType == MapType.TERRAIN) "TERRAIN" else "SATELLITE",
                                     fontSize = 9.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = OnBackgroundDark
+                                    color = colors.textPrimary
                                 )
                             }
                         }
@@ -171,8 +183,9 @@ fun MapScreen(viewModel: MapViewModel = hiltViewModel()) {
                     Surface(
                         onClick = { viewModel.toggleRiskLayer() },
                         shape = RoundedCornerShape(6.dp),
-                        color = if (uiState.showRiskLayer) Primary80 else SurfaceDark,
-                        border = BorderStroke(1.dp, if (uiState.showRiskLayer) Primary80 else BorderSubtle)
+                        color = if (uiState.showRiskLayer) colors.accent else colors.bgSurface,
+                        border = BorderStroke(1.dp, if (uiState.showRiskLayer) colors.accent else colors.borderDefault),
+                        shadowElevation = if (colors.isDark) 0.dp else 1.dp
                     ) {
                         Row(
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
@@ -183,13 +196,13 @@ fun MapScreen(viewModel: MapViewModel = hiltViewModel()) {
                                 modifier = Modifier
                                     .size(6.dp)
                                     .clip(CircleShape)
-                                    .background(if (uiState.showRiskLayer) Color.White else TextSubtle)
+                                    .background(if (uiState.showRiskLayer) Color.White else colors.textSecondary)
                             )
                             Text(
                                 "Hazard Polygons",
                                 fontSize = 10.sp,
                                 fontWeight = if (uiState.showRiskLayer) FontWeight.Bold else FontWeight.Medium,
-                                color = if (uiState.showRiskLayer) Color.White else TextMuted
+                                color = if (uiState.showRiskLayer) Color.White else colors.textSecondary
                             )
                         }
                     }
@@ -198,8 +211,9 @@ fun MapScreen(viewModel: MapViewModel = hiltViewModel()) {
                     Surface(
                         onClick = { viewModel.toggleRoadLayer() },
                         shape = RoundedCornerShape(6.dp),
-                        color = if (uiState.showRoadLayer) Primary80 else SurfaceDark,
-                        border = BorderStroke(1.dp, if (uiState.showRoadLayer) Primary80 else BorderSubtle)
+                        color = if (uiState.showRoadLayer) colors.accent else colors.bgSurface,
+                        border = BorderStroke(1.dp, if (uiState.showRoadLayer) colors.accent else colors.borderDefault),
+                        shadowElevation = if (colors.isDark) 0.dp else 1.dp
                     ) {
                         Row(
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
@@ -210,13 +224,13 @@ fun MapScreen(viewModel: MapViewModel = hiltViewModel()) {
                                 modifier = Modifier
                                     .size(6.dp)
                                     .clip(CircleShape)
-                                    .background(if (uiState.showRoadLayer) Color.White else TextSubtle)
+                                    .background(if (uiState.showRoadLayer) Color.White else colors.textSecondary)
                             )
                             Text(
                                 "Corridors",
                                 fontSize = 10.sp,
                                 fontWeight = if (uiState.showRoadLayer) FontWeight.Bold else FontWeight.Medium,
-                                color = if (uiState.showRoadLayer) Color.White else TextMuted
+                                color = if (uiState.showRoadLayer) Color.White else colors.textSecondary
                             )
                         }
                     }
@@ -238,16 +252,17 @@ fun MapScreen(viewModel: MapViewModel = hiltViewModel()) {
                                 }
                             },
                             shape = RoundedCornerShape(4.dp),
-                            color = SurfaceDark,
-                            border = BorderStroke(1.dp, BorderSubtle)
+                            color = colors.bgSurface,
+                            border = BorderStroke(1.dp, colors.borderDefault),
+                            shadowElevation = if (colors.isDark) 0.dp else 1.dp
                         ) {
                             Row(
                                 modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
-                                Icon(Icons.Default.Place, null, tint = TextMuted, modifier = Modifier.size(11.dp))
-                                Text(name, fontSize = 10.sp, fontWeight = FontWeight.Medium, color = TextMuted)
+                                Icon(Icons.Default.Place, null, tint = colors.textSecondary, modifier = Modifier.size(11.dp))
+                                Text(name, fontSize = 10.sp, fontWeight = FontWeight.Medium, color = colors.textSecondary)
                             }
                         }
                     }
@@ -261,8 +276,9 @@ fun MapScreen(viewModel: MapViewModel = hiltViewModel()) {
                     .fillMaxWidth()
                     .padding(horizontal = 14.dp, vertical = 10.dp),
                 shape = RoundedCornerShape(8.dp),
-                color = SurfaceDark.copy(alpha = 0.95f),
-                border = BorderStroke(1.dp, BorderSubtle)
+                color = colors.bgSurface.copy(alpha = 0.95f),
+                border = BorderStroke(1.dp, colors.borderDefault),
+                shadowElevation = if (colors.isDark) 0.dp else 2.dp
             ) {
                 Row(
                     modifier = Modifier
@@ -279,18 +295,18 @@ fun MapScreen(viewModel: MapViewModel = hiltViewModel()) {
                             modifier = Modifier
                                 .size(6.dp)
                                 .clip(CircleShape)
-                                .background(Primary80)
+                                .background(colors.accent)
                         )
-                        Text("8 SECTORS LIVE", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Primary80)
+                        Text("8 SECTORS LIVE", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = colors.accent)
                     }
 
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        MapLegendPill(color = SeverityLow, label = "Nominal")
-                        MapLegendPill(color = SeverityModerate, label = "Advisory")
-                        MapLegendPill(color = SeverityCritical, label = "Hazard")
+                        MapLegendPill(color = colors.success, label = "Nominal", textColor = colors.textSecondary)
+                        MapLegendPill(color = colors.warning, label = "Advisory", textColor = colors.textSecondary)
+                        MapLegendPill(color = colors.critical, label = "Hazard", textColor = colors.textSecondary)
                     }
                 }
             }
@@ -299,7 +315,7 @@ fun MapScreen(viewModel: MapViewModel = hiltViewModel()) {
 }
 
 @Composable
-private fun MapLegendPill(color: Color, label: String) {
+private fun MapLegendPill(color: Color, label: String, textColor: Color) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -314,7 +330,7 @@ private fun MapLegendPill(color: Color, label: String) {
             text = label,
             fontSize = 10.sp,
             fontWeight = FontWeight.Medium,
-            color = TextMuted
+            color = textColor
         )
     }
 }
