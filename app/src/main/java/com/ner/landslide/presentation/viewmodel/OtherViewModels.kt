@@ -194,9 +194,16 @@ class WeatherViewModel @Inject constructor(
     private var currentLat: Double = 26.14
     private var currentLng: Double = 91.74
 
-    // Default to Guwahati, can be overridden with user GPS
+    // Auto-detect GPS location if available, otherwise default to regional capital
     init {
-        loadWeather(26.14, 91.74)
+        viewModelScope.launch {
+            val loc = locationHelper.getCurrentLocation()
+            if (loc != null) {
+                loadWeather(loc.latitude, loc.longitude)
+            } else {
+                loadWeather(26.14, 91.74)
+            }
+        }
         observeNetworkReconnection()
     }
 
@@ -206,6 +213,18 @@ class WeatherViewModel @Inject constructor(
                 if (online && _uiState.value.error != null) {
                     loadWeather(currentLat, currentLng)
                 }
+            }
+        }
+    }
+
+    fun useCurrentLocation() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            val loc = locationHelper.getCurrentLocation()
+            if (loc != null) {
+                loadWeather(loc.latitude, loc.longitude)
+            } else {
+                loadWeather(currentLat, currentLng)
             }
         }
     }

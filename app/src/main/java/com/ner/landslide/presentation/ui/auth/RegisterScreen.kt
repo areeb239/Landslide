@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.*
 import androidx.compose.ui.text.style.TextAlign
@@ -21,9 +22,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ner.landslide.R
 import com.ner.landslide.domain.model.UserRole
 import com.ner.landslide.presentation.ui.components.GlassCard
 import com.ner.landslide.presentation.ui.components.LoadingContent
+import com.ner.landslide.presentation.ui.components.PulsingStatusDot
 import com.ner.landslide.presentation.ui.theme.*
 import com.ner.landslide.presentation.viewmodel.AuthViewModel
 
@@ -35,10 +38,11 @@ fun RegisterScreen(
     viewModel: AuthViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var phone by remember { mutableStateOf("") }
+    var selectedRole by remember { mutableStateOf(UserRole.CITIZEN) }
     var passwordVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(uiState.isSuccess) {
@@ -50,12 +54,9 @@ fun RegisterScreen(
             .fillMaxSize()
             .background(ObsidianBase)
     ) {
-        // Decorative background glow radial
         Box(
             modifier = Modifier
-                .size(340.dp)
-                .align(Alignment.TopCenter)
-                .offset(y = (-80).dp)
+                .fillMaxSize()
                 .background(
                     Brush.radialGradient(
                         listOf(BrandIndigo.copy(alpha = 0.15f), Color.Transparent)
@@ -75,27 +76,16 @@ fun RegisterScreen(
                     .padding(horizontal = 24.dp, vertical = 20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Header Shield Emblem
+                // Header Brand Logo Emblem
                 Box(contentAlignment = Alignment.Center) {
-                    Box(
+                    Image(
+                        painter = painterResource(id = R.drawable.bhoochetak_logo),
+                        contentDescription = "Bhoochetak Logo",
                         modifier = Modifier
                             .size(76.dp)
-                            .clip(CircleShape)
-                            .background(
-                                Brush.linearGradient(
-                                    listOf(BrandIndigo.copy(alpha = 0.3f), Primary80.copy(alpha = 0.2f))
-                                )
-                            )
-                            .border(1.5.dp, Primary80.copy(alpha = 0.5f), CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.AppRegistration,
-                            contentDescription = null,
-                            tint = Primary80,
-                            modifier = Modifier.size(38.dp)
-                        )
-                    }
+                            .clip(RoundedCornerShape(18.dp))
+                            .border(1.5.dp, Primary80.copy(alpha = 0.5f), RoundedCornerShape(18.dp))
+                    )
                 }
 
                 Spacer(Modifier.height(14.dp))
@@ -103,7 +93,7 @@ fun RegisterScreen(
                 // Title & Mission Classification
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(
-                        text = "BHURAKSHAK",
+                        text = "BHOOCHETAK",
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Black,
                         letterSpacing = 1.4.sp,
@@ -304,7 +294,7 @@ fun RegisterScreen(
                             enabled = name.isNotBlank() && email.isNotBlank() && password.length >= 6
                         ) {
                             Text(
-                                "ENLIST IN BHURAKSHAK NETWORK",
+                                "ENLIST IN BHOOCHETAK NETWORK",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 14.sp,
                                 letterSpacing = 0.5.sp,

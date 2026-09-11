@@ -77,7 +77,7 @@ class LocationHelper @Inject constructor(
                             locality = loc.ifBlank { dist }.ifBlank { "Local Sector" },
                             district = dist.ifBlank { "Regional District" },
                             state = st.ifBlank { "Northeast India" },
-                            formattedName = name.ifBlank { "Sector (${String.format(Locale.US, "%.2f°N, %.2f°E", latitude, longitude)})" }
+                            formattedName = name.ifBlank { "Local Monitored Sector" }
                         )
                     } else null
                 } else null

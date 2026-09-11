@@ -16,11 +16,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ner.landslide.R
 import com.ner.landslide.domain.model.*
 import com.ner.landslide.presentation.ui.components.*
 import com.ner.landslide.presentation.ui.theme.*
@@ -54,8 +56,8 @@ fun HomeScreen(
     }
 
     LaunchedEffect(uiState.sosState) {
-        if (uiState.sosState == SOSState.SENT) {
-            kotlinx.coroutines.delay(3500)
+        if (uiState.sosState in listOf(SOSState.SENT, SOSState.SENT_OFFLINE_SMS, SOSState.SENT_OFFLINE_INTENT)) {
+            kotlinx.coroutines.delay(4500)
             viewModel.resetSOSState()
         }
     }
@@ -122,7 +124,10 @@ fun HomeScreen(
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
                     Text(
-                        text = "Broadcasting to SDRF / NDMA in $countdownSeconds seconds...",
+                        text = if (!uiState.isOnline)
+                            "Broadcasting via Cellular SMS to 112 / SDRF in $countdownSeconds seconds..."
+                        else
+                            "Broadcasting to SDRF / NDMA in $countdownSeconds seconds...",
                         style = MaterialTheme.typography.labelSmall,
                         fontSize = 11.sp,
                         color = colors.textSecondary,
@@ -145,23 +150,49 @@ fun HomeScreen(
                             modifier = Modifier.padding(10.dp),
                             verticalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "LOCKED GPS RESCUE TELEMETRY",
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colors.textSecondary
+                                )
+                                Surface(
+                                    shape = RoundedCornerShape(4.dp),
+                                    color = if (uiState.isOnline) colors.accent.copy(alpha = 0.15f) else colors.warning.copy(alpha = 0.15f)
+                                ) {
+                                    Text(
+                                        text = if (uiState.isOnline) "CLOUD + SMS" else "OFFLINE SMS MODE",
+                                        fontSize = 8.5.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = if (uiState.isOnline) colors.accent else colors.warning,
+                                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
+                                    )
+                                }
+                            }
                             Text(
-                                text = "LOCKED GPS RESCUE TELEMETRY",
-                                fontSize = 9.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = colors.textSecondary
-                            )
-                            Text(
-                                text = String.format(java.util.Locale.US, "%.4f° N, %.4f° E", uiState.sosLocationLat, uiState.sosLocationLon),
+                                text = uiState.sosLocationName,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = colors.textPrimary
+                            )
+                            Text(
+                                text = "Emergency Relay: 112 (National Disaster Response) + Google Maps PIN",
+                                fontSize = 9.5.sp,
+                                color = colors.textSecondary
                             )
                         }
                     }
 
                     Text(
-                        text = strings.sosDescription,
+                        text = if (!uiState.isOnline)
+                            "No internet detected. Bhoochetak will automatically use the GSM cellular signaling channel to send an emergency SMS with your live GPS location & Google Maps pin to emergency responders, and queue for cloud sync."
+                        else
+                            strings.sosDescription,
                         style = MaterialTheme.typography.bodySmall,
                         fontSize = 11.5.sp,
                         color = colors.textSecondary,
@@ -349,7 +380,14 @@ fun HomeScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f, fill = false)) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Image(
+                                painter = painterResource(id = R.drawable.bhoochetak_logo),
+                                contentDescription = "Bhoochetak Logo",
+                                modifier = Modifier
+                                    .size(28.dp)
+                                    .clip(RoundedCornerShape(6.dp))
+                            )
                             Text(
                                 text = strings.appTitle,
                                 fontSize = 20.sp,
@@ -357,14 +395,6 @@ fun HomeScreen(
                                 letterSpacing = 1.sp,
                                 color = colors.textPrimary
                             )
-                            
-                                Text(
-                                    text = "NER 2.0",
-                                    fontSize = 9.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = colors.accent,
-                                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
-                                )
                         }
                         Text(
                             text = strings.appSubtitle,
@@ -497,15 +527,26 @@ fun HomeScreen(
             // SOS Confirmation Feedback Banner
             item {
                 AnimatedVisibility(
-                    visible = uiState.sosState == SOSState.SENT,
+                    visible = uiState.sosState in listOf(
+                        SOSState.SENT,
+                        SOSState.SENT_OFFLINE_SMS,
+                        SOSState.SENT_OFFLINE_INTENT
+                    ),
                     enter = fadeIn() + expandVertically(),
                     exit = fadeOut() + shrinkVertically()
                 ) {
+                    val isOfflineDispatch = uiState.sosState in listOf(
+                        SOSState.SENT_OFFLINE_SMS,
+                        SOSState.SENT_OFFLINE_INTENT
+                    )
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(8.dp),
-                        color = colors.critical.copy(alpha = 0.15f),
-                        border = BorderStroke(1.dp, colors.critical.copy(alpha = 0.5f))
+                        color = if (isOfflineDispatch) colors.warning.copy(alpha = 0.15f) else colors.critical.copy(alpha = 0.15f),
+                        border = BorderStroke(
+                            1.dp,
+                            if (isOfflineDispatch) colors.warning.copy(alpha = 0.6f) else colors.critical.copy(alpha = 0.5f)
+                        )
                     ) {
                         Row(
                             modifier = Modifier.padding(12.dp),
@@ -514,26 +555,33 @@ fun HomeScreen(
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(32.dp)
+                                    .size(34.dp)
                                     .clip(CircleShape)
-                                    .background(colors.critical),
+                                    .background(if (isOfflineDispatch) colors.warning else colors.critical),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(Icons.Default.Check, null, tint = Color.White, modifier = Modifier.size(20.dp))
                             }
-                            Column {
+                            Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    "EMERGENCY SOS DISPATCHED",
+                                    text = if (isOfflineDispatch)
+                                        "OFFLINE SOS DISPATCHED VIA SMS"
+                                    else
+                                        "EMERGENCY SOS DISPATCHED (CLOUD)",
                                     fontWeight = FontWeight.ExtraBold,
-                                    fontSize = 13.sp,
-                                    color = colors.critical,
+                                    fontSize = 12.5.sp,
+                                    color = if (isOfflineDispatch) colors.warning else colors.critical,
                                     letterSpacing = 0.5.sp
                                 )
                                 Text(
-                                    "Your GPS telemetry has been relayed to SDRF / NDMA quick-response teams.",
+                                    text = if (isOfflineDispatch)
+                                        "Distress beacon sent via Cellular SMS to 112 with GPS coordinates & Maps pin. Auto-queued to sync with SDRF Cloud Dashboard when internet returns."
+                                    else
+                                        "Your GPS telemetry has been relayed to SDRF / NDMA quick-response teams.",
                                     style = MaterialTheme.typography.bodySmall,
                                     fontSize = 11.sp,
-                                    color = colors.textPrimary
+                                    color = colors.textPrimary,
+                                    lineHeight = 15.sp
                                 )
                             }
                         }

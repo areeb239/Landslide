@@ -255,7 +255,7 @@ def predict_landslide_risk(req: PredictionRequest) -> PredictionResponse:
                 sample_factors=sample_factors,
                 recommendation=rec,
                 is_mock=False,
-                model_version=f"BhuRakshak-XGBoost-v2.0 ({os.path.basename(_model_path_used or 'bhurakshak_pipeline.pkl')})",
+                model_version=f"Bhoochetak-XGBoost ({os.path.basename(_model_path_used or 'bhurakshak_pipeline.pkl')})",
                 extracted_telemetry=extracted
             )
         except Exception as e:
@@ -386,8 +386,8 @@ def get_model_metadata() -> ModelMetadataResponse:
     global _model_loaded, _model_path_used, _bhurakshak_predictor
     importances = _bhurakshak_predictor.feature_importances if _bhurakshak_predictor else None
     return ModelMetadataResponse(
-        model_name="BhuRakshak Landslide Hazard Neural Core",
-        model_version=f"2.0 ({os.path.basename(_model_path_used) if _model_path_used else 'Heuristic Fallback'})",
+        model_name="Bhoochetak Landslide Hazard Neural Core",
+        model_version=f"Pipeline ({os.path.basename(_model_path_used) if _model_path_used else 'Heuristic Fallback'})",
         algorithm="XGBoost Classifier + Scikit-Learn ColumnTransformer Pipeline",
         features_required=[
             "elevation",

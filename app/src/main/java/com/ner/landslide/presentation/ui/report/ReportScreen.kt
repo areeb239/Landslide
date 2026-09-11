@@ -41,8 +41,6 @@ fun ReportScreen(
     val strings = LocalAppStrings.current
     val context = androidx.compose.ui.platform.LocalContext.current
     var currentStep by remember { mutableIntStateOf(1) } // Step 1: Location/Evidence, Step 2: Classification/Severity
-    val latDisplay = if (uiState.latitude != 0.0) String.format(java.util.Locale.US, "%.4f° N", uiState.latitude) else "27.1765° N"
-    val lonDisplay = if (uiState.longitude != 0.0) String.format(java.util.Locale.US, "%.4f° E", uiState.longitude) else "88.5321° E"
 
     var showPermissionRationale by remember { mutableStateOf(false) }
     var showGpsDialog by remember { mutableStateOf(false) }
@@ -421,7 +419,7 @@ fun ReportScreen(
                                             lineHeight = 20.sp
                                         )
                                         Text(
-                                            text = "$latDisplay, $lonDisplay • 1,420 m MSL",
+                                            text = "GNSS Precise Sensor Lock • 1,420 m MSL",
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.Medium,
                                             color = colors.textSecondary
@@ -824,8 +822,13 @@ fun ReportScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text("COORDINATES", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = colors.textSecondary)
-                                Text("$latDisplay, $lonDisplay", fontSize = 11.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                                Text("INCIDENT LOCATION", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = colors.textSecondary)
+                                Text(
+                                    uiState.resolvedLocationName.ifBlank { uiState.district.ifBlank { "Verified Incident Sector" } },
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = colors.textPrimary
+                                )
                             }
                         }
                     }

@@ -219,7 +219,7 @@ fun ProfileScreen(
 
                     ProfileMenuItem(
                         icon = Icons.Default.Info,
-                        label = "BhuRakshak v2.4 • Dual-Theme Edition",
+                        label = "Bhoochetak • Dual-Theme Edition",
                         tint = colors.textSecondary,
                         onClick = {},
                         textColor = colors.textPrimary

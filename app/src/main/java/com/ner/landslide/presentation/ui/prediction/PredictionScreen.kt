@@ -144,7 +144,11 @@ fun PredictionScreen(
                                     color = colors.textPrimary
                                 )
                                 Text(
-                                    text = "${uiState.latitude}° N, ${uiState.longitude}° E • ${uiState.elevation}m MSL",
+                                    text = if (uiState.elevation.isNotBlank() && uiState.elevation != "0") {
+                                        "Elevation: ${uiState.elevation}m MSL • Monitored Sector"
+                                    } else {
+                                        "Active Monitoring Zone"
+                                    },
                                     style = MaterialTheme.typography.bodySmall,
                                     fontSize = 11.sp,
                                     color = colors.textSecondary
@@ -211,62 +215,61 @@ fun PredictionScreen(
                         }
                     }
 
-                    // Coordinates Header & GPS Action
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                    // GPS Location Card
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = colors.accent.copy(alpha = 0.08f),
+                        border = BorderStroke(1.dp, colors.accent.copy(alpha = 0.25f)),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(
-                            text = "GEOGRAPHIC COORDINATES",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 10.sp,
-                            letterSpacing = 0.5.sp,
-                            color = colors.textSecondary
-                        )
-                        TextButton(
-                            onClick = { viewModel.useCurrentLocation() },
-                            contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Icon(Icons.Default.LocationOn, contentDescription = null, modifier = Modifier.size(13.dp), tint = colors.accent)
-                            Spacer(Modifier.width(4.dp))
-                            Text("Use Current GPS", fontSize = 11.sp, color = colors.accent, fontWeight = FontWeight.Bold)
-                        }
-                    }
-
-                    // Coordinates Row
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Box(modifier = Modifier.weight(1f)) {
-                            PredictionInputField(
-                                label = "Latitude (°N)",
-                                unit = "decimal",
-                                icon = Icons.Default.Place,
-                                iconColor = colors.accent,
-                                value = uiState.latitude,
-                                onValueChange = {
-                                    selectedScenario = null
-                                    viewModel.onLatitudeChange(it)
-                                },
-                                placeholder = "27.33"
-                            )
-                        }
-                        Box(modifier = Modifier.weight(1f)) {
-                            PredictionInputField(
-                                label = "Longitude (°E)",
-                                unit = "decimal",
-                                icon = Icons.Default.Explore,
-                                iconColor = colors.accent,
-                                value = uiState.longitude,
-                                onValueChange = {
-                                    selectedScenario = null
-                                    viewModel.onLongitudeChange(it)
-                                },
-                                placeholder = "88.61"
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(34.dp)
+                                        .clip(CircleShape)
+                                        .background(colors.accent.copy(alpha = 0.15f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(Icons.Default.MyLocation, contentDescription = null, tint = colors.accent, modifier = Modifier.size(18.dp))
+                                }
+                                Column {
+                                    Text(
+                                        text = uiState.locationName ?: "Sector Location",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 13.sp,
+                                        color = colors.textPrimary
+                                    )
+                                    Text(
+                                        text = "GPS High-Precision Lock • Processing Internally",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontSize = 10.5.sp,
+                                        color = colors.textSecondary
+                                    )
+                                }
+                            }
+                            Button(
+                                onClick = { viewModel.useCurrentLocation() },
+                                colors = ButtonDefaults.buttonColors(containerColor = colors.accent),
+                                shape = RoundedCornerShape(8.dp),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+                                modifier = Modifier.height(34.dp)
+                            ) {
+                                Icon(Icons.Default.GpsFixed, contentDescription = null, modifier = Modifier.size(14.dp), tint = Color.White)
+                                Spacer(Modifier.width(4.dp))
+                                Text("Enable GPS", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            }
                         }
                     }
 

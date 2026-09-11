@@ -79,7 +79,11 @@ data class HourlyDto(
     @SerializedName("precipitation") val precipitation: List<Double>,
     @SerializedName("temperature_2m") val temperature: List<Double>,
     @SerializedName("relative_humidity_2m") val humidity: List<Double>,
-    @SerializedName("wind_speed_10m") val windSpeed: List<Double>
+    @SerializedName("wind_speed_10m") val windSpeed: List<Double>,
+    @SerializedName("precipitation_probability") val precipitationProbability: List<Int>? = null,
+    @SerializedName("uv_index") val uvIndex: List<Double>? = null,
+    @SerializedName("wind_direction_10m") val windDirection: List<Double>? = null,
+    @SerializedName("weather_code") val weatherCode: List<Int>? = null
 )
 
 interface WeatherApi {
@@ -87,8 +91,8 @@ interface WeatherApi {
     suspend fun getWeatherForecast(
         @Query("latitude") latitude: Double,
         @Query("longitude") longitude: Double,
-        @Query("hourly") hourly: String = "precipitation,temperature_2m,relative_humidity_2m,wind_speed_10m",
-        @Query("forecast_days") forecastDays: Int = 3,
+        @Query("hourly") hourly: String = "precipitation,temperature_2m,relative_humidity_2m,wind_speed_10m,precipitation_probability,uv_index,wind_direction_10m,weather_code",
+        @Query("forecast_days") forecastDays: Int = 7,
         @Query("timezone") timezone: String = "Asia/Kolkata"
     ): OpenMeteoResponse
 }

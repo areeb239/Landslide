@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.*
 import androidx.compose.ui.text.style.TextAlign
@@ -21,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ner.landslide.R
 import com.ner.landslide.presentation.ui.components.GlassCard
 import com.ner.landslide.presentation.ui.components.LoadingContent
 import com.ner.landslide.presentation.ui.components.PulsingStatusDot
@@ -47,16 +49,18 @@ fun LoginScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    listOf(
-                        ObsidianBase,
-                        BackgroundDark,
-                        Color(0xFF0F172A)
+            .background(ObsidianBase)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.radialGradient(
+                        listOf(BrandIndigo.copy(alpha = 0.2f), Color.Transparent)
                     )
                 )
-            )
-    ) {
+        )
+
         if (uiState.isLoading) {
             LoadingContent()
         } else {
@@ -70,27 +74,16 @@ fun LoginScreen(
             ) {
                 Spacer(Modifier.height(16.dp))
 
-                // Brand Emblem with Pulsing Radar
+                // Brand Emblem
                 Box(contentAlignment = Alignment.Center) {
-                    Box(
+                    Image(
+                        painter = painterResource(id = R.drawable.bhoochetak_logo),
+                        contentDescription = "Bhoochetak Logo",
                         modifier = Modifier
                             .size(80.dp)
-                            .clip(CircleShape)
-                            .background(
-                                Brush.linearGradient(
-                                    listOf(BrandIndigo.copy(alpha = 0.3f), Primary80.copy(alpha = 0.2f))
-                                )
-                            )
-                            .border(1.5.dp, Primary80.copy(alpha = 0.5f), CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Shield,
-                            contentDescription = null,
-                            tint = Primary80,
-                            modifier = Modifier.size(42.dp)
-                        )
-                    }
+                            .clip(RoundedCornerShape(18.dp))
+                            .border(1.5.dp, Primary80.copy(alpha = 0.5f), RoundedCornerShape(18.dp))
+                    )
                 }
 
                 Spacer(Modifier.height(18.dp))
@@ -98,7 +91,7 @@ fun LoginScreen(
                 // Title & Mission Classification
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(
-                        text = "BHURAKSHAK",
+                        text = "BHOOCHETAK",
                         fontSize = 26.sp,
                         fontWeight = FontWeight.Black,
                         letterSpacing = 1.5.sp,

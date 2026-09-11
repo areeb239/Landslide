@@ -23,6 +23,21 @@ data class PendingReportEntity(
     val isSynced: Boolean = false
 )
 
+@Entity(tableName = "pending_sos_alerts")
+data class PendingSOSEntity(
+    @PrimaryKey(autoGenerate = true) val localId: Int = 0,
+    val uid: String,
+    val name: String,
+    val phone: String = "",
+    val latitude: Double,
+    val longitude: Double,
+    val sectorName: String = "",
+    val message: String = "SOS — Need Help!",
+    val triggeredAt: Long = System.currentTimeMillis(),
+    val isSynced: Boolean = false,
+    val smsDispatched: Boolean = false
+)
+
 // ─── DAO ──────────────────────────────────────────────────────────────────────
 
 @Dao
@@ -44,13 +59,33 @@ interface PendingReportDao {
     suspend fun deleteSyncedReports()
 }
 
+@Dao
+interface PendingSOSDao {
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSOS(sos: PendingSOSEntity): Long
+
+    @Query("SELECT * FROM pending_sos_alerts WHERE isSynced = 0 ORDER BY triggeredAt DESC")
+    fun getUnsyncedSOS(): Flow<List<PendingSOSEntity>>
+
+    @Query("SELECT * FROM pending_sos_alerts WHERE isSynced = 0 ORDER BY triggeredAt DESC")
+    suspend fun getUnsyncedSOSList(): List<PendingSOSEntity>
+
+    @Query("UPDATE pending_sos_alerts SET isSynced = 1 WHERE localId = :localId")
+    suspend fun markSynced(localId: Int)
+
+    @Query("DELETE FROM pending_sos_alerts WHERE isSynced = 1")
+    suspend fun deleteSyncedSOS()
+}
+
 // ─── Database ─────────────────────────────────────────────────────────────────
 
 @Database(
-    entities = [PendingReportEntity::class],
-    version = 1,
+    entities = [PendingReportEntity::class, PendingSOSEntity::class],
+    version = 2,
     exportSchema = false
 )
 abstract class NERDatabase : RoomDatabase() {
     abstract fun pendingReportDao(): PendingReportDao
+    abstract fun pendingSOSDao(): PendingSOSDao
 }

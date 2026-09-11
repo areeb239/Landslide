@@ -153,7 +153,7 @@ data class PredictionResult(
     val sampleFactors: Map<String, Any> = emptyMap(),
     val recommendation: String = "",
     val isMock: Boolean = false,         // true when backend is unavailable, uses fallback
-    val modelVersion: String = "BhuRakshak-XGBoost-v2.0 (bhurakshak_pipeline.pkl)"
+    val modelVersion: String = "Bhoochetak-XGBoost (bhurakshak_pipeline.pkl)"
 )
 
 // Weather (Open-Meteo)
@@ -162,7 +162,11 @@ data class HourlyWeather(
     val rainfallMm: Double = 0.0,
     val temperature: Double = 0.0,
     val humidity: Double = 0.0,
-    val windSpeedKmh: Double = 0.0
+    val windSpeedKmh: Double = 0.0,
+    val rainProbability: Int = 0,
+    val uvIndex: Double = 0.0,
+    val windDirectionDeg: Double = 0.0,
+    val weatherCode: Int = 0
 )
 
 data class WeatherForecast(

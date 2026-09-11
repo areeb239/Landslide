@@ -1,6 +1,7 @@
 package com.ner.landslide.presentation.ui.auth
 
 import androidx.compose.animation.*
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -15,10 +16,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
+import com.ner.landslide.R
 import com.ner.landslide.presentation.ui.components.PulsingStatusDot
 import com.ner.landslide.presentation.ui.theme.*
 import kotlinx.coroutines.delay
@@ -57,51 +60,25 @@ fun SplashScreen(
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(contentAlignment = Alignment.Center) {
-                    Box(
+                    Image(
+                        painter = painterResource(id = R.drawable.bhoochetak_logo),
+                        contentDescription = "Bhoochetak Logo",
                         modifier = Modifier
-                            .size(100.dp)
-                            .clip(CircleShape)
-                            .background(
-                                Brush.linearGradient(
-                                    listOf(BrandIndigo.copy(alpha = 0.35f), Primary80.copy(alpha = 0.25f))
-                                )
-                            )
-                            .border(1.5.dp, Primary80.copy(alpha = 0.6f), CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Shield,
-                            contentDescription = null,
-                            tint = Primary80,
-                            modifier = Modifier.size(54.dp)
-                        )
-                    }
+                            .size(108.dp)
+                            .clip(RoundedCornerShape(24.dp))
+                            .border(1.5.dp, Primary80.copy(alpha = 0.5f), RoundedCornerShape(24.dp))
+                    )
                 }
 
                 Spacer(Modifier.height(24.dp))
 
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(
-                        text = "BHURAKSHAK",
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 1.8.sp,
-                        color = OnBackgroundDark
-                    )
-                    Surface(
-                        shape = RoundedCornerShape(6.dp),
-                        color = Primary80.copy(alpha = 0.2f),
-                        border = androidx.compose.foundation.BorderStroke(0.8.dp, Primary80.copy(alpha = 0.6f))
-                    ) {
-                        Text(
-                            text = "NER 2.0",
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = Primary80,
-                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
-                        )
-                    }
-                }
+                Text(
+                    text = "BHOOCHETAK",
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Black,
+                    letterSpacing = 1.8.sp,
+                    color = OnBackgroundDark
+                )
 
                 Spacer(Modifier.height(6.dp))
 

@@ -40,4 +40,6 @@ interface SOSRepository {
     suspend fun triggerSOS(sosAlert: SOSAlert): Result<Unit>
     fun getAllSOSAlerts(): Flow<List<SOSAlert>>
     suspend fun resolveSOSAlert(sosId: String): Result<Unit>
+    suspend fun savePendingSOS(sosAlert: SOSAlert, sectorName: String = "", smsDispatched: Boolean = false): Long
+    suspend fun syncPendingSOS(): Result<Unit>
 }

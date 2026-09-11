@@ -3,6 +3,7 @@ package com.ner.landslide.data.repository
 import android.content.Context
 import com.ner.landslide.data.local.database.NERDatabase
 import com.ner.landslide.data.local.database.PendingReportEntity
+import com.ner.landslide.data.local.database.PendingSOSEntity
 import com.ner.landslide.data.remote.api.*
 import com.ner.landslide.data.remote.firestore.*
 import com.ner.landslide.domain.model.*
@@ -140,7 +141,7 @@ class PredictionRepositoryImpl @Inject constructor(
                 sampleFactors = dto.sampleFactors,
                 recommendation = dto.recommendation,
                 isMock = dto.isMock,
-                modelVersion = dto.modelVersion ?: "BhuRakshak-XGBoost-v2.0 (bhurakshak_pipeline.pkl)"
+                modelVersion = dto.modelVersion ?: "Bhoochetak-XGBoost (bhurakshak_pipeline.pkl)"
             )
         }.recoverCatching {
             // FastAPI not reachable — return mock response so demo never breaks
@@ -304,7 +305,7 @@ class PredictionRepositoryImpl @Inject constructor(
                 else -> "✅ NORMAL STATUS: Stable ground conditions. Slope safety factor within acceptable limits."
             },
             isMock = true,
-            modelVersion = "BhuRakshak-Offline (Rule-Based Fallback)"
+            modelVersion = "Bhoochetak-Offline (Rule-Based Fallback)"
         )
     }
 }
@@ -321,12 +322,30 @@ class WeatherRepositoryImpl @Inject constructor(
         val response = api.getWeatherForecast(latitude, longitude)
         val hourly = response.hourly
         val hourlyData = hourly.time.indices.map { i ->
+            val rain = hourly.precipitation.getOrElse(i) { 0.0 }
+            val hum = hourly.humidity.getOrElse(i) { 0.0 }
+            val prob = hourly.precipitationProbability?.getOrNull(i)
+                ?: if (rain > 0.0) minOf(95, (40 + (rain * 12)).toInt()) else if (hum > 70) ((hum - 60) * 1.5).toInt().coerceIn(0, 40) else 5
+            val uv = hourly.uvIndex?.getOrNull(i) ?: run {
+                val hourOfDay = try { hourly.time[i].substringAfter('T').take(2).toInt() } catch (e: Exception) { 12 }
+                if (hourOfDay in 6..18) {
+                    val peakDist = kotlin.math.abs(hourOfDay - 12)
+                    maxOf(0.0, (7.0 - peakDist * 0.9) * (1.0 - (hum / 150.0).coerceIn(0.0, 0.7)))
+                } else 0.0
+            }
+            val windDir = hourly.windDirection?.getOrNull(i) ?: 45.0
+            val code = hourly.weatherCode?.getOrNull(i) ?: 0
+
             HourlyWeather(
                 time = hourly.time[i],
-                rainfallMm = hourly.precipitation.getOrElse(i) { 0.0 },
+                rainfallMm = rain,
                 temperature = hourly.temperature.getOrElse(i) { 0.0 },
-                humidity = hourly.humidity.getOrElse(i) { 0.0 },
-                windSpeedKmh = hourly.windSpeed.getOrElse(i) { 0.0 }
+                humidity = hum,
+                windSpeedKmh = hourly.windSpeed.getOrElse(i) { 0.0 },
+                rainProbability = prob,
+                uvIndex = uv,
+                windDirectionDeg = windDir,
+                weatherCode = code
             )
         }
         WeatherForecast(latitude = latitude, longitude = longitude, hourlyData = hourlyData)
@@ -336,11 +355,45 @@ class WeatherRepositoryImpl @Inject constructor(
 // ─── SOS Repository ────────────────────────────────────────────────────────────
 
 class SOSRepositoryImpl @Inject constructor(
-    private val source: SOSFirestoreSource
+    private val source: SOSFirestoreSource,
+    private val db: NERDatabase
 ) : SOSRepository {
     override suspend fun triggerSOS(sosAlert: SOSAlert): Result<Unit> = source.triggerSOS(sosAlert)
     override fun getAllSOSAlerts(): Flow<List<SOSAlert>> = source.getAllSOSAlerts()
     override suspend fun resolveSOSAlert(sosId: String): Result<Unit> = source.resolveSOSAlert(sosId)
+
+    override suspend fun savePendingSOS(sosAlert: SOSAlert, sectorName: String, smsDispatched: Boolean): Long {
+        val entity = PendingSOSEntity(
+            uid = sosAlert.uid,
+            name = sosAlert.name,
+            latitude = sosAlert.latitude,
+            longitude = sosAlert.longitude,
+            sectorName = sectorName,
+            message = sosAlert.message,
+            triggeredAt = sosAlert.triggeredAt,
+            isSynced = false,
+            smsDispatched = smsDispatched
+        )
+        return db.pendingSOSDao().insertSOS(entity)
+    }
+
+    override suspend fun syncPendingSOS(): Result<Unit> = runCatching {
+        val pending = db.pendingSOSDao().getUnsyncedSOSList()
+        pending.forEach { entity ->
+            val alert = SOSAlert(
+                uid = entity.uid,
+                name = entity.name,
+                latitude = entity.latitude,
+                longitude = entity.longitude,
+                message = "${entity.message} [Offline Cellular/SMS Sync]",
+                triggeredAt = entity.triggeredAt,
+                isResolved = false
+            )
+            source.triggerSOS(alert).onSuccess {
+                db.pendingSOSDao().markSynced(entity.localId)
+            }
+        }
+    }
 }
 
 // ─── User Repository ──────────────────────────────────────────────────────────

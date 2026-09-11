@@ -72,6 +72,15 @@ class TriggerSOSUseCase @Inject constructor(
     private val repo: SOSRepository
 ) {
     suspend operator fun invoke(sos: SOSAlert): Result<Unit> = repo.triggerSOS(sos)
+    suspend fun savePending(sos: SOSAlert, sectorName: String = "", smsDispatched: Boolean = false): Long =
+        repo.savePendingSOS(sos, sectorName, smsDispatched)
+    suspend fun syncPending(): Result<Unit> = repo.syncPendingSOS()
+}
+
+class SyncOfflineSOSUseCase @Inject constructor(
+    private val repo: SOSRepository
+) {
+    suspend operator fun invoke(): Result<Unit> = repo.syncPendingSOS()
 }
 
 class GetAllSOSAlertsUseCase @Inject constructor(

@@ -148,8 +148,10 @@ object RepositoryModule {
         WeatherRepositoryImpl(api)
 
     @Provides @Singleton
-    fun provideSOSRepository(source: SOSFirestoreSource): SOSRepository =
-        SOSRepositoryImpl(source)
+    fun provideSOSRepository(
+        source: SOSFirestoreSource,
+        db: NERDatabase
+    ): SOSRepository = SOSRepositoryImpl(source, db)
 
     @Provides @Singleton
     fun provideUserRepository(

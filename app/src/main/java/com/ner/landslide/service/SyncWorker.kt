@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.hilt.work.HiltWorker
 import androidx.work.*
 import com.ner.landslide.domain.usecase.SyncOfflineReportsUseCase
+import com.ner.landslide.domain.usecase.SyncOfflineSOSUseCase
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import java.util.concurrent.TimeUnit
@@ -12,18 +13,21 @@ import java.util.concurrent.TimeUnit
 class SyncWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted workerParams: WorkerParameters,
-    private val syncReports: SyncOfflineReportsUseCase
+    private val syncReports: SyncOfflineReportsUseCase,
+    private val syncSOS: SyncOfflineSOSUseCase
 ) : CoroutineWorker(context, workerParams) {
 
     override suspend fun doWork(): Result {
         return try {
-            syncReports()
-                .fold(
-                    onSuccess = { Result.success() },
-                    onFailure = {
-                        if (runAttemptCount < 3) Result.retry() else Result.failure()
-                    }
-                )
+            val reportResult = syncReports()
+            val sosResult = syncSOS()
+            if (reportResult.isSuccess && sosResult.isSuccess) {
+                Result.success()
+            } else if (runAttemptCount < 3) {
+                Result.retry()
+            } else {
+                Result.failure()
+            }
         } catch (e: Exception) {
             if (runAttemptCount < 3) Result.retry() else Result.failure()
         }
