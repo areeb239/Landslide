@@ -1,10 +1,44 @@
 from fastapi import APIRouter, Query
-from typing import List, Dict, Any
-from app.models.schemas import PredictionRequest, PredictionResponse
-from app.services.ml_service import predict_landslide_risk
+from typing import List, Dict, Any, Optional
+from app.models.schemas import (
+    PredictionRequest,
+    PredictionResponse,
+    ModelMetadataResponse,
+    FeatureExtractionResponse
+)
+from app.services.ml_service import (
+    predict_landslide_risk,
+    get_model_metadata,
+    extract_features_for_location
+)
 from app.services.weather_service import fetch_weather_and_soil
 
 router = APIRouter(prefix="/api/v1", tags=["Prediction"])
+
+
+@router.get("/predict/extract-features", response_model=FeatureExtractionResponse)
+async def extract_features(
+    latitude: float = Query(..., ge=-90, le=90, description="Latitude"),
+    longitude: float = Query(..., ge=-180, le=180, description="Longitude"),
+    date: Optional[str] = Query(default=None, description="Date (YYYY-MM-DD), defaults to today")
+):
+    """
+    Automated Satellite & GIS Telemetry Extraction:
+    Given latitude and longitude, automatically extracts the 7 features
+    required by bhurakshak_pipeline.pkl:
+    elevation, slope, rainfall_1d, rainfall_3d, rainfall_7d, lithology_group, land_cover.
+    """
+    data = extract_features_for_location(latitude, longitude, date)
+    return FeatureExtractionResponse(**data)
+
+
+@router.get("/predict/metadata", response_model=ModelMetadataResponse)
+async def get_metadata():
+    """
+    Returns metadata for BhuRakshak model pipeline, including available
+    Lithology groups and Land Cover classes for client dropdown pickers.
+    """
+    return get_model_metadata()
 
 
 @router.post("/predict", response_model=PredictionResponse)

@@ -88,21 +88,72 @@ data class SOSAlert(
 
 // AI Prediction from FastAPI
 data class PredictionRequest(
-    val rainfallMm: Double,
-    val slopeDeg: Double,
-    val soilMoisturePct: Double,
-    val antecedentRain3d: Double,
+    val rainfallMm: Double = 0.0,
+    val slopeDeg: Double = 35.0,
+    val soilMoisturePct: Double = 75.0,
+    val antecedentRain3d: Double = 120.0,
+    val elevation: Double = 1450.0,
+    val slope: Double = 35.0,
+    val rainfallPrevious1d: Double = 45.0,
+    val rainfallPrevious3d: Double = 120.0,
+    val rainfallPrevious7d: Double = 250.0,
+    val lithologyGroup: String = "Metamorphic rocks",
+    val landCover: String = "Tree cover",
     val latitude: Double = 0.0,
     val longitude: Double = 0.0
+)
+
+object ModelConstants {
+    val LITHOLOGY_GROUPS = listOf(
+        "Metamorphic rocks",
+        "Siliciclastic sedimentary rocks",
+        "Unconsolidated sediments",
+        "Carbonate sedimentary rocks",
+        "Mixed sedimentary rocks",
+        "Acid plutonic rocks",
+        "Basic plutonic rocks",
+        "Intermediate volcanic rocks",
+        "Basic volcanic rocks"
+    )
+
+    val LAND_COVER_CLASSES = listOf(
+        "Tree cover",
+        "Grassland",
+        "Cropland",
+        "Built-up",
+        "Bare/sparse vegetation",
+        "Shrubland",
+        "Herbaceous wetland",
+        "Snow/ice",
+        "Permanent water"
+    )
+}
+
+data class FeatureExtractionResult(
+    val latitude: Double = 0.0,
+    val longitude: Double = 0.0,
+    val date: String = "",
+    val locationName: String? = null,
+    val elevation: Double = 1450.0,
+    val slope: Double = 35.0,
+    val rainfallPrevious1d: Double = 25.0,
+    val rainfallPrevious3d: Double = 75.0,
+    val rainfallPrevious7d: Double = 160.0,
+    val lithologyGroup: String = "Metamorphic rocks",
+    val landCover: String = "Tree cover",
+    val source: Map<String, String> = emptyMap()
 )
 
 data class PredictionResult(
     val riskLevel: String = "",          // LOW / MODERATE / HIGH / CRITICAL
     val probability: Double = 0.0,       // 0.0 – 1.0
-    val confidence: Double = 0.0,
+    val confidence: Double = 0.0,        // Deprecated; use probability
     val factors: Map<String, Double> = emptyMap(), // XAI factor importance
+    val featureImportances: Map<String, Double> = emptyMap(),
+    val sampleFactors: Map<String, Any> = emptyMap(),
     val recommendation: String = "",
-    val isMock: Boolean = false          // true when Flask is unavailable, uses mock data
+    val isMock: Boolean = false,         // true when backend is unavailable, uses fallback
+    val modelVersion: String = "BhuRakshak-XGBoost-v2.0 (bhurakshak_pipeline.pkl)"
 )
 
 // Weather (Open-Meteo)

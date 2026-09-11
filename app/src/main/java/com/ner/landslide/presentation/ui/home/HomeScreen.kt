@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,6 +25,7 @@ import com.ner.landslide.domain.model.*
 import com.ner.landslide.presentation.ui.components.*
 import com.ner.landslide.presentation.ui.theme.*
 import com.ner.landslide.presentation.viewmodel.*
+import com.ner.landslide.util.toRelativeTimeString
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,16 +37,44 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val colors = BhurakshakTheme.colors
+    val strings = LocalAppStrings.current
     val themeController = LocalThemeController.current
     val localeController = LocalLocaleController.current
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showSOSDialog by remember { mutableStateOf(false) }
     var selectedSeverityFilter by remember { mutableStateOf<AlertSeverity?>(null) }
 
+    var isCitizenMode by rememberSaveable { mutableStateOf(true) }
+    var countdownSeconds by remember { mutableIntStateOf(5) }
+    var isCountingDown by remember { mutableStateOf(false) }
+
     LaunchedEffect(uiState.sosState) {
         if (uiState.sosState == SOSState.SENT) {
             kotlinx.coroutines.delay(3500)
             viewModel.resetSOSState()
+        }
+    }
+
+    LaunchedEffect(showSOSDialog) {
+        if (showSOSDialog) {
+            countdownSeconds = 5
+            isCountingDown = true
+        } else {
+            isCountingDown = false
+        }
+    }
+
+    LaunchedEffect(showSOSDialog, countdownSeconds, isCountingDown) {
+        if (showSOSDialog && isCountingDown && countdownSeconds > 0) {
+            kotlinx.coroutines.delay(1000)
+            if (showSOSDialog && isCountingDown) {
+                countdownSeconds -= 1
+                if (countdownSeconds == 0) {
+                    showSOSDialog = false
+                    isCountingDown = false
+                    viewModel.onSOSTrigger()
+                }
+            }
         }
     }
 
@@ -54,51 +84,129 @@ fun HomeScreen(
 
     if (showSOSDialog) {
         AlertDialog(
-            onDismissRequest = { showSOSDialog = false },
+            onDismissRequest = {
+                showSOSDialog = false
+                isCountingDown = false
+            },
             containerColor = colors.bgSurface,
             icon = {
                 Box(
                     modifier = Modifier
-                        .size(48.dp)
+                        .size(60.dp)
                         .clip(CircleShape)
-                        .background(colors.critical.copy(alpha = 0.15f)),
+                        .background(colors.critical.copy(alpha = 0.2f))
+                        .border(2.dp, colors.critical, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Default.Emergency, null, tint = colors.critical, modifier = Modifier.size(28.dp))
+                    Text(
+                        text = "$countdownSeconds",
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Black,
+                        color = colors.critical
+                    )
                 }
             },
             title = {
-                Text(
-                    "TRIGGER EMERGENCY SOS?",
-                    fontWeight = FontWeight.ExtraBold,
-                    fontSize = 17.sp,
-                    color = colors.textPrimary,
-                    letterSpacing = 0.5.sp
-                )
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = "EMERGENCY SOS DISPATCH",
+                        fontWeight = FontWeight.Black,
+                        fontSize = 17.sp,
+                        color = colors.critical,
+                        letterSpacing = 0.5.sp,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                    Text(
+                        text = "Broadcasting to SDRF / NDMA in $countdownSeconds seconds...",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontSize = 11.sp,
+                        color = colors.textSecondary,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                }
             },
             text = {
-                Text(
-                    "This broadcasts your verified GPS coordinates directly to the State Disaster Management Authority (SDMA) and District Incident Response Teams.\n\nUse solely in case of immediate slope failure, structural collapse, or life hazard.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colors.textSecondary,
-                    lineHeight = 19.sp
-                )
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = colors.bgBase,
+                        border = BorderStroke(1.dp, colors.borderDefault),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(10.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                text = "LOCKED GPS RESCUE TELEMETRY",
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.textSecondary
+                            )
+                            Text(
+                                text = String.format(java.util.Locale.US, "%.4f° N, %.4f° E", uiState.sosLocationLat, uiState.sosLocationLon),
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.textPrimary
+                            )
+                        }
+                    }
+
+                    Text(
+                        text = "This will immediately notify Quick Response Teams with your verified live coordinates.\n\nTap CANCEL below if tapped accidentally.",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontSize = 11.5.sp,
+                        color = colors.textSecondary,
+                        lineHeight = 16.sp
+                    )
+
+                    LinearProgressIndicator(
+                        progress = { (countdownSeconds / 5f).coerceIn(0f, 1f) },
+                        color = colors.critical,
+                        trackColor = colors.critical.copy(alpha = 0.2f),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(6.dp)
+                            .clip(RoundedCornerShape(3.dp))
+                    )
+                }
             },
             confirmButton = {
                 Button(
                     onClick = {
                         showSOSDialog = false
-                        viewModel.onSOSTrigger()
+                        isCountingDown = false
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = colors.critical),
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("TRANSMIT SOS", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color.White)
+                    Text(
+                        text = "CANCEL SOS DISPATCH",
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 13.sp,
+                        color = Color.White
+                    )
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showSOSDialog = false }) {
-                    Text("Cancel", color = colors.textSecondary, fontSize = 12.sp)
+                TextButton(
+                    onClick = {
+                        showSOSDialog = false
+                        isCountingDown = false
+                        viewModel.onSOSTrigger()
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "Send Immediately (Imminent Hazard) →",
+                        color = colors.textSecondary,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
             }
         )
@@ -126,7 +234,7 @@ fun HomeScreen(
                     ) {
                         PulsingStatusDot(color = colors.accent, size = 6.dp)
                         Text(
-                            text = "TELEMETRY RADAR: ACTIVE",
+                            text = if (isCitizenMode) "SAFETY MONITOR: ACTIVE" else strings.telemetryRadarActive,
                             style = MaterialTheme.typography.labelSmall,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
@@ -135,11 +243,38 @@ fun HomeScreen(
                         )
                     }
 
-                    // Global utility controls: Admin, Language Selector, Theme Switcher
+                    // Global utility controls: Citizen/Official Mode, Admin, Language Selector, Theme Switcher
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
+                        // Plain-Language Citizen Mode vs Official Mode Switch
+                        Surface(
+                            onClick = { isCitizenMode = !isCitizenMode },
+                            shape = RoundedCornerShape(16.dp),
+                            color = colors.bgSurface,
+                            border = BorderStroke(1.dp, if (isCitizenMode) colors.accent else colors.warning)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = if (isCitizenMode) Icons.Default.Person else Icons.Default.Tune,
+                                    contentDescription = null,
+                                    tint = if (isCitizenMode) colors.accent else colors.warning,
+                                    modifier = Modifier.size(12.dp)
+                                )
+                                Text(
+                                    text = if (isCitizenMode) "Citizen" else "Official",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isCitizenMode) colors.accent else colors.warning
+                                )
+                            }
+                        }
+
                         if (uiState.currentUser?.role == UserRole.ADMIN) {
                             Surface(
                                 onClick = onNavigateToAdmin,
@@ -211,7 +346,7 @@ fun HomeScreen(
                     Column(modifier = Modifier.weight(1f, fill = false)) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(
-                                text = "BHURAKSHAK",
+                                text = strings.appTitle,
                                 fontSize = 20.sp,
                                 fontWeight = FontWeight.Black,
                                 letterSpacing = 1.sp,
@@ -227,7 +362,7 @@ fun HomeScreen(
                                 )
                         }
                         Text(
-                            text = "Himalayan Landslide Early Warning & Response",
+                            text = strings.appSubtitle,
                             style = MaterialTheme.typography.bodySmall,
                             fontSize = 11.sp,
                             color = colors.textSecondary
@@ -280,6 +415,47 @@ fun HomeScreen(
                 }
             }
 
+            // Real Offline State Banner (Emergency Buffer Active)
+            if (!uiState.isOnline) {
+                item {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = colors.warning.copy(alpha = 0.12f),
+                        border = BorderStroke(1.dp, colors.warning.copy(alpha = 0.5f)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.CloudOff,
+                                contentDescription = null,
+                                tint = colors.warning,
+                                modifier = Modifier.size(22.dp)
+                            )
+                            Column {
+                                Text(
+                                    text = "OFFLINE MODE — CACHED RISK DATA",
+                                    fontWeight = FontWeight.ExtraBold,
+                                    fontSize = 11.sp,
+                                    color = colors.warning,
+                                    letterSpacing = 0.4.sp
+                                )
+                                Text(
+                                    text = "Offline — showing last known risk from ${uiState.lastSyncedTime.toRelativeTimeString()}. Emergency SOS and disaster reports are queued locally for transmission.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontSize = 10.5.sp,
+                                    color = colors.textPrimary,
+                                    lineHeight = 15.sp
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
             // Real-time Regional Telemetry Instrumentation (Inline Micro-Gauges)
             item {
                 Row(
@@ -287,7 +463,7 @@ fun HomeScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     TelemetryInstrumentTile(
-                        title = "Rainfall",
+                        title = strings.rainfall,
                         value = "48.2",
                         unit = "mm",
                         progressFraction = 0.48f,
@@ -295,7 +471,7 @@ fun HomeScreen(
                         modifier = Modifier.weight(1f)
                     )
                     TelemetryInstrumentTile(
-                        title = "Soil Sat",
+                        title = strings.soilSat,
                         value = "64%",
                         unit = "Sat",
                         progressFraction = 0.64f,
@@ -303,9 +479,9 @@ fun HomeScreen(
                         modifier = Modifier.weight(1f)
                     )
                     TelemetryInstrumentTile(
-                        title = "Sectors",
+                        title = strings.sectors,
                         value = "8",
-                        unit = "Live",
+                        unit = strings.live,
                         progressFraction = 0.80f,
                         indicatorColor = colors.accent,
                         modifier = Modifier.weight(1f)
@@ -362,14 +538,19 @@ fun HomeScreen(
 
             // Embedded Emergency SOS Dispatch Action Bar (Tactile Crimson Treatment)
             item {
-                EmergencySOSBar(onTriggerSOS = { showSOSDialog = true })
+                EmergencySOSBar(
+                    onTriggerSOS = { showSOSDialog = true },
+                    isCitizenMode = isCitizenMode
+                )
             }
 
-            // Secondary Utility: AI Hazard Neural Core
+            // Secondary Utility: AI Hazard Prediction Card
             item {
                 HeroAiFeatureCard(
                     onRunPredict = onNavigateToPrediction,
-                    onOpenDoppler = onNavigateToWeather
+                    onOpenDoppler = onNavigateToWeather,
+                    isCitizenMode = isCitizenMode,
+                    isOnline = uiState.isOnline
                 )
             }
 
@@ -378,8 +559,8 @@ fun HomeScreen(
                 Spacer(Modifier.height(4.dp))
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     SectionHeader(
-                        title = "Regional Hazard Feed",
-                        subtitle = "${uiState.alerts.size} active alert(s) across Eastern Himalayas",
+                        title = strings.regionalHazardFeed,
+                        subtitle = "${uiState.alerts.size} ${strings.activeAlertsSuffix}",
                         trailingContent = {
                             Surface(
                                 shape = RoundedCornerShape(4.dp),
@@ -392,7 +573,7 @@ fun HomeScreen(
                                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
                                     Icon(Icons.Default.Sensors, null, tint = colors.accent, modifier = Modifier.size(11.dp))
-                                    Text("LIVE FEED", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = colors.accent)
+                                    Text(strings.liveFeedBadge, fontSize = 9.sp, fontWeight = FontWeight.Bold, color = colors.accent)
                                 }
                             }
                         }
@@ -413,7 +594,7 @@ fun HomeScreen(
                             shadowElevation = if (colors.isDark) 0.dp else 1.dp
                         ) {
                             Text(
-                                text = "All (${uiState.alerts.size})",
+                                text = "${strings.filterAll} (${uiState.alerts.size})",
                                 fontSize = 11.sp,
                                 fontWeight = if (isAllSelected) FontWeight.Bold else FontWeight.Medium,
                                 color = if (isAllSelected) Color.White else colors.textSecondary,
@@ -432,7 +613,7 @@ fun HomeScreen(
                             shadowElevation = if (colors.isDark) 0.dp else 1.dp
                         ) {
                             Text(
-                                text = "Critical ($critCount)",
+                                text = "${strings.filterCritical} ($critCount)",
                                 fontSize = 11.sp,
                                 fontWeight = if (isCritSelected) FontWeight.Bold else FontWeight.Medium,
                                 color = if (isCritSelected) Color.White else colors.textSecondary,
@@ -451,7 +632,7 @@ fun HomeScreen(
                             shadowElevation = if (colors.isDark) 0.dp else 1.dp
                         ) {
                             Text(
-                                text = "Warning ($highCount)",
+                                text = "${strings.filterWarning} ($highCount)",
                                 fontSize = 11.sp,
                                 fontWeight = if (isHighSelected) FontWeight.Bold else FontWeight.Medium,
                                 color = if (isHighSelected) Color.White else colors.textSecondary,
@@ -470,7 +651,7 @@ fun HomeScreen(
                             shadowElevation = if (colors.isDark) 0.dp else 1.dp
                         ) {
                             Text(
-                                text = "Advisory ($modCount)",
+                                text = "${strings.filterAdvisory} ($modCount)",
                                 fontSize = 11.sp,
                                 fontWeight = if (isModSelected) FontWeight.Bold else FontWeight.Medium,
                                 color = if (isModSelected) Color.White else colors.textSecondary,
@@ -516,7 +697,7 @@ fun HomeScreen(
                             )
                             Spacer(Modifier.height(10.dp))
                             Text(
-                                "SECTORS NOMINAL",
+                                text = if (isCitizenMode) "ALL CLEAR" else "SECTORS NOMINAL",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 13.sp,
@@ -525,7 +706,7 @@ fun HomeScreen(
                             )
                             Spacer(Modifier.height(3.dp))
                             Text(
-                                "No active slope failures matching this filter across monitored corridors.",
+                                text = if (isCitizenMode) "No active landslide warnings reported in your area right now." else "No active slope failures matching this filter across monitored corridors.",
                                 style = MaterialTheme.typography.bodySmall,
                                 fontSize = 11.sp,
                                 color = colors.textSecondary,
@@ -617,9 +798,12 @@ private fun MissionUserProfileCard(user: User) {
 @Composable
 private fun HeroAiFeatureCard(
     onRunPredict: () -> Unit,
-    onOpenDoppler: () -> Unit
+    onOpenDoppler: () -> Unit,
+    isCitizenMode: Boolean = true,
+    isOnline: Boolean = true
 ) {
     val colors = BhurakshakTheme.colors
+    val strings = LocalAppStrings.current
     FieldCard(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(14.dp),
@@ -644,7 +828,7 @@ private fun HeroAiFeatureCard(
                         Icon(Icons.Default.Psychology, null, tint = colors.accent, modifier = Modifier.size(17.dp))
                     }
                     Text(
-                        text = "AI HAZARD NEURAL CORE",
+                        text = if (isCitizenMode) "CHECK LANDSLIDE RISK" else strings.aiHazardNeuralCore,
                         fontWeight = FontWeight.Bold,
                         fontSize = 12.sp,
                         letterSpacing = 0.5.sp,
@@ -654,21 +838,21 @@ private fun HeroAiFeatureCard(
 
                 Surface(
                     shape = RoundedCornerShape(4.dp),
-                    color = colors.accent.copy(alpha = 0.12f),
-                    border = BorderStroke(1.dp, colors.accent.copy(alpha = 0.3f))
+                    color = if (isOnline) colors.success.copy(alpha = 0.12f) else colors.warning.copy(alpha = 0.12f),
+                    border = BorderStroke(1.dp, if (isOnline) colors.success.copy(alpha = 0.3f) else colors.warning.copy(alpha = 0.3f))
                 ) {
                     Text(
-                        text = "ONLINE",
+                        text = if (isOnline) strings.online else "OFFLINE",
                         fontSize = 9.sp,
                         fontWeight = FontWeight.Bold,
-                        color = colors.accent,
-                        modifier = Modifier.padding(horizontal = 3.dp, vertical = 2.dp)
+                        color = if (isOnline) colors.success else colors.warning,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                     )
                 }
             }
 
             Text(
-                text = "Evaluate geotechnical slope failure probability using live 24h rainfall saturation, antecedent precipitation index, and digital elevation models.",
+                text = if (isCitizenMode) "Check if your village, slope, or travel route is at risk of landslide based on recent rain and steep terrain." else strings.aiHazardDescription,
                 style = MaterialTheme.typography.bodySmall,
                 fontSize = 11.sp,
                 color = colors.textSecondary,
@@ -687,7 +871,7 @@ private fun HeroAiFeatureCard(
                 ) {
                     Icon(Icons.Default.Bolt, null, modifier = Modifier.size(15.dp), tint = Color.White)
                     Spacer(Modifier.width(6.dp))
-                    Text("Calculate Risk", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 12.sp)
+                    Text(if (isCitizenMode) "Check My Risk" else strings.calculateRisk, fontWeight = FontWeight.Bold, color = Color.White, fontSize = 12.sp)
                 }
 
                 OutlinedButton(
@@ -699,7 +883,7 @@ private fun HeroAiFeatureCard(
                 ) {
                     Icon(Icons.Default.Radar, null, modifier = Modifier.size(15.dp), tint = colors.accent)
                     Spacer(Modifier.width(6.dp))
-                    Text("Doppler", fontWeight = FontWeight.SemiBold, color = colors.textPrimary, fontSize = 12.sp)
+                    Text(if (isCitizenMode) "Rain Radar" else strings.doppler, fontWeight = FontWeight.SemiBold, color = colors.textPrimary, fontSize = 12.sp)
                 }
             }
         }

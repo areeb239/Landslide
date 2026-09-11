@@ -1,6 +1,8 @@
+import os
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
 from app.routers import predict, alerts, sensors, sos, health, data_sources
@@ -58,6 +60,14 @@ app.include_router(sos.router)
 app.include_router(data_sources.router)
 
 
+@app.get("/dashboard", response_class=FileResponse)
+async def get_dashboard():
+    static_file = os.path.join(os.path.dirname(__file__), "static", "dashboard.html")
+    if os.path.exists(static_file):
+        return FileResponse(static_file)
+    return {"error": "Dashboard template not found"}
+
+
 @app.get("/")
 async def root():
     return {
@@ -65,10 +75,13 @@ async def root():
         "region": "North Eastern Region (NER) India",
         "status": "online",
         "version": "1.0.0",
+        "dashboard": "/dashboard",
         "documentation": "/docs",
         "openapi": "/openapi.json",
         "endpoints": {
+            "dashboard": "GET /dashboard",
             "prediction": "POST /api/v1/predict",
+            "prediction_metadata": "GET /api/v1/predict/metadata",
             "prediction_by_location": "GET /api/v1/predict/location?latitude=27.17&longitude=88.53",
             "hotspots": "GET /api/v1/predict/hotspots",
             "alerts": "GET /api/v1/alerts | POST /api/v1/alerts",

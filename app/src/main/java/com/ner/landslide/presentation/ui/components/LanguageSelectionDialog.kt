@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ner.landslide.presentation.ui.theme.AppLanguage
 import com.ner.landslide.presentation.ui.theme.BhurakshakTheme
+import com.ner.landslide.presentation.ui.theme.LocalAppStrings
 import com.ner.landslide.presentation.ui.theme.LocalLocaleController
 import com.ner.landslide.presentation.ui.theme.SupportedLanguages
 
@@ -54,6 +55,7 @@ fun LanguageSelectionDialog(
     onDismissRequest: () -> Unit
 ) {
     val colors = BhurakshakTheme.colors
+    val strings = LocalAppStrings.current
     val localeController = LocalLocaleController.current
     val currentLang = localeController.currentLanguage.value
 
@@ -102,13 +104,13 @@ fun LanguageSelectionDialog(
 
                         Column {
                             Text(
-                                text = "Language & Dialect",
+                                text = strings.languageDialogTitle,
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = colors.textPrimary
                             )
                             Text(
-                                text = "Eastern Himalayas Field Telemetry",
+                                text = strings.languageDialogSub,
                                 style = MaterialTheme.typography.labelSmall,
                                 color = colors.textSecondary
                             )
@@ -132,7 +134,7 @@ fun LanguageSelectionDialog(
 
                 // State Filter Chips
                 Text(
-                    text = "FILTER BY REGION / STATE",
+                    text = strings.filterByState,
                     style = MaterialTheme.typography.labelSmall,
                     color = colors.textSecondary,
                     fontWeight = FontWeight.Bold,

@@ -34,9 +34,31 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ner.landslide.domain.model.PredictionResult
+import com.ner.landslide.domain.model.ModelConstants
 import com.ner.landslide.presentation.ui.components.*
 import com.ner.landslide.presentation.ui.theme.*
 import com.ner.landslide.presentation.viewmodel.PredictionViewModel
+
+data class CityPreset(
+    val id: String,
+    val name: String,
+    val state: String,
+    val lat: Double,
+    val lon: Double
+)
+
+private val HIMALAYAN_CITIES = listOf(
+    CityPreset("gangtok", "Gangtok (Urban)", "Sikkim", 27.33, 88.61),
+    CityPreset("shillong", "Shillong (Urban)", "Meghalaya", 25.57, 91.89),
+    CityPreset("guwahati", "Guwahati (Built-up)", "Assam", 26.14, 91.74),
+    CityPreset("aizawl", "Aizawl (Urban)", "Mizoram", 23.73, 92.71),
+    CityPreset("kohima", "Kohima (Urban)", "Nagaland", 25.67, 94.11),
+    CityPreset("itanagar", "Itanagar (Urban)", "Arunachal", 27.08, 93.60),
+    CityPreset("darjeeling", "Darjeeling (Tea Hills)", "WB/Sikkim", 27.04, 88.26),
+    CityPreset("kaziranga", "Kaziranga Buffer", "Assam Forest • 0.3% Low", 26.58, 93.17),
+    CityPreset("majuli", "Majuli Plain", "Assam Farmland • 0.4% Low", 26.95, 94.22),
+    CityPreset("mawphlang", "Mawphlang Forest", "Meghalaya • 31% Mod", 25.45, 91.75)
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -46,6 +68,7 @@ fun PredictionScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val colors = BhurakshakTheme.colors
+    val strings = LocalAppStrings.current
     var selectedScenario by remember { mutableStateOf<String?>("Monsoon Cloudburst") }
 
     Scaffold(
@@ -55,13 +78,13 @@ fun PredictionScreen(
                 title = {
                     Column {
                         Text(
-                            "AI Hazard Inference",
+                            text = strings.predictionScreenTitle,
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp,
                             color = colors.textPrimary
                         )
                         Text(
-                            "Geotechnical XGBoost & ML Pipeline",
+                            text = strings.predictionScreenSub,
                             style = MaterialTheme.typography.labelSmall,
                             color = colors.accent
                         )
@@ -87,10 +110,210 @@ fun PredictionScreen(
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Location & Satellite Telemetry Intelligence Card
+            FieldCard(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(Icons.Default.LocationOn, contentDescription = null, tint = colors.accent, modifier = Modifier.size(20.dp))
+                            Column {
+                                Text(
+                                    text = "LOCATION & SATELLITE TELEMETRY",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    letterSpacing = 1.sp,
+                                    color = colors.accent
+                                )
+                                uiState.locationName?.let { loc ->
+                                    Text(
+                                        text = loc,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = colors.textPrimary
+                                    )
+                                }
+                            }
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = colors.accent.copy(alpha = 0.12f),
+                            border = BorderStroke(1.dp, colors.accent.copy(alpha = 0.3f))
+                        ) {
+                            Text(
+                                text = "AUTO-EXTRACTION",
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.accent,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+
+                    // City Presets horizontal scroll
+                    Text(
+                        text = "Regional Presets (Instant Cached Load):",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = colors.textSecondary,
+                        fontWeight = FontWeight.Medium
+                    )
+
+                    Row(
+                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        HIMALAYAN_CITIES.forEach { city ->
+                            val isSelected = uiState.selectedPreset == city.id
+                            Surface(
+                                onClick = {
+                                    selectedScenario = null
+                                    viewModel.selectPreset(city.id, city.lat, city.lon, "${city.name} (${city.state})")
+                                },
+                                shape = RoundedCornerShape(8.dp),
+                                color = if (isSelected) colors.accent else colors.bgSurface,
+                                border = BorderStroke(1.dp, if (isSelected) colors.accent else colors.borderDefault)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(5.dp)
+                                ) {
+                                    Text(
+                                        text = city.name,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                        color = if (isSelected) Color.White else colors.textPrimary
+                                    )
+                                    Text(
+                                        text = city.state,
+                                        fontSize = 9.sp,
+                                        color = if (isSelected) Color.White.copy(alpha = 0.8f) else colors.textSecondary
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // Coordinates Header & GPS Action
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "GEOGRAPHIC COORDINATES",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 10.sp,
+                            letterSpacing = 0.5.sp,
+                            color = colors.textSecondary
+                        )
+                        TextButton(
+                            onClick = { viewModel.useCurrentLocation() },
+                            contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp)
+                        ) {
+                            Icon(Icons.Default.LocationOn, contentDescription = null, modifier = Modifier.size(13.dp), tint = colors.accent)
+                            Spacer(Modifier.width(4.dp))
+                            Text("Use Current GPS", fontSize = 11.sp, color = colors.accent, fontWeight = FontWeight.Bold)
+                        }
+                    }
+
+                    // Coordinates Row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Box(modifier = Modifier.weight(1f)) {
+                            PredictionInputField(
+                                label = "Latitude (°N)",
+                                unit = "decimal",
+                                icon = Icons.Default.Place,
+                                iconColor = colors.accent,
+                                value = uiState.latitude,
+                                onValueChange = {
+                                    selectedScenario = null
+                                    viewModel.onLatitudeChange(it)
+                                },
+                                placeholder = "27.33"
+                            )
+                        }
+                        Box(modifier = Modifier.weight(1f)) {
+                            PredictionInputField(
+                                label = "Longitude (°E)",
+                                unit = "decimal",
+                                icon = Icons.Default.Explore,
+                                iconColor = colors.accent,
+                                value = uiState.longitude,
+                                onValueChange = {
+                                    selectedScenario = null
+                                    viewModel.onLongitudeChange(it)
+                                },
+                                placeholder = "88.61"
+                            )
+                        }
+                    }
+
+                    // Fetch Telemetry Button
+                    Button(
+                        onClick = { viewModel.fetchTelemetry() },
+                        enabled = !uiState.isExtractingFeatures,
+                        modifier = Modifier.fillMaxWidth().height(42.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = colors.bgSurface,
+                            contentColor = colors.accent
+                        ),
+                        border = BorderStroke(1.dp, colors.accent.copy(alpha = 0.5f))
+                    ) {
+                        if (uiState.isExtractingFeatures) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp,
+                                color = colors.accent
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text("Extracting GIS Telemetry...", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                        } else {
+                            Icon(Icons.Default.CloudDownload, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text("Fetch Satellite Telemetry (SRTM / GLiM)", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+
+                    uiState.telemetryMessage?.let { msg ->
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = colors.success.copy(alpha = 0.1f),
+                            border = BorderStroke(1.dp, colors.success.copy(alpha = 0.3f)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(Icons.Default.CheckCircle, contentDescription = null, tint = colors.success, modifier = Modifier.size(14.dp))
+                                Text(text = msg, fontSize = 11.sp, color = colors.success, fontWeight = FontWeight.Medium)
+                            }
+                        }
+                    }
+                }
+            }
+
             // Scenario Quick Presets
             SectionHeader(
-                title = "Geotechnical Scenarios",
-                subtitle = "Select a rapid simulation preset or input field telemetry below"
+                title = strings.geotechnicalScenarios,
+                subtitle = strings.scenarioSub
             )
 
             Row(
@@ -98,71 +321,82 @@ fun PredictionScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 ScenarioChip(
-                    title = "Monsoon Cloudburst",
+                    title = strings.scenarioCloudburst,
                     accent = colors.critical,
                     isSelected = selectedScenario == "Monsoon Cloudburst",
                     onClick = {
                         selectedScenario = "Monsoon Cloudburst"
-                        viewModel.onRainfallChange("185")
+                        viewModel.onRainfall1dChange("185")
                         viewModel.onSlopeChange("42")
-                        viewModel.onSoilMoistureChange("92")
-                        viewModel.onAntecedentRainChange("320")
+                        viewModel.onRainfall3dChange("320")
+                        viewModel.onRainfall7dChange("480")
+                        viewModel.onElevationChange("1850")
+                        viewModel.onLithologyChange("Metamorphic rocks")
+                        viewModel.onLandCoverChange("Tree cover")
                     }
                 )
                 ScenarioChip(
-                    title = "Moderate Hill Shower",
+                    title = strings.scenarioModerate,
                     accent = colors.warning,
                     isSelected = selectedScenario == "Moderate Hill Shower",
                     onClick = {
                         selectedScenario = "Moderate Hill Shower"
-                        viewModel.onRainfallChange("55")
+                        viewModel.onRainfall1dChange("55")
                         viewModel.onSlopeChange("28")
-                        viewModel.onSoilMoistureChange("62")
-                        viewModel.onAntecedentRainChange("95")
+                        viewModel.onRainfall3dChange("95")
+                        viewModel.onRainfall7dChange("160")
+                        viewModel.onElevationChange("1400")
+                        viewModel.onLithologyChange("Siliciclastic sedimentary rocks")
+                        viewModel.onLandCoverChange("Grassland")
                     }
                 )
                 ScenarioChip(
-                    title = "Dry Hill Slope",
+                    title = strings.scenarioDry,
                     accent = colors.accent,
                     isSelected = selectedScenario == "Dry Hill Slope",
                     onClick = {
                         selectedScenario = "Dry Hill Slope"
-                        viewModel.onRainfallChange("5")
+                        viewModel.onRainfall1dChange("5")
                         viewModel.onSlopeChange("18")
-                        viewModel.onSoilMoistureChange("22")
-                        viewModel.onAntecedentRainChange("12")
+                        viewModel.onRainfall3dChange("12")
+                        viewModel.onRainfall7dChange("25")
+                        viewModel.onElevationChange("950")
+                        viewModel.onLithologyChange("Carbonate sedimentary rocks")
+                        viewModel.onLandCoverChange("Cropland")
                     }
                 )
             }
 
-            // Input Telemetry Section
+            // Input Telemetry Section (All 7 Geotechnical & GIS Features)
             FieldCard(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                     Text(
-                        "SLOPE & METEOROLOGICAL TELEMETRY",
+                        text = strings.slopeTelemetryHeader,
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.ExtraBold,
                         letterSpacing = 1.sp,
                         color = colors.accent
                     )
 
+                    // 1. Elevation (MSL)
                     PredictionInputField(
-                        label = "Current 24h Precipitation",
-                        unit = "mm",
-                        icon = Icons.Default.WaterDrop,
+                        label = strings.elevation,
+                        unit = "m MSL",
+                        icon = Icons.Default.Landscape,
                         iconColor = colors.accent,
-                        value = uiState.rainfallMm,
+                        value = uiState.elevation,
                         onValueChange = {
                             selectedScenario = null
-                            viewModel.onRainfallChange(it)
+                            viewModel.onElevationChange(it)
                         },
-                        placeholder = "e.g. 140"
+                        placeholder = "e.g. 1650"
                     )
 
+                    // 2. Slope Angle (degrees)
                     PredictionInputField(
-                        label = "Slope Angle Inclination",
+                        label = strings.slopeAngle,
                         unit = "degrees (°)",
                         icon = Icons.Default.Terrain,
                         iconColor = colors.warning,
@@ -174,37 +408,79 @@ fun PredictionScreen(
                         placeholder = "e.g. 38"
                     )
 
+                    // 3. Current 24h Precipitation (rainfall_previous_1d)
                     PredictionInputField(
-                        label = "Volumetric Soil Moisture",
-                        unit = "% saturation",
-                        icon = Icons.Default.Grass,
+                        label = strings.rainfall1d,
+                        unit = "mm (24h)",
+                        icon = Icons.Default.WaterDrop,
                         iconColor = colors.accent,
-                        value = uiState.soilMoisturePct,
+                        value = uiState.rainfall1d,
                         onValueChange = {
                             selectedScenario = null
-                            viewModel.onSoilMoistureChange(it)
+                            viewModel.onRainfall1dChange(it)
                         },
-                        placeholder = "e.g. 82"
+                        placeholder = "e.g. 85"
                     )
 
+                    // 4. 3-Day Antecedent Rainfall Index (rainfall_previous_3d)
                     PredictionInputField(
-                        label = "3-Day Antecedent Rainfall Index",
-                        unit = "mm accumulated",
+                        label = strings.rainfall3d,
+                        unit = "mm (3-day)",
                         icon = Icons.Default.CloudSync,
                         iconColor = colors.accent,
-                        value = uiState.antecedentRain3d,
+                        value = uiState.rainfall3d,
                         onValueChange = {
                             selectedScenario = null
-                            viewModel.onAntecedentRainChange(it)
+                            viewModel.onRainfall3dChange(it)
                         },
-                        placeholder = "e.g. 260"
+                        placeholder = "e.g. 190"
+                    )
+
+                    // 5. 7-Day Cumulative Precipitation (rainfall_previous_7d)
+                    PredictionInputField(
+                        label = strings.rainfall7d,
+                        unit = "mm (7-day)",
+                        icon = Icons.Default.Thunderstorm,
+                        iconColor = colors.critical,
+                        value = uiState.rainfall7d,
+                        onValueChange = {
+                            selectedScenario = null
+                            viewModel.onRainfall7dChange(it)
+                        },
+                        placeholder = "e.g. 320"
+                    )
+
+                    // 6. Lithology Group (GLiM Categorical Feature)
+                    PredictionDropdownField(
+                        label = strings.lithology,
+                        selectedValue = uiState.lithologyGroup,
+                        options = ModelConstants.LITHOLOGY_GROUPS,
+                        onValueChange = {
+                            selectedScenario = null
+                            viewModel.onLithologyChange(it)
+                        },
+                        icon = Icons.Default.Layers,
+                        iconColor = colors.warning
+                    )
+
+                    // 8. Land Cover (ESA WorldCover Categorical Feature)
+                    PredictionDropdownField(
+                        label = strings.landCover,
+                        selectedValue = uiState.landCover,
+                        options = ModelConstants.LAND_COVER_CLASSES,
+                        onValueChange = {
+                            selectedScenario = null
+                            viewModel.onLandCoverChange(it)
+                        },
+                        icon = Icons.Default.Forest,
+                        iconColor = colors.accent
                     )
                 }
             }
 
             // Compute Action Button (Unified Primary Action Button)
             PrimaryActionButton(
-                text = if (uiState.isLoading) "RUNNING INFERENCE PIPELINE..." else "RUN GEOTECHNICAL RISK ASSESSMENT",
+                text = if (uiState.isLoading) strings.runningInference else strings.runAssessment,
                 onClick = { viewModel.predict() },
                 enabled = !uiState.isLoading,
                 icon = Icons.Default.Bolt,
@@ -332,9 +608,79 @@ private fun PredictionInputField(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PredictionDropdownField(
+    label: String,
+    selectedValue: String,
+    options: List<String>,
+    onValueChange: (String) -> Unit,
+    icon: ImageVector,
+    iconColor: Color
+) {
+    val colors = BhurakshakTheme.colors
+    var expanded by remember { mutableStateOf(false) }
+
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.Medium,
+            color = colors.textPrimary
+        )
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = !expanded },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            OutlinedTextField(
+                value = selectedValue,
+                onValueChange = {},
+                readOnly = true,
+                leadingIcon = { Icon(icon, null, tint = iconColor, modifier = Modifier.size(18.dp)) },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .menuAnchor(),
+                shape = RoundedCornerShape(8.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = colors.accent,
+                    unfocusedBorderColor = colors.borderDefault,
+                    focusedContainerColor = colors.bgSurface,
+                    unfocusedContainerColor = colors.bgSurface,
+                    focusedTextColor = colors.textPrimary,
+                    unfocusedTextColor = colors.textPrimary
+                )
+            )
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                modifier = Modifier.background(colors.bgSurface)
+            ) {
+                options.forEach { option ->
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                text = option,
+                                color = if (option == selectedValue) colors.accent else colors.textPrimary,
+                                fontWeight = if (option == selectedValue) FontWeight.Bold else FontWeight.Normal
+                            )
+                        },
+                        onClick = {
+                            onValueChange(option)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun HeroRiskAssessmentDisplay(result: PredictionResult) {
     val colors = BhurakshakTheme.colors
+    val strings = LocalAppStrings.current
     val riskColor = when (result.riskLevel.uppercase()) {
         "CRITICAL" -> colors.critical
         "HIGH", "MODERATE" -> colors.warning
@@ -371,7 +717,7 @@ private fun HeroRiskAssessmentDisplay(result: PredictionResult) {
                 ) {
                     PulsingStatusDot(color = riskColor, size = 8.dp)
                     Text(
-                        "GEOTECHNICAL HAZARD ASSESSMENT",
+                        strings.failureProbability.uppercase(),
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.ExtraBold,
                         letterSpacing = 1.sp,
@@ -385,7 +731,7 @@ private fun HeroRiskAssessmentDisplay(result: PredictionResult) {
                     border = BorderStroke(1.dp, colors.borderDefault)
                 ) {
                     Text(
-                        text = if (result.isMock) "SIMULATION" else "LIVE XGBOOST",
+                        text = if (result.isMock) "OFFLINE MODE" else "LIVE XGBOOST",
                         fontSize = 9.sp,
                         fontWeight = FontWeight.Bold,
                         color = colors.textSecondary,
@@ -436,7 +782,7 @@ private fun HeroRiskAssessmentDisplay(result: PredictionResult) {
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "${"%.0f".format(animatedProgress.value * 100)}%",
+                        text = "${String.format(java.util.Locale.US, "%.0f", animatedProgress.value * 100)}%",
                         fontSize = 38.sp,
                         fontWeight = FontWeight.Black,
                         color = colors.textPrimary
@@ -449,61 +795,98 @@ private fun HeroRiskAssessmentDisplay(result: PredictionResult) {
                         color = riskColor
                     )
                     Text(
-                        text = "Confidence: ${"%.0f".format(result.confidence * 100)}%",
+                        text = if (result.isMock) "RULE-BASED ESTIMATE (OFFLINE)" else "AI PREDICT_PROBA (7-FEATURE XGBOOST)",
                         style = MaterialTheme.typography.labelSmall,
                         fontSize = 10.sp,
-                        color = colors.textSecondary
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.5.sp,
+                        color = if (result.isMock) colors.warning else colors.accent
                     )
                 }
             }
 
-            // Geotechnical Factor Breakdown (Explainable AI)
-            if (result.factors.isNotEmpty()) {
+            // Geotechnical Factor Breakdown (Explainable AI / Feature Importances)
+            val factorItems = if (result.featureImportances.isNotEmpty()) {
+                result.featureImportances.entries.sortedByDescending { it.value }
+            } else {
+                result.factors.entries.sortedByDescending { it.value }
+            }
+
+            if (factorItems.isNotEmpty()) {
                 HorizontalDivider(color = colors.borderDefault, thickness = 0.8.dp)
 
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Text(
-                        "CONTRIBUTING GEOTECHNICAL DRIVERS",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = 0.8.sp,
-                        color = colors.textSecondary
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            strings.contributingFactors.uppercase(),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = 0.8.sp,
+                            color = colors.textSecondary
+                        )
+                        Text(
+                            text = "Feature Importance Weights",
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.accent
+                        )
+                    }
 
-                    result.factors.forEach { (factor, value) ->
+                    factorItems.take(8).forEach { (factor, value) ->
                         val factorPercent = (value * 100).toInt()
+                        val factorLabel = when (factor) {
+                            "rainfall_previous_7d" -> "7-Day Cumulative Rainfall"
+                            "rainfall_previous_3d" -> "3-Day Antecedent Rainfall"
+                            "rainfall_previous_1d" -> "24h Precipitation"
+                            "elevation" -> "Elevation (MSL)"
+                            "slope" -> "Terrain Slope Gradient"
+                            else -> factor.replace("_", " ").replaceFirstChar { it.uppercase() }
+                        }
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = factor.replace("_", " ").replaceFirstChar { it.uppercase() },
+                                    text = factorLabel,
                                     style = MaterialTheme.typography.bodySmall,
                                     fontSize = 12.sp,
                                     color = colors.textPrimary
                                 )
                                 Text(
-                                    text = "$factorPercent%",
+                                    text = "${String.format(java.util.Locale.US, "%.1f", value * 100)}%",
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (factorPercent > 60) riskColor else colors.textSecondary
+                                    color = if (factorPercent >= 10) colors.critical else colors.textSecondary
                                 )
                             }
                             LinearProgressIndicator(
-                                progress = { value.toFloat().coerceIn(0f, 1f) },
+                                progress = { (value / 0.16).toFloat().coerceIn(0f, 1f) },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(6.dp)
                                     .clip(RoundedCornerShape(3.dp)),
-                                color = if (factorPercent > 60) riskColor else colors.accent,
+                                color = if (factorPercent >= 10) colors.critical else colors.accent,
                                 trackColor = colors.borderDefault
                             )
                         }
                     }
+
+                    Text(
+                        text = "Note: Weights reflect statistical predictive gain across training data. Built-up land prominence represents plausible anthropogenic slope modifications and/or reporting bias in historical disaster inventories.",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontSize = 10.sp,
+                        color = colors.textSecondary.copy(alpha = 0.75f),
+                        lineHeight = 13.sp,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
                 }
             }
 

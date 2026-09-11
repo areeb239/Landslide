@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BhuRakshak NER 2.0 — AI Landslide Prediction & Telemetry Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base: #0a0e17;
+      --bg-surface: #111827;
+      --bg-card: #162032;
+      --border-color: #223249;
+      --border-highlight: #00b4d8;
+      --accent: #00b4d8;
+      --accent-glow: rgba(0, 180, 216, 0.25);
+      --critical: #ef4444;
+      --warning: #f59e0b;
+      --moderate: #eab308;
+      --low: #10b981;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(0, 180, 216, 0.07) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(239, 68, 68, 0.05) 0%, transparent 40%);
+    }
+
+    header {
+      background: rgba(17, 24, 39, 0.88);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-color);
+      padding: 14px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .radar-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      color: var(--accent);
+      background: rgba(0, 180, 216, 0.12);
+      border: 1px solid rgba(0, 180, 216, 0.3);
+      padding: 5px 12px;
+      border-radius: 999px;
+      text-transform: uppercase;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background-color: var(--accent);
+      border-radius: 50%;
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(0, 180, 216, 0.7); }
+      70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(0, 180, 216, 0); }
+      100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(0, 180, 216, 0); }
+    }
+
+    .brand-title {
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      color: var(--text-primary);
+    }
+
+    .brand-badge {
+      font-size: 10px;
+      background: rgba(0, 180, 216, 0.18);
+      color: var(--accent);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 800;
+      border: 1px solid rgba(0, 180, 216, 0.3);
+      margin-left: 6px;
+    }
+
+    .lang-selector-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .lang-selector-group label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .lang-select {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      color: var(--accent);
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    main {
+      flex: 1;
+      padding: 24px;
+      max-width: 1380px;
+      margin: 0 auto;
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 1024px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .card-header {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      padding-bottom: 14px;
+    }
+
+    .card-title {
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-subtitle {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    /* Location Panel */
+    .location-box {
+      background: rgba(17, 24, 39, 0.7);
+      border: 1px solid rgba(0, 180, 216, 0.25);
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .location-box-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .location-title {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .chips-carousel {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      scrollbar-width: thin;
+    }
+
+    .chip {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .chip:hover {
+      border-color: var(--accent);
+      color: var(--text-primary);
+      transform: translateY(-1px);
+    }
+
+    .chip.active {
+      background: var(--accent);
+      color: #000;
+      border-color: var(--accent);
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+
+    .coords-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1.2fr auto;
+      gap: 10px;
+      align-items: flex-end;
+    }
+
+    @media (max-width: 680px) {
+      .coords-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .btn-fetch {
+      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+      white-space: nowrap;
+      height: 40px;
+    }
+
+    .btn-fetch:hover {
+      filter: brightness(1.15);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(14, 165, 233, 0.35);
+    }
+
+    .telemetry-status {
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .telemetry-status.live {
+      color: #34d399;
+    }
+
+    /* Input Grid */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    @media (max-width: 600px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .input-field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .input-field.full-width {
+      grid-column: span 2;
+    }
+
+    @media (max-width: 600px) {
+      .input-field.full-width {
+        grid-column: span 1;
+      }
+    }
+
+    .input-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .input-val-badge {
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+    }
+
+    input[type="number"], input[type="text"], input[type="date"], select {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 9px;
+      padding: 9px 12px;
+      color: var(--text-primary);
+      font-size: 13px;
+      font-weight: 600;
+      outline: none;
+      transition: border-color 0.2s;
+      width: 100%;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-glow);
+    }
+
+    .btn-predict {
+      background: linear-gradient(135deg, #00b4d8 0%, #0077b6 100%);
+      color: #ffffff;
+      border: none;
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      letter-spacing: 0.5px;
+      transition: all 0.2s ease;
+      box-shadow: 0 8px 20px rgba(0, 180, 216, 0.3);
+      margin-top: 8px;
+    }
+
+    .btn-predict:hover {
+      filter: brightness(1.1);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 25px rgba(0, 180, 216, 0.4);
+    }
+
+    /* Results Column */
+    .gauge-box {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+    }
+
+    .risk-badge {
+      display: inline-block;
+      padding: 6px 20px;
+      border-radius: 999px;
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .risk-badge.CRITICAL {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+      border: 1px solid #ef4444;
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.35);
+    }
+
+    .risk-badge.HIGH {
+      background: rgba(245, 158, 11, 0.2);
+      color: #f59e0b;
+      border: 1px solid #f59e0b;
+    }
+
+    .risk-badge.MODERATE {
+      background: rgba(234, 179, 8, 0.2);
+      color: #eab308;
+      border: 1px solid #eab308;
+    }
+
+    .risk-badge.LOW {
+      background: rgba(16, 185, 129, 0.2);
+      color: #10b981;
+      border: 1px solid #10b981;
+    }
+
+    .prob-number {
+      font-size: 52px;
+      font-weight: 900;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-primary);
+      line-height: 1;
+    }
+
+    .prob-desc {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .pipeline-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      background: rgba(16, 185, 129, 0.12);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-weight: 700;
+    }
+
+    /* Factor List (Real XGBoost Weights) */
+    .factors-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .factors-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .factor-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      background: rgba(17, 24, 39, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 8px 12px;
+    }
+
+    .factor-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .factor-label {
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .factor-val-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sample-val-badge {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .importance-badge {
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 800;
+    }
+
+    .factor-bar-bg {
+      height: 6px;
+      background: var(--bg-surface);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .factor-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #00b4d8 0%, #0077b6 100%);
+      border-radius: 3px;
+      transition: width 0.6s ease;
+    }
+
+    .rec-box {
+      background: rgba(239, 68, 68, 0.08);
+      border-left: 4px solid var(--critical);
+      padding: 16px;
+      border-radius: 0 12px 12px 0;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #fca5a5;
+    }
+
+    .rec-box.safe {
+      background: rgba(16, 185, 129, 0.08);
+      border-left-color: var(--low);
+      color: #86efac;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand-group">
+      <div class="radar-indicator">
+        <div class="pulse-dot"></div>
+        <span id="txt-radar">Telemetry Radar: Active</span>
+      </div>
+      <div class="brand-title">
+        BHURAKSHAK <span class="brand-badge">NER 2.0</span>
+      </div>
+    </div>
+
+    <!-- Live Multilingual Switcher -->
+    <div class="lang-selector-group">
+      <label id="txt-select-lang" for="languageSelect">Language / भाषा:</label>
+      <select id="languageSelect" class="lang-select" onchange="changeLanguage(this.value)">
+        <option value="en">English</option>
+        <option value="hi">हिन्दी (Hindi)</option>
+        <option value="as">অসমীয়া (Assamese)</option>
+        <option value="bn">বাংলা (Bengali)</option>
+        <option value="ne">नेपाली (Nepali)</option>
+      </select>
+    </div>
+  </header>
+
+  <main>
+    <!-- Left Column: Location Intelligence & 7-Feature Telemetry -->
+    <section class="card">
+      <div class="card-header">
+        <h2 class="card-title" id="txt-core-title">🛰️ Location & Telemetry Intelligence</h2>
+        <p class="card-subtitle" id="txt-core-sub">Pick a Himalayan location to auto-extract real DEM, GLiM, ESA WorldCover, and precipitation telemetry via <code>get_features()</code></p>
+      </div>
+
+      <!-- Location Presets & Coordinates -->
+      <div class="location-box">
+        <div class="location-box-header">
+          <span class="location-title" id="txt-lbl-presets">📍 Vulnerable Himalayan Hotspots:</span>
+          <span id="txt-telemetry-badge" class="telemetry-status live">⚡ Cached (0.1ms Instant Demo)</span>
+        </div>
+
+        <div class="chips-carousel">
+          <div class="chip active" onclick="selectPresetCity('gangtok', 27.33, 88.61, this)">
+            <span>🏔️</span> <span>Gangtok (Urban)</span>
+          </div>
+          <div class="chip" onclick="selectPresetCity('shillong', 25.57, 91.89, this)">
+            <span>🌲</span> <span>Shillong (Urban)</span>
+          </div>
+          <div class="chip" onclick="selectPresetCity('guwahati', 26.14, 91.74, this)">
+            <span>🏙️</span> <span>Guwahati (Built-up)</span>
+          </div>
+          <div class="chip" onclick="selectPresetCity('aizawl', 23.73, 92.71, this)">
+            <span>⛰️</span> <span>Aizawl (Urban)</span>
+          </div>
+          <div class="chip" onclick="selectPresetCity('kohima', 25.67, 94.11, this)">
+            <span>🌿</span> <span>Kohima (Urban)</span>
+          </div>
+          <div class="chip" onclick="selectPresetCity('itanagar', 27.08, 93.60, this)">
+            <span>🌄</span> <span>Itanagar (Urban)</span>
+          </div>
+          <div class="chip" onclick="selectPresetCity('darjeeling', 27.04, 88.26, this)">
+            <span>🌱</span> <span>Darjeeling (Tea Hills)</span>
+          </div>
+          <div class="chip" style="border-color: #10b981; background: rgba(16, 185, 129, 0.1);" onclick="selectPresetCity('kaziranga', 26.58, 93.17, this)">
+            <span>🦌</span> <span style="color: #10b981; font-weight: 700;">Kaziranga Buffer (Low 0.3%)</span>
+          </div>
+          <div class="chip" style="border-color: #10b981; background: rgba(16, 185, 129, 0.1);" onclick="selectPresetCity('majuli', 26.95, 94.22, this)">
+            <span>🌾</span> <span style="color: #10b981; font-weight: 700;">Majuli Plain (Low 0.4%)</span>
+          </div>
+          <div class="chip" style="border-color: #eab308; background: rgba(234, 179, 8, 0.1);" onclick="selectPresetCity('mawphlang', 25.45, 91.75, this)">
+            <span>🌳</span> <span style="color: #eab308; font-weight: 700;">Mawphlang Forest (Mod 31%)</span>
+          </div>
+        </div>
+
+        <div class="coords-grid">
+          <div class="input-field">
+            <label class="input-label">Latitude (°N)</label>
+            <input type="number" id="inp-lat" value="27.33" step="0.01" />
+          </div>
+          <div class="input-field">
+            <label class="input-label">Longitude (°E)</label>
+            <input type="number" id="inp-lon" value="88.61" step="0.01" />
+          </div>
+          <div class="input-field">
+            <label class="input-label">Date (Rainfall Window)</label>
+            <input type="date" id="inp-date" value="2026-09-08" />
+          </div>
+          <button type="button" class="btn-fetch" id="btn-fetch-action" onclick="fetchLiveFeatures()">
+            <span>🌐</span> <span id="txt-btn-fetch">Fetch Telemetry</span>
+          </button>
+        </div>
+
+        <div class="telemetry-status" id="telemetrySourceInfo">
+          <span>📡 Data Sources: SRTM DEM (30m) • GLiM Lithology • ESA WorldCover (10m) • Open-Meteo Precipitation</span>
+        </div>
+      </div>
+
+      <!-- 7 Form Fields (Auto-Populated by get_features, editable for what-if simulation) -->
+      <form id="predictionForm" onsubmit="event.preventDefault(); runPrediction();">
+        <div style="font-size: 13px; font-weight: 800; color: var(--text-secondary); margin-bottom: 10px; display: flex; justify-content: space-between;">
+          <span id="txt-lbl-features-header">EXTRACTED 7-FEATURE TELEMETRY MATRIX</span>
+          <span style="color: var(--accent); font-size: 11px;">(Auto-filled • Editable for Simulation)</span>
+        </div>
+
+        <div class="form-grid">
+          <!-- 1. Elevation -->
+          <div class="input-field">
+            <label class="input-label">
+              <span id="txt-lbl-elevation">Elevation (MSL)</span>
+              <span class="input-val-badge">m MSL</span>
+            </label>
+            <input type="number" id="inp-elevation" value="1562" min="10" max="7000" step="1" required />
+          </div>
+
+          <!-- 2. Slope -->
+          <div class="input-field">
+            <label class="input-label">
+              <span id="txt-lbl-slope">Slope Inclination</span>
+              <span class="input-val-badge">deg (°)</span>
+            </label>
+            <input type="number" id="inp-slope" value="28.5" min="0" max="85" step="0.5" required />
+          </div>
+
+          <!-- 3. Rainfall 1D -->
+          <div class="input-field">
+            <label class="input-label">
+              <span id="txt-lbl-rain1d">24h Precipitation (1-Day)</span>
+              <span class="input-val-badge">mm</span>
+            </label>
+            <input type="number" id="inp-rain1d" value="0.7" min="0" max="800" step="0.1" required />
+          </div>
+
+          <!-- 4. Rainfall 3D -->
+          <div class="input-field">
+            <label class="input-label">
+              <span id="txt-lbl-rain3d">Antecedent Precipitation (3-Day)</span>
+              <span class="input-val-badge">mm</span>
+            </label>
+            <input type="number" id="inp-rain3d" value="22.7" min="0" max="1500" step="0.1" required />
+          </div>
+
+          <!-- 5. Rainfall 7D -->
+          <div class="input-field">
+            <label class="input-label">
+              <span id="txt-lbl-rain7d">Cumulative Precipitation (7-Day)</span>
+              <span class="input-val-badge">mm</span>
+            </label>
+            <input type="number" id="inp-rain7d" value="66.9" min="0" max="2500" step="0.1" required />
+          </div>
+
+          <!-- 6. Lithology Group -->
+          <div class="input-field">
+            <label class="input-label">
+              <span id="txt-lbl-litho">Lithology Group (GLiM)</span>
+            </label>
+            <select id="sel-litho" required>
+              <option value="Metamorphic rocks" selected>Metamorphic rocks</option>
+              <option value="Siliciclastic sedimentary rocks">Siliciclastic sedimentary rocks</option>
+              <option value="Unconsolidated sediments">Unconsolidated sediments</option>
+              <option value="Carbonate sedimentary rocks">Carbonate sedimentary rocks</option>
+              <option value="Mixed sedimentary rocks">Mixed sedimentary rocks</option>
+              <option value="Acid plutonic rocks">Acid plutonic rocks</option>
+              <option value="Basic plutonic rocks">Basic plutonic rocks</option>
+              <option value="Intermediate volcanic rocks">Intermediate volcanic rocks</option>
+              <option value="Basic volcanic rocks">Basic volcanic rocks</option>
+            </select>
+          </div>
+
+          <!-- 7. Land Cover -->
+          <div class="input-field full-width">
+            <label class="input-label">
+              <span id="txt-lbl-landcover">Land Cover (ESA WorldCover)</span>
+            </label>
+            <select id="sel-landcover" required>
+              <option value="Tree cover" selected>Tree cover</option>
+              <option value="Grassland">Grassland</option>
+              <option value="Cropland">Cropland</option>
+              <option value="Built-up">Built-up</option>
+              <option value="Bare/sparse vegetation">Bare/sparse vegetation</option>
+              <option value="Shrubland">Shrubland</option>
+              <option value="Herbaceous wetland">Herbaceous wetland</option>
+              <option value="Snow/ice">Snow/ice</option>
+              <option value="Permanent water">Permanent water</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-predict" id="btn-predict-action">
+          <span>⚡</span> <span id="txt-btn-predict">RUN XGBOOST INFERENCE</span>
+        </button>
+      </form>
+    </section>
+
+    <!-- Right Column: Live XGBoost Inference Output & Real Feature Importances -->
+    <section class="card">
+      <div class="card-header">
+        <h2 class="card-title" id="txt-results-title">📊 XGBoost Hazard Inference</h2>
+        <p class="card-subtitle" id="txt-results-sub">Live risk probability and feature importance weights from <code>bhurakshak_pipeline.pkl</code></p>
+      </div>
+
+      <!-- Circular Gauge Box -->
+      <div class="gauge-box">
+        <div class="pipeline-status-badge">
+          <span>✓</span> <span id="txtPipelineStatus">Model: bhurakshak_pipeline.pkl (Live XGBoost)</span>
+        </div>
+
+        <div id="badgeRisk" class="risk-badge CRITICAL">CRITICAL</div>
+        <div class="prob-number" id="txtProbability">95.4%</div>
+        <div class="prob-desc" id="txtProbLabel">Estimated Slope Failure Probability (predict_proba)</div>
+      </div>
+
+      <!-- Real XGBoost Feature Importance Breakdown -->
+      <div class="factors-container">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <h3 style="font-size: 13px; font-weight: 800; letter-spacing: 0.5px; color: var(--text-secondary);" id="txt-factor-title">
+            XGBOOST FEATURE IMPORTANCE (Gini / Gain)
+          </h3>
+          <span style="font-size: 11px; color: var(--accent); font-family: 'JetBrains Mono', monospace;">Trained Weights</span>
+        </div>
+
+        <div class="factors-list" id="factorsList">
+          <!-- Dynamically populated from pipeline.named_steps['classifier'].feature_importances_ -->
+        </div>
+        <p style="font-size: 11px; color: var(--text-muted); line-height: 1.4; margin-top: 12px; font-style: italic; border-top: 1px dashed var(--border-color); padding-top: 8px;">
+          ℹ️ <strong>Analytical Note:</strong> Feature weights represent statistical predictive gain across training datasets. Factors such as built-up land cover encompass plausible anthropogenic slope modifications as well as potential reporting bias in historical disaster catalogs.
+        </p>
+      </div>
+
+      <!-- Official Directive -->
+      <div class="rec-box" id="recommendationBox">
+        🚨 <strong>CRITICAL WARNING:</strong> Evacuation recommended for downhill settlements.
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // ─── Multilingual Localization Dictionary ─────────────────────────────────
+    const I18N = {
+      en: {
+        radar: "Telemetry Radar: Active",
+        selectLang: "Language:",
+        coreTitle: "🛰️ Location & Telemetry Intelligence",
+        coreSub: "Pick a Himalayan location to auto-extract real DEM, GLiM, ESA WorldCover, and precipitation telemetry via get_features()",
+        lblPresets: "📍 Vulnerable Himalayan Hotspots:",
+        btnFetch: "Fetch Telemetry",
+        lblElevation: "Elevation (MSL)",
+        lblSlope: "Slope Inclination",
+        lblRain1d: "24h Precipitation (1-Day)",
+        lblRain3d: "Antecedent Precipitation (3-Day)",
+        lblRain7d: "Cumulative Precipitation (7-Day)",
+        lblLitho: "Lithology Group (GLiM)",
+        lblLandcover: "Land Cover (ESA WorldCover)",
+        btnPredict: "RUN XGBOOST INFERENCE",
+        resultsTitle: "📊 XGBoost Hazard Inference",
+        resultsSub: "Live risk probability and feature importance weights from bhurakshak_pipeline.pkl",
+        probDesc: "Estimated Slope Failure Probability (predict_proba)",
+        factorTitle: "XGBOOST FEATURE IMPORTANCE (Gini / Gain)"
+      },
+      hi: {
+        radar: "टेलीमेट्री रडार: सक्रिय",
+        selectLang: "भाषा चुनें:",
+        coreTitle: "🛰️ स्थान और टेलीमेट्री इंटेलिजेंस",
+        coreSub: "get_features() के माध्यम से वास्तविक DEM, GLiM, ESA WorldCover और वर्षा टेलीमेट्री प्राप्त करने के लिए हिमालयी स्थान चुनें",
+        lblPresets: "📍 संवेदनशील हिमालयी हॉटस्पॉट:",
+        btnFetch: "टेलीमेट्री प्राप्त करें",
+        lblElevation: "ऊंचाई (समुद्र तल से m MSL)",
+        lblSlope: "ढाल कोण (डिग्री °)",
+        lblRain1d: "24 घंटे की वर्षा (1 दिन)",
+        lblRain3d: "पूर्व संचित वर्षा (3 दिन)",
+        lblRain7d: "कुल संचित वर्षा (7 दिन)",
+        lblLitho: "भूवैज्ञानिक शैल समूह (GLiM)",
+        lblLandcover: "भूमि आवरण वर्ग (ESA WorldCover)",
+        btnPredict: "XGBOOST मॉडल गणना चलाएं",
+        resultsTitle: "📊 XGBoost जोखिम मूल्यांकन",
+        resultsSub: "bhurakshak_pipeline.pkl से वास्तविक विफलता संभावना और फीचर महत्व",
+        probDesc: "ढलान विफलता की अनुमानित संभावना (predict_proba)",
+        factorTitle: "XGBOOST फीचर महत्व भार (Gain / Weight)"
+      },
+      as: {
+        radar: "টেলিমেট্ৰি ৰাডাৰ: সক্ৰিয়",
+        selectLang: "ভাষা বাছক:",
+        coreTitle: "🛰️ স্থান আৰু টেলিমেট্ৰি বুদ্ধিমত্তা",
+        coreSub: "get_features() দ্বাৰা প্ৰকৃত DEM, GLiM, ESA WorldCover আৰু বৰষুণৰ তথ্য পাবলৈ স্থান নিৰ্বাচন কৰক",
+        lblPresets: "📍 সংবেদনশীল হিমালয় অঞ্চল:",
+        btnFetch: "তথ্য আহৰণ কৰক",
+        lblElevation: "উচ্চতা (m MSL)",
+        lblSlope: "ঢাল কোণ (ডিগ্ৰী °)",
+        lblRain1d: "২৪ ঘণ্টাৰ বৰষুণ (১ দিন)",
+        lblRain3d: "পূৰ্বৱৰ্তী বৰষুণ (৩ দিন)",
+        lblRain7d: "সঞ্চিত বৰষুণ (৭ দিন)",
+        lblLitho: "ভূতাত্ত্বিক শিলৰ গোট (GLiM)",
+        lblLandcover: "ভূমিৰ আৱৰণ (ESA WorldCover)",
+        btnPredict: "XGBOOST মডেল গণনা কৰক",
+        resultsTitle: "📊 XGBoost বিপদ মূল্যায়ন",
+        resultsSub: "bhurakshak_pipeline.pkl দ্বাৰা প্ৰকৃত ভৱিষ্যদ্বাণী",
+        probDesc: "ঢাল খহি পৰাৰ আনুমানিক সম্ভাৱনা",
+        factorTitle: "মডেলৰ বৈশিষ্ট গুৰুত্ব (Feature Importance)"
+      },
+      bn: {
+        radar: "টেলিমেট্রি রাডার: সক্রিয়",
+        selectLang: "ভাষা নির্বাচন করুন:",
+        coreTitle: "🛰️ স্থান ও টেলিমেট্রি ইন্টেলিজেন্স",
+        coreSub: "get_features() দ্বারা প্রকৃত DEM, GLiM, ESA WorldCover ও বৃষ্টির ডেটা পেতে অবস্থান নির্বাচন করুন",
+        lblPresets: "📍 ঝুঁকিপূর্ণ পাহাড়ি এলাকা:",
+        btnFetch: "টেলিমেট্রি লোড করুন",
+        lblElevation: "উচ্চতা (m MSL)",
+        lblSlope: "ঢাল কোণ (ডিগ্রী °)",
+        lblRain1d: "২৪ ঘণ্টার বৃষ্টিপাত (১ দিন)",
+        lblRain3d: "পূর্ববর্তী বৃষ্টিপাত (৩ দিন)",
+        lblRain7d: "মোট সঞ্চিত বৃষ্টি (৭ দিন)",
+        lblLitho: "ভূতাত্ত্বিক শিলা গ্রুপ (GLiM)",
+        lblLandcover: "ভূমি আচ্ছাদন (ESA WorldCover)",
+        btnPredict: "XGBOOST মডেল চালান",
+        resultsTitle: "📊 XGBoost ঝুঁকি মূল্যায়ন",
+        resultsSub: "bhurakshak_pipeline.pkl দ্বারা লাইভ পূর্বাভাস",
+        probDesc: "ঢাল ধসের আনুমানিক সম্ভাবনা",
+        factorTitle: "XGBOOST বৈশিষ্ট্যের গুরুত্ব (Feature Importance)"
+      },
+      ne: {
+        radar: "टेलिमेट्री रडार: सक्रिय",
+        selectLang: "भाषा रोज्नुहोस्:",
+        coreTitle: "🛰️ स्थान र टेलिमेट्री इन्टेलिजेन्स",
+        coreSub: "get_features() प्रयोग गरी वास्तविक DEM, GLiM, ESA WorldCover र वर्षा टेलिमेट्री प्राप्त गर्नुहोस्",
+        lblPresets: "📍 संवेदनशील हिमालयी क्षेत्रहरू:",
+        btnFetch: "टेलिमेट्री लिनुहोस्",
+        lblElevation: "उचाइ (m MSL)",
+        lblSlope: "भिरालोपन कोण (डिग्री °)",
+        lblRain1d: "२४ घण्टाको वर्षा (१ दिन)",
+        lblRain3d: "३ दिनको संचित वर्षा",
+        lblRain7d: "७ दिनको कुल वर्षा",
+        lblLitho: "भूवैज्ञानिक चट्टान समूह (GLiM)",
+        lblLandcover: "भूमि आवरण वर्ग (ESA WorldCover)",
+        btnPredict: "XGBOOST मोडेल गणना गर्नुहोस्",
+        resultsTitle: "📊 XGBoost जोखिम मूल्यांकन",
+        resultsSub: "bhurakshak_pipeline.pkl द्वारा प्रत्यक्ष नतिजा",
+        probDesc: "पहिरो जाने अनुमानित सम्भाव्यता (predict_proba)",
+        factorTitle: "XGBOOST मुख्य कारकहरू (Feature Importance)"
+      }
+    };
+
+    let currentLang = 'en';
+
+    function changeLanguage(langCode) {
+      currentLang = langCode;
+      const dict = I18N[langCode] || I18N.en;
+
+      document.getElementById('txt-radar').innerText = dict.radar;
+      document.getElementById('txt-select-lang').innerText = dict.selectLang;
+      document.getElementById('txt-core-title').innerText = dict.coreTitle;
+      document.getElementById('txt-core-sub').innerText = dict.coreSub;
+      document.getElementById('txt-lbl-presets').innerText = dict.lblPresets;
+      document.getElementById('txt-btn-fetch').innerText = dict.btnFetch;
+      document.getElementById('txt-lbl-elevation').innerText = dict.lblElevation;
+      document.getElementById('txt-lbl-slope').innerText = dict.lblSlope;
+      document.getElementById('txt-lbl-rain1d').innerText = dict.lblRain1d;
+      document.getElementById('txt-lbl-rain3d').innerText = dict.lblRain3d;
+      document.getElementById('txt-lbl-rain7d').innerText = dict.lblRain7d;
+      document.getElementById('txt-lbl-litho').innerText = dict.lblLitho;
+      document.getElementById('txt-lbl-landcover').innerText = dict.lblLandcover;
+      document.getElementById('txt-btn-predict').innerText = dict.btnPredict;
+      document.getElementById('txt-results-title').innerText = dict.resultsTitle;
+      document.getElementById('txt-results-sub').innerText = dict.resultsSub;
+      document.getElementById('txtProbLabel').innerText = dict.probDesc;
+      document.getElementById('txt-factor-title').innerText = dict.factorTitle;
+    }
+
+    function selectPresetCity(id, lat, lon, el) {
+      document.querySelectorAll('.chips-carousel .chip').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('inp-lat').value = lat;
+      document.getElementById('inp-lon').value = lon;
+      fetchLiveFeatures();
+    }
+
+    async function fetchLiveFeatures() {
+      const lat = parseFloat(document.getElementById('inp-lat').value);
+      const lon = parseFloat(document.getElementById('inp-lon').value);
+      const date = document.getElementById('inp-date').value || '2026-09-08';
+      const btn = document.getElementById('btn-fetch-action');
+      const badge = document.getElementById('txt-telemetry-badge');
+
+      btn.style.opacity = '0.6';
+      badge.innerText = '⏳ Querying Satellite Telemetry...';
+
+      try {
+        const resp = await fetch(`/api/v1/predict/extract-features?latitude=${lat}&longitude=${lon}&date=${date}`);
+        if (!resp.ok) throw new Error('Extraction error: ' + resp.statusText);
+        const data = await resp.json();
+
+        // Populate Form Fields
+        document.getElementById('inp-elevation').value = data.elevation;
+        document.getElementById('inp-slope').value = data.slope;
+        document.getElementById('inp-rain1d').value = data.rainfall_previous_1d;
+        document.getElementById('inp-rain3d').value = data.rainfall_previous_3d;
+        document.getElementById('inp-rain7d').value = data.rainfall_previous_7d;
+        document.getElementById('sel-litho').value = data.lithology_group;
+        document.getElementById('sel-landcover').value = data.land_cover;
+
+        badge.innerText = '✓ Extracted via get_features() (' + (data.location_name || 'Location') + ')';
+        badge.className = 'telemetry-status live';
+
+        // Automatically run prediction for the newly fetched telemetry
+        runPrediction();
+      } catch (err) {
+        console.error('Fetch features error:', err);
+        badge.innerText = '⚠️ Telemetry error, using local fallback';
+        badge.className = 'telemetry-status';
+      } finally {
+        btn.style.opacity = '1';
+      }
+    }
+
+    async function runPrediction() {
+      const payload = {
+        latitude: parseFloat(document.getElementById('inp-lat').value) || 0.0,
+        longitude: parseFloat(document.getElementById('inp-lon').value) || 0.0,
+        date: document.getElementById('inp-date').value || null,
+        elevation: parseFloat(document.getElementById('inp-elevation').value),
+        slope: parseFloat(document.getElementById('inp-slope').value),
+        rainfall_previous_1d: parseFloat(document.getElementById('inp-rain1d').value),
+        rainfall_previous_3d: parseFloat(document.getElementById('inp-rain3d').value),
+        rainfall_previous_7d: parseFloat(document.getElementById('inp-rain7d').value),
+        lithology_group: document.getElementById('sel-litho').value,
+        land_cover: document.getElementById('sel-landcover').value
+      };
+
+      const btn = document.getElementById('btn-predict-action');
+      btn.style.opacity = '0.7';
+
+      try {
+        const resp = await fetch('/api/v1/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!resp.ok) throw new Error('Prediction API error: ' + resp.statusText);
+        const data = await resp.json();
+
+        // 1. Risk Badge
+        const badge = document.getElementById('badgeRisk');
+        badge.className = 'risk-badge ' + data.risk_level;
+        badge.innerText = data.risk_level;
+
+        // 2. Pure Failure Probability (predict_proba)
+        const probPct = Math.round(data.probability * 1000) / 10;
+        document.getElementById('txtProbability').innerText = probPct + '%';
+
+        // 3. Model Pipeline Status
+        document.getElementById('txtPipelineStatus').innerText = 
+          'Model: ' + (data.model_version || 'bhurakshak_pipeline.pkl') + (data.is_mock ? ' [Fallback]' : ' [Live XGBoost]');
+
+        // 4. Render Real XGBoost Feature Importances
+        renderFeatureImportances(data.sample_factors, data.feature_importances);
+
+        // 5. Civic Recommendation
+        const recBox = document.getElementById('recommendationBox');
+        recBox.innerText = data.recommendation;
+        if (data.risk_level === 'LOW') {
+          recBox.className = 'rec-box safe';
+        } else {
+          recBox.className = 'rec-box';
+        }
+
+      } catch (err) {
+        console.error('Prediction failed:', err);
+      } finally {
+        btn.style.opacity = '1';
+      }
+    }
+
+    function renderFeatureImportances(sampleFactors, globalImportances) {
+      const container = document.getElementById('factorsList');
+      container.innerHTML = '';
+
+      // Standard real feature importance ranking from trained XGBoost model
+      const itemsToRender = sampleFactors ? Object.values(sampleFactors) : [];
+
+      itemsToRender.sort((a, b) => b.importance - a.importance);
+
+      itemsToRender.forEach(factor => {
+        const pct = Math.round(factor.importance * 1000) / 10;
+        const barWidth = Math.min(100, Math.max(8, (factor.importance / 0.16) * 100));
+
+        const item = document.createElement('div');
+        item.className = 'factor-item';
+        item.innerHTML = `
+          <div class="factor-meta">
+            <span class="factor-label">
+              <span>🔹</span> <strong>${factor.label}</strong>
+            </span>
+            <div class="factor-val-info">
+              <span class="sample-val-badge">Value: ${factor.value}</span>
+              <span class="importance-badge">${pct}% weight</span>
+            </div>
+          </div>
+          <div class="factor-bar-bg">
+            <div class="factor-bar-fill" style="width: ${barWidth}%;"></div>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    // Initial load: Fetch Gangtok telemetry and run inference
+    window.addEventListener('DOMContentLoaded', () => {
+      fetchLiveFeatures();
+    });
+  </script>
+</body>
+</html>

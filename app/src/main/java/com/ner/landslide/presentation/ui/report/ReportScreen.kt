@@ -19,6 +19,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -38,13 +39,60 @@ fun ReportScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val colors = BhurakshakTheme.colors
     var currentStep by remember { mutableIntStateOf(1) } // Step 1: Location/Evidence, Step 2: Classification/Severity
+    val latDisplay = if (uiState.latitude != 0.0) String.format(java.util.Locale.US, "%.4f° N", uiState.latitude) else "27.1765° N"
+    val lonDisplay = if (uiState.longitude != 0.0) String.format(java.util.Locale.US, "%.4f° E", uiState.longitude) else "88.5321° E"
 
     val photoPicker = rememberLauncherForActivityResult(
         ActivityResultContracts.GetMultipleContents()
     ) { uris: List<Uri> -> viewModel.onPhotosSelected(uris) }
 
+    var showSuccessDialog by remember { mutableStateOf(false) }
+    var reportReceiptId by remember { mutableStateOf("") }
+    var showErrorDialog by remember { mutableStateOf(false) }
+
     LaunchedEffect(uiState.isSuccess) {
-        if (uiState.isSuccess) onReportSubmitted()
+        if (uiState.isSuccess) {
+            reportReceiptId = "BHU-${(System.currentTimeMillis() % 90000) + 10000}"
+            showSuccessDialog = true
+        }
+    }
+
+    LaunchedEffect(uiState.error) {
+        if (uiState.error != null) {
+            showErrorDialog = true
+        }
+    }
+
+    if (showErrorDialog && uiState.error != null) {
+        AlertDialog(
+            onDismissRequest = { showErrorDialog = false },
+            containerColor = colors.bgSurface,
+            icon = { Icon(Icons.Default.ErrorOutline, null, tint = colors.critical, modifier = Modifier.size(28.dp)) },
+            title = { Text("Submission Error", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = colors.textPrimary) },
+            text = {
+                Text(
+                    text = "${uiState.error}\n\nYour report details and coordinates are preserved. Please tap retry or save to offline emergency buffer.",
+                    fontSize = 12.sp,
+                    color = colors.textSecondary
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showErrorDialog = false
+                        viewModel.submitReport()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = colors.accent)
+                ) {
+                    Text("Retry Transmission", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showErrorDialog = false }) {
+                    Text("Dismiss", color = colors.textSecondary, fontSize = 12.sp)
+                }
+            }
+        )
     }
 
     Scaffold(
@@ -240,8 +288,7 @@ fun ReportScreen(
                                     }
                                 }
 
-                                val latDisplay = if (uiState.latitude != 0.0) "%.4f° N".format(uiState.latitude) else "27.1765° N"
-                                val lonDisplay = if (uiState.longitude != 0.0) "%.4f° E".format(uiState.longitude) else "88.5321° E"
+
 
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
@@ -438,9 +485,9 @@ fun ReportScreen(
                                             modifier = Modifier.weight(1f)
                                         ) {
                                             Row(
-                                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
+                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp),
                                                 verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                                horizontalArrangement = Arrangement.spacedBy(6.dp)
                                             ) {
                                                 Icon(
                                                     imageVector = when (type) {
@@ -457,9 +504,11 @@ fun ReportScreen(
                                                 )
                                                 Text(
                                                     text = type.name.replace("_", " "),
-                                                    fontSize = 11.sp,
+                                                    fontSize = 10.5.sp,
                                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                                    color = if (isSelected) Color.White else colors.textSecondary
+                                                    color = if (isSelected) Color.White else colors.textSecondary,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
                                                 )
                                             }
                                         }
@@ -521,19 +570,20 @@ fun ReportScreen(
                         // Bottom Navigation CTAs: Ghost Back + Primary Transmit
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             GhostSecondaryButton(
                                 text = "← Back",
                                 onClick = { currentStep = 1 },
-                                modifier = Modifier.weight(0.35f)
+                                modifier = Modifier.weight(0.28f)
                             )
                             PrimaryActionButton(
                                 text = if (uiState.isSubmitting) "TRANSMITTING..." else "TRANSMIT DISASTER REPORT",
                                 onClick = { viewModel.submitReport() },
                                 enabled = !uiState.isSubmitting,
                                 containerColor = if (uiState.severity == AlertSeverity.CRITICAL) colors.critical else colors.accent,
-                                modifier = Modifier.weight(0.65f)
+                                modifier = Modifier.weight(0.72f)
                             )
                         }
 
@@ -550,5 +600,108 @@ fun ReportScreen(
                 }
             }
         }
+    }
+
+    if (showSuccessDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showSuccessDialog = false
+                onReportSubmitted()
+            },
+            containerColor = colors.bgSurface,
+            icon = {
+                Box(
+                    modifier = Modifier
+                        .size(52.dp)
+                        .clip(CircleShape)
+                        .background(colors.success.copy(alpha = 0.15f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.CheckCircle, null, tint = colors.success, modifier = Modifier.size(34.dp))
+                }
+            },
+            title = {
+                Text(
+                    "REPORT DISPATCHED TO SDRF",
+                    fontWeight = FontWeight.Black,
+                    fontSize = 16.sp,
+                    letterSpacing = 0.5.sp,
+                    color = colors.textPrimary,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+            },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = colors.bgBase,
+                        border = BorderStroke(1.dp, colors.borderDefault),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(12.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("TRACKING ID", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = colors.textSecondary)
+                                Text("#$reportReceiptId", fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, color = colors.accent)
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("INCIDENT TYPE", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = colors.textSecondary)
+                                Text(uiState.incidentType.name.replace("_", " "), fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = colors.textPrimary)
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("SEVERITY", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = colors.textSecondary)
+                                Text(uiState.severity.name, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = uiState.severity.toThemeColor())
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("COORDINATES", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = colors.textSecondary)
+                                Text("$latDisplay, $lonDisplay", fontSize = 11.sp, fontWeight = FontWeight.Medium, color = colors.textPrimary)
+                            }
+                        }
+                    }
+
+                    Text(
+                        text = if (uiState.isOnline) {
+                            "Encrypted broadcast delivered to State Disaster Response Force (SDRF) & District Incident Command Center. Emergency response teams notified."
+                        } else {
+                            "Saved securely in local offline buffer. Your report and GPS telemetry will automatically dispatch the moment network or mesh connection is restored."
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        fontSize = 11.5.sp,
+                        color = colors.textSecondary,
+                        lineHeight = 16.sp
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showSuccessDialog = false
+                        onReportSubmitted()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = colors.accent),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("DONE / RETURN TO HOME", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color.White)
+                }
+            }
+        )
     }
 }

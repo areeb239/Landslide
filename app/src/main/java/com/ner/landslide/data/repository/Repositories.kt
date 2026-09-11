@@ -116,10 +116,17 @@ class PredictionRepositoryImpl @Inject constructor(
         runCatching {
             val dto = api.predictRisk(
                 PredictionRequestDto(
-                    rainfallMm = request.rainfallMm,
-                    slopeDeg = request.slopeDeg,
+                    rainfallMm = request.rainfallPrevious1d.takeIf { it > 0 } ?: request.rainfallMm,
+                    slopeDeg = request.slope.takeIf { it > 0 } ?: request.slopeDeg,
                     soilMoisturePct = request.soilMoisturePct,
-                    antecedentRain3d = request.antecedentRain3d,
+                    antecedentRain3d = request.rainfallPrevious3d.takeIf { it > 0 } ?: request.antecedentRain3d,
+                    elevation = request.elevation,
+                    slope = request.slope.takeIf { it > 0 } ?: request.slopeDeg,
+                    rainfallPrevious1d = request.rainfallPrevious1d.takeIf { it > 0 } ?: request.rainfallMm,
+                    rainfallPrevious3d = request.rainfallPrevious3d.takeIf { it > 0 } ?: request.antecedentRain3d,
+                    rainfallPrevious7d = request.rainfallPrevious7d,
+                    lithologyGroup = request.lithologyGroup,
+                    landCover = request.landCover,
                     latitude = request.latitude,
                     longitude = request.longitude
                 )
@@ -127,39 +134,177 @@ class PredictionRepositoryImpl @Inject constructor(
             PredictionResult(
                 riskLevel = dto.riskLevel,
                 probability = dto.probability,
-                confidence = dto.confidence,
+                confidence = dto.confidence ?: dto.probability,
                 factors = dto.factors,
+                featureImportances = dto.featureImportances,
+                sampleFactors = dto.sampleFactors,
                 recommendation = dto.recommendation,
-                isMock = false
+                isMock = dto.isMock,
+                modelVersion = dto.modelVersion ?: "BhuRakshak-XGBoost-v2.0 (bhurakshak_pipeline.pkl)"
             )
         }.recoverCatching {
             // FastAPI not reachable — return mock response so demo never breaks
             mockPrediction(request)
         }
 
+    override suspend fun extractFeatures(
+        latitude: Double,
+        longitude: Double,
+        date: String?
+    ): Result<FeatureExtractionResult> = runCatching {
+        val dto = api.extractFeatures(latitude, longitude, date)
+        FeatureExtractionResult(
+            latitude = dto.latitude,
+            longitude = dto.longitude,
+            date = dto.date,
+            locationName = dto.locationName,
+            elevation = dto.elevation,
+            slope = dto.slope,
+            rainfallPrevious1d = dto.rainfallPrevious1d,
+            rainfallPrevious3d = dto.rainfallPrevious3d,
+            rainfallPrevious7d = dto.rainfallPrevious7d,
+            lithologyGroup = dto.lithologyGroup,
+            landCover = dto.landCover,
+            source = dto.source
+        )
+    }.recoverCatching {
+        mockExtractFeatures(latitude, longitude, date)
+    }
+
+    private fun mockExtractFeatures(
+        lat: Double,
+        lon: Double,
+        date: String?
+    ): FeatureExtractionResult {
+        // Fallback preset lookup for demo continuity
+        return when {
+            kotlin.math.abs(lat - 27.33) < 0.2 -> FeatureExtractionResult(
+                latitude = 27.33, longitude = 88.61, date = date ?: "2026-09-11",
+                locationName = "Gangtok (Sikkim)", elevation = 1562.0, slope = 28.5,
+                rainfallPrevious1d = 24.5, rainfallPrevious3d = 88.0, rainfallPrevious7d = 185.5,
+                lithologyGroup = "Metamorphic rocks", landCover = "Tree cover"
+            )
+            kotlin.math.abs(lat - 25.57) < 0.2 -> FeatureExtractionResult(
+                latitude = 25.57, longitude = 91.89, date = date ?: "2026-09-11",
+                locationName = "Shillong (Meghalaya)", elevation = 1496.0, slope = 22.0,
+                rainfallPrevious1d = 32.0, rainfallPrevious3d = 110.0, rainfallPrevious7d = 215.0,
+                lithologyGroup = "Metamorphic rocks", landCover = "Tree cover"
+            )
+            kotlin.math.abs(lat - 26.14) < 0.2 -> FeatureExtractionResult(
+                latitude = 26.14, longitude = 91.74, date = date ?: "2026-09-11",
+                locationName = "Guwahati / Kamrup (Assam)", elevation = 55.0, slope = 16.5,
+                rainfallPrevious1d = 5.0, rainfallPrevious3d = 18.0, rainfallPrevious7d = 42.0,
+                lithologyGroup = "Unconsolidated sediments", landCover = "Built-up"
+            )
+            kotlin.math.abs(lat - 23.73) < 0.2 -> FeatureExtractionResult(
+                latitude = 23.73, longitude = 92.71, date = date ?: "2026-09-11",
+                locationName = "Aizawl (Mizoram)", elevation = 1132.0, slope = 34.0,
+                rainfallPrevious1d = 18.0, rainfallPrevious3d = 65.0, rainfallPrevious7d = 140.0,
+                lithologyGroup = "Siliciclastic sedimentary rocks", landCover = "Tree cover"
+            )
+            kotlin.math.abs(lat - 25.67) < 0.2 -> FeatureExtractionResult(
+                latitude = 25.67, longitude = 94.11, date = date ?: "2026-09-11",
+                locationName = "Kohima (Nagaland)", elevation = 1444.0, slope = 31.5,
+                rainfallPrevious1d = 20.0, rainfallPrevious3d = 72.0, rainfallPrevious7d = 155.0,
+                lithologyGroup = "Siliciclastic sedimentary rocks", landCover = "Tree cover"
+            )
+            kotlin.math.abs(lat - 27.08) < 0.2 -> FeatureExtractionResult(
+                latitude = 27.08, longitude = 93.60, date = date ?: "2026-09-11",
+                locationName = "Itanagar (Arunachal Pradesh)", elevation = 320.0, slope = 26.0,
+                rainfallPrevious1d = 28.0, rainfallPrevious3d = 95.0, rainfallPrevious7d = 190.0,
+                lithologyGroup = "Mixed sedimentary rocks", landCover = "Tree cover"
+            )
+            kotlin.math.abs(lat - 26.58) < 0.2 -> FeatureExtractionResult(
+                latitude = 26.58, longitude = 93.17, date = date ?: "2026-09-11",
+                locationName = "Kaziranga Foothills Buffer (Assam)", elevation = 85.0, slope = 4.5,
+                rainfallPrevious1d = 1.5, rainfallPrevious3d = 4.5, rainfallPrevious7d = 12.0,
+                lithologyGroup = "Unconsolidated sediments", landCover = "Tree cover"
+            )
+            kotlin.math.abs(lat - 26.95) < 0.2 -> FeatureExtractionResult(
+                latitude = 26.95, longitude = 94.22, date = date ?: "2026-09-11",
+                locationName = "Majuli Agricultural Plain (Assam)", elevation = 84.0, slope = 2.0,
+                rainfallPrevious1d = 2.0, rainfallPrevious3d = 6.0, rainfallPrevious7d = 16.0,
+                lithologyGroup = "Unconsolidated sediments", landCover = "Cropland"
+            )
+            kotlin.math.abs(lat - 25.45) < 0.2 -> FeatureExtractionResult(
+                latitude = 25.45, longitude = 91.75, date = date ?: "2026-09-11",
+                locationName = "Mawphlang Sacred Forest (Meghalaya)", elevation = 1620.0, slope = 15.0,
+                rainfallPrevious1d = 2.5, rainfallPrevious3d = 7.0, rainfallPrevious7d = 16.0,
+                lithologyGroup = "Metamorphic rocks", landCover = "Tree cover"
+            )
+            else -> FeatureExtractionResult(
+                latitude = lat, longitude = lon, date = date ?: "2026-09-11",
+                locationName = "Darjeeling Hill Tracts", elevation = 2042.0, slope = 38.0,
+                rainfallPrevious1d = 35.0, rainfallPrevious3d = 125.0, rainfallPrevious7d = 240.0,
+                lithologyGroup = "Metamorphic rocks", landCover = "Cropland"
+            )
+        }
+    }
+
     private fun mockPrediction(request: PredictionRequest): PredictionResult {
-        val score = (request.rainfallMm / 300.0 + request.slopeDeg / 90.0 +
-                request.soilMoisturePct / 100.0) / 3.0
+        val rain1 = if (request.rainfallPrevious1d > 0) request.rainfallPrevious1d else request.rainfallMm
+        val rain3 = if (request.rainfallPrevious3d > 0) request.rainfallPrevious3d else request.antecedentRain3d
+        val rain7 = if (request.rainfallPrevious7d > 0) request.rainfallPrevious7d else (rain3 * 1.6)
+        val slope = if (request.slope > 0) request.slope else request.slopeDeg
+
+        val lithoModifier = when (request.lithologyGroup) {
+            "Unconsolidated sediments" -> 1.25
+            "Metamorphic rocks" -> 1.15
+            "Siliciclastic sedimentary rocks" -> 1.10
+            "Carbonate sedimentary rocks" -> 0.95
+            "Acid plutonic rocks" -> 0.85
+            else -> 1.0
+        }
+
+        val landCoverModifier = when (request.landCover) {
+            "Bare/sparse vegetation" -> 1.30
+            "Built-up" -> 1.20
+            "Cropland" -> 1.10
+            "Tree cover" -> 0.80
+            else -> 1.0
+        }
+
+        val baseScore = (rain1 / 150.0 * 0.30 + rain3 / 280.0 * 0.25 + rain7 / 450.0 * 0.20 + slope / 55.0 * 0.25)
+        val score = (baseScore * lithoModifier * landCoverModifier).coerceIn(0.02, 0.99)
+
         val level = when {
-            score > 0.75 -> "CRITICAL"
-            score > 0.55 -> "HIGH"
-            score > 0.35 -> "MODERATE"
+            score >= 0.75 -> "CRITICAL"
+            score >= 0.50 -> "HIGH"
+            score >= 0.28 -> "MODERATE"
             else -> "LOW"
         }
         return PredictionResult(
             riskLevel = level,
-            probability = score.coerceIn(0.0, 1.0),
-            confidence = 0.72,
+            probability = score,
+            confidence = score,
             factors = mapOf(
-                "rainfall" to request.rainfallMm / 300.0,
-                "slope_angle" to request.slopeDeg / 90.0,
-                "soil_moisture" to request.soilMoisturePct / 100.0,
-                "antecedent_rain" to request.antecedentRain3d / 500.0
+                "land_cover: Built-up" to 0.1496,
+                "rainfall_previous_7d" to 0.1307,
+                "rainfall_previous_3d" to 0.1286,
+                "land_cover: Cropland" to 0.0912,
+                "elevation" to 0.0794,
+                "land_cover: Tree cover" to 0.0564,
+                "slope" to 0.0444,
+                "rainfall_previous_1d" to 0.0387
             ),
-            recommendation = if (level == "CRITICAL" || level == "HIGH")
-                "Immediate evacuation of vulnerable zones recommended."
-            else "Continue monitoring. No immediate action required.",
-            isMock = true
+            featureImportances = mapOf(
+                "land_cover: Built-up" to 0.1496,
+                "rainfall_previous_7d" to 0.1307,
+                "rainfall_previous_3d" to 0.1286,
+                "land_cover: Cropland" to 0.0912,
+                "elevation" to 0.0794,
+                "land_cover: Tree cover" to 0.0564,
+                "slope" to 0.0444,
+                "rainfall_previous_1d" to 0.0387
+            ),
+            recommendation = when (level) {
+                "CRITICAL" -> "🚨 CRITICAL EVACUATION WARNING: High probability of slope failure and debris flow. Immediately evacuate downhill settlements."
+                "HIGH" -> "⚠️ HIGH ALERT: Soil near saturation and slope shear stress elevated. Restrict night-time vehicular movement on mountain passes."
+                "MODERATE" -> "⚡ MODERATE WATCH: Soil moisture accumulating. Monitor culverts and hill cuts."
+                else -> "✅ NORMAL STATUS: Stable ground conditions. Slope safety factor within acceptable limits."
+            },
+            isMock = true,
+            modelVersion = "BhuRakshak-Offline (Rule-Based Fallback)"
         )
     }
 }

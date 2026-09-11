@@ -22,6 +22,7 @@ interface RiskZoneRepository {
 
 interface PredictionRepository {
     suspend fun predictRisk(request: PredictionRequest): Result<PredictionResult>
+    suspend fun extractFeatures(latitude: Double, longitude: Double, date: String? = null): Result<FeatureExtractionResult>
 }
 
 interface WeatherRepository {

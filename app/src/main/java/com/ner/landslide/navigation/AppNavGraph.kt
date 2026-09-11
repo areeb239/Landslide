@@ -34,7 +34,7 @@ data class BottomNavItem(
     val selectedIcon: ImageVector = icon
 )
 
-val bottomNavItems = listOf(
+val defaultBottomNavItems = listOf(
     BottomNavItem(Screen.Home, "Alerts", Icons.Default.NotificationsActive),
     BottomNavItem(Screen.Map, "Map", Icons.Default.Map),
     BottomNavItem(Screen.Report, "Report", Icons.Default.AddLocationAlt),
@@ -49,7 +49,16 @@ fun AppNavGraph() {
     val auth = FirebaseAuth.getInstance()
     val isSessionActive = auth.currentUser != null || com.ner.landslide.data.repository.UserRepositoryImpl.isSessionActive(context)
     val startDestination = if (isSessionActive) Screen.Home.route else Screen.Splash.route
-    val tabRoutes = bottomNavItems.map { it.screen.route }
+    val strings = LocalAppStrings.current
+    val navItems = remember(strings) {
+        listOf(
+            BottomNavItem(Screen.Home, strings.tabAlerts, Icons.Default.NotificationsActive),
+            BottomNavItem(Screen.Map, strings.tabMap, Icons.Default.Map),
+            BottomNavItem(Screen.Report, strings.tabReport, Icons.Default.AddLocationAlt),
+            BottomNavItem(Screen.Profile, strings.tabProfile, Icons.Default.Person)
+        )
+    }
+    val tabRoutes = remember { listOf(Screen.Home.route, Screen.Map.route, Screen.Report.route, Screen.Profile.route) }
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     val showBottomBar = currentRoute in tabRoutes
@@ -70,7 +79,7 @@ fun AppNavGraph() {
                         tonalElevation = 0.dp
                     ) {
                         val currentDestination = navBackStackEntry?.destination
-                        bottomNavItems.forEach { item ->
+                        navItems.forEach { item ->
                             val isSelected = currentDestination?.hierarchy?.any {
                                 it.route == item.screen.route
                             } == true

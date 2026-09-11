@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, Any
 from enum import Enum
 
 
@@ -75,11 +75,40 @@ class PredictionRequest(BaseModel):
 class PredictionResponse(BaseModel):
     risk_level: RiskLevel
     probability: float = Field(..., ge=0.0, le=1.0)
-    confidence: float = Field(..., ge=0.0, le=1.0)
-    factors: dict[str, float]
+    confidence: Optional[float] = Field(default=None, description="Deprecated heuristic confidence; use probability")
+    factors: dict[str, float] = Field(default_factory=dict, description="Normalized active factor contributions")
+    feature_importances: dict[str, float] = Field(default_factory=dict, description="Authentic XGBoost feature importances directly from pipeline")
+    sample_factors: dict[str, Any] = Field(default_factory=dict, description="Active features for this location and their model weights")
     recommendation: str
     is_mock: bool = False
     model_version: str = "1.0.0"
+    extracted_telemetry: Optional[dict[str, Any]] = None
+
+
+class FeatureExtractionResponse(BaseModel):
+    latitude: float
+    longitude: float
+    date: str
+    location_name: Optional[str] = None
+    elevation: float
+    slope: float
+    rainfall_previous_1d: float
+    rainfall_previous_3d: float
+    rainfall_previous_7d: float
+    lithology_group: str
+    land_cover: str
+    source: dict[str, str] = Field(default_factory=dict)
+
+
+class ModelMetadataResponse(BaseModel):
+    model_name: str
+    model_version: str
+    algorithm: str
+    features_required: list[str]
+    lithology_groups: list[str]
+    land_cover_classes: list[str]
+    defaults: dict[str, Any]
+    feature_importances: Optional[dict[str, float]] = None
 
 
 # ─── Alerts ───────────────────────────────────────────────────────────────────

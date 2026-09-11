@@ -35,25 +35,16 @@ object SupportedLanguages {
     val ALL = listOf(
         AppLanguage("en", "English", "English", "All States", "EN"),
         AppLanguage("hi", "Hindi", "हिन्दी", "All States", "HI"),
-        AppLanguage("ne", "Nepali", "नेपाली", "Sikkim", "NE"),
         AppLanguage("as", "Assamese", "অসমীয়া", "Assam", "AS"),
         AppLanguage("bn", "Bengali", "বাংলা", "Tripura / Assam", "BN"),
-        AppLanguage("lus", "Mizo", "Mizo ṭawng", "Mizoram", "LUS"),
-        AppLanguage("brx", "Bodo", "बड़ो", "Assam", "BRX"),
-        AppLanguage("kha", "Khasi", "Ka Ktien Khasi", "Meghalaya", "KHA"),
-        AppLanguage("mni", "Meitei (Manipuri)", "মৈতৈলোন্", "Manipur", "MNI")
+        AppLanguage("ne", "Nepali", "नेपाली", "Sikkim", "NE")
     )
 
     val STATES = listOf(
         "All States",
-        "Sikkim",
         "Assam",
-        "Meghalaya",
-        "Mizoram",
-        "Manipur",
         "Tripura",
-        "Nagaland",
-        "Arunachal Pradesh"
+        "Sikkim"
     )
 
     fun findByCode(code: String): AppLanguage {
@@ -154,10 +145,15 @@ fun ProvideAppLocale(
         LocalizedContextWrapper(context, configContext)
     }
 
+    val currentStrings = remember(activeLang.code) {
+        AppStringsRepository.get(activeLang.code)
+    }
+
     CompositionLocalProvider(
         LocalLocaleController provides controller,
         LocalContext provides localizedContext,
-        LocalConfiguration provides localizedConfig
+        LocalConfiguration provides localizedConfig,
+        LocalAppStrings provides currentStrings
     ) {
         content()
     }

@@ -502,7 +502,7 @@ fun GraduatedSeveritySelector(
 
     Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.Bottom
     ) {
         AlertSeverity.values().forEach { severity ->
@@ -535,7 +535,7 @@ fun GraduatedSeveritySelector(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(horizontal = 4.dp, vertical = 8.dp),
+                        .padding(horizontal = 2.dp, vertical = 6.dp),
                     verticalArrangement = Arrangement.SpaceBetween,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -550,18 +550,20 @@ fun GraduatedSeveritySelector(
                         Text(
                             text = severity.name,
                             fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.SemiBold,
-                            fontSize = if (severity == AlertSeverity.CRITICAL) 11.sp else 10.sp,
+                            fontSize = if (severity == AlertSeverity.CRITICAL) 10.sp else 9.sp,
                             color = if (isSelected) color else colors.textSecondary,
-                            letterSpacing = 0.4.sp,
-                            maxLines = 1
+                            letterSpacing = 0.2.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         if (severity == AlertSeverity.CRITICAL) {
                             Text(
                                 text = "EVACUATE",
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 8.sp,
+                                fontSize = 7.5.sp,
                                 color = colors.critical,
-                                maxLines = 1
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
@@ -588,8 +590,9 @@ fun PrimaryActionButton(
         enabled = enabled,
         modifier = modifier
             .fillMaxWidth()
-            .height(48.dp),
+            .defaultMinSize(minHeight = 48.dp),
         shape = RoundedCornerShape(8.dp),
+        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = effectiveColor,
             contentColor = Color.White,
@@ -599,16 +602,19 @@ fun PrimaryActionButton(
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             if (icon != null) {
-                Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp))
+                Icon(icon, contentDescription = null, modifier = Modifier.size(16.dp))
             }
             Text(
                 text = text,
                 fontWeight = FontWeight.Bold,
-                fontSize = 13.sp,
-                letterSpacing = 0.6.sp
+                fontSize = 11.5.sp,
+                letterSpacing = 0.4.sp,
+                lineHeight = 15.sp,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                maxLines = 2
             )
         }
     }
@@ -624,8 +630,10 @@ fun GhostSecondaryButton(
     val colors = BhurakshakTheme.colors
     OutlinedButton(
         onClick = onClick,
-        modifier = modifier.height(48.dp),
+        modifier = modifier
+            .defaultMinSize(minHeight = 48.dp),
         shape = RoundedCornerShape(8.dp),
+        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
         border = BorderStroke(1.dp, colors.borderDefault),
         colors = ButtonDefaults.outlinedButtonColors(
             contentColor = colors.textPrimary
@@ -641,7 +649,8 @@ fun GhostSecondaryButton(
             Text(
                 text = text,
                 fontWeight = FontWeight.SemiBold,
-                fontSize = 13.sp
+                fontSize = 12.sp,
+                letterSpacing = 0.4.sp
             )
         }
     }
@@ -651,9 +660,11 @@ fun GhostSecondaryButton(
 @Composable
 fun EmergencySOSBar(
     onTriggerSOS: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isCitizenMode: Boolean = true
 ) {
     val colors = BhurakshakTheme.colors
+    val strings = LocalAppStrings.current
 
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -690,14 +701,14 @@ fun EmergencySOSBar(
                 }
                 Column {
                     Text(
-                        text = "EMERGENCY SOS DISPATCH",
+                        text = if (isCitizenMode) "EMERGENCY HELP (SOS)" else strings.emergencySosTitle,
                         fontWeight = FontWeight.ExtraBold,
                         fontSize = 12.sp,
                         letterSpacing = 0.5.sp,
                         color = colors.critical
                     )
                     Text(
-                        text = "One-tap GNSS broadcast to SDRF / NDMA",
+                        text = if (isCitizenMode) "Instant 1-tap distress alert to rescue teams" else strings.emergencySosSubtitle,
                         style = MaterialTheme.typography.bodySmall,
                         fontSize = 11.sp,
                         color = colors.textSecondary
@@ -712,7 +723,7 @@ fun EmergencySOSBar(
                 contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
             ) {
                 Text(
-                    "TRANSMIT",
+                    text = if (isCitizenMode) "SEND SOS" else strings.transmit,
                     fontWeight = FontWeight.Black,
                     fontSize = 11.sp,
                     letterSpacing = 0.8.sp,

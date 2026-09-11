@@ -54,6 +54,13 @@ class PredictRiskUseCase @Inject constructor(
         repo.predictRisk(request)
 }
 
+class ExtractFeaturesUseCase @Inject constructor(
+    private val repo: PredictionRepository
+) {
+    suspend operator fun invoke(lat: Double, lon: Double, date: String? = null): Result<FeatureExtractionResult> =
+        repo.extractFeatures(lat, lon, date)
+}
+
 class GetWeatherForecastUseCase @Inject constructor(
     private val repo: WeatherRepository
 ) {

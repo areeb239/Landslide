@@ -6,6 +6,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.ner.landslide.domain.model.*
 import com.ner.landslide.domain.usecase.*
 import com.ner.landslide.util.LocationHelper
+import com.ner.landslide.util.NetworkMonitor
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -15,11 +16,15 @@ data class HomeUiState(
     val alerts: List<Alert> = emptyList(),
     val currentUser: User? = null,
     val isLoading: Boolean = true,
+    val isOnline: Boolean = true,
+    val lastSyncedTime: Long = System.currentTimeMillis(),
+    val sosLocationLat: Double = 27.1765,
+    val sosLocationLon: Double = 88.5321,
     val sosState: SOSState = SOSState.IDLE,
     val error: String? = null
 )
 
-enum class SOSState { IDLE, SENDING, SENT, ERROR }
+enum class SOSState { IDLE, COUNTDOWN, SENDING, SENT, ERROR }
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
@@ -27,6 +32,7 @@ class HomeViewModel @Inject constructor(
     private val triggerSOS: TriggerSOSUseCase,
     private val getCurrentUser: GetCurrentUserUseCase,
     private val locationHelper: LocationHelper,
+    private val networkMonitor: NetworkMonitor,
     private val auth: FirebaseAuth
 ) : ViewModel() {
 
@@ -36,6 +42,8 @@ class HomeViewModel @Inject constructor(
     init {
         loadUser()
         observeAlerts()
+        observeNetwork()
+        prefetchSOSLocation()
     }
 
     private fun loadUser() {
@@ -45,10 +53,41 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    private fun observeNetwork() {
+        viewModelScope.launch {
+            networkMonitor.isOnline.collect { online ->
+                _uiState.update { it.copy(isOnline = online) }
+                if (online) {
+                    observeAlerts()
+                }
+            }
+        }
+    }
+
+    fun prefetchSOSLocation() {
+        viewModelScope.launch {
+            val loc = locationHelper.getCurrentLocation()
+            if (loc != null) {
+                _uiState.update {
+                    it.copy(
+                        sosLocationLat = loc.latitude,
+                        sosLocationLon = loc.longitude
+                    )
+                }
+            }
+        }
+    }
+
     private fun observeAlerts() {
         viewModelScope.launch {
             getAlerts().collect { alerts ->
-                _uiState.update { it.copy(alerts = alerts, isLoading = false) }
+                _uiState.update {
+                    it.copy(
+                        alerts = alerts,
+                        isLoading = false,
+                        lastSyncedTime = System.currentTimeMillis()
+                    )
+                }
             }
         }
     }
@@ -60,9 +99,9 @@ class HomeViewModel @Inject constructor(
             val user = _uiState.value.currentUser
             val sos = SOSAlert(
                 uid = auth.currentUser?.uid ?: return@launch,
-                name = user?.name ?: "Unknown",
-                latitude = location?.latitude ?: 0.0,
-                longitude = location?.longitude ?: 0.0
+                name = user?.name ?: "Citizen",
+                latitude = location?.latitude ?: _uiState.value.sosLocationLat,
+                longitude = location?.longitude ?: _uiState.value.sosLocationLon
             )
             triggerSOS(sos)
                 .onSuccess { _uiState.update { it.copy(sosState = SOSState.SENT) } }
