@@ -123,25 +123,32 @@ fun PredictionScreen(
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.weight(1f)
                         ) {
-                            Icon(Icons.Default.LocationOn, contentDescription = null, tint = colors.accent, modifier = Modifier.size(20.dp))
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(colors.accent.copy(alpha = 0.12f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Default.LocationOn, contentDescription = null, tint = colors.accent, modifier = Modifier.size(20.dp))
+                            }
                             Column {
                                 Text(
-                                    text = "LOCATION & SATELLITE TELEMETRY",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    letterSpacing = 1.sp,
-                                    color = colors.accent
+                                    text = uiState.locationName ?: "Target Sector Location",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 15.sp,
+                                    color = colors.textPrimary
                                 )
-                                uiState.locationName?.let { loc ->
-                                    Text(
-                                        text = loc,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        fontWeight = FontWeight.Bold,
-                                        color = colors.textPrimary
-                                    )
-                                }
+                                Text(
+                                    text = "${uiState.latitude}° N, ${uiState.longitude}° E • ${uiState.elevation}m MSL",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontSize = 11.sp,
+                                    color = colors.textSecondary
+                                )
                             }
                         }
 

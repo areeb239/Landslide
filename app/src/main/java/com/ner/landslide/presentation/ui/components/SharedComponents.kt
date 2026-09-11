@@ -232,6 +232,7 @@ fun HazardBadge(
     modifier: Modifier = Modifier
 ) {
     val color = severity.toThemeColor()
+    val strings = LocalAppStrings.current
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(4.dp),
@@ -250,7 +251,7 @@ fun HazardBadge(
                     .background(color)
             )
             Text(
-                text = severity.toLabel().uppercase(),
+                text = severity.toLocalizedLabel(strings).uppercase(),
                 style = MaterialTheme.typography.labelSmall,
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold,
@@ -381,6 +382,7 @@ fun AlertCard(
     onClick: () -> Unit = {}
 ) {
     val colors = BhurakshakTheme.colors
+    val strings = LocalAppStrings.current
     val isCritical = alert.severity == AlertSeverity.CRITICAL
 
     SeverityAccentCard(
@@ -416,7 +418,7 @@ fun AlertCard(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = alert.title,
+            text = alert.getLocalizedTitle(strings),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             fontSize = 15.sp,
@@ -424,10 +426,11 @@ fun AlertCard(
             lineHeight = 20.sp
         )
 
-        if (alert.description.isNotBlank()) {
+        val localizedDesc = alert.getLocalizedDescription(strings)
+        if (localizedDesc.isNotBlank()) {
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = alert.description,
+                text = localizedDesc,
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.textSecondary,
                 lineHeight = 17.sp,
@@ -476,7 +479,7 @@ fun AlertCard(
                 color = if (isCritical) colors.critical.copy(alpha = 0.15f) else Color.Transparent
             ) {
                 Text(
-                    text = alert.severity.toActionGuideline(),
+                    text = alert.severity.toLocalizedDirective(strings),
                     style = MaterialTheme.typography.labelSmall,
                     fontSize = 11.sp,
                     fontWeight = if (isCritical) FontWeight.Bold else FontWeight.Medium,
@@ -499,6 +502,7 @@ fun GraduatedSeveritySelector(
     modifier: Modifier = Modifier
 ) {
     val colors = BhurakshakTheme.colors
+    val strings = LocalAppStrings.current
 
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -548,7 +552,7 @@ fun GraduatedSeveritySelector(
 
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = severity.name,
+                            text = severity.toLocalizedLabel(strings).uppercase(),
                             fontWeight = if (isSelected) FontWeight.ExtraBold else FontWeight.SemiBold,
                             fontSize = if (severity == AlertSeverity.CRITICAL) 10.sp else 9.sp,
                             color = if (isSelected) color else colors.textSecondary,
@@ -558,7 +562,7 @@ fun GraduatedSeveritySelector(
                         )
                         if (severity == AlertSeverity.CRITICAL) {
                             Text(
-                                text = "EVACUATE",
+                                text = strings.directiveEvacuate.uppercase(),
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 7.5.sp,
                                 color = colors.critical,
@@ -656,7 +660,7 @@ fun GhostSecondaryButton(
     }
 }
 
-// Tier 3: Dedicated Emergency SOS Dispatch Bar (Tactile Crimson Treatment)
+// Tier 3: Dedicated Emergency SOS Dispatch Bar (Visually Dominant Hero Treatment)
 @Composable
 fun EmergencySOSBar(
     onTriggerSOS: () -> Unit,
@@ -666,68 +670,98 @@ fun EmergencySOSBar(
     val colors = BhurakshakTheme.colors
     val strings = LocalAppStrings.current
 
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(10.dp),
-        color = colors.bgSurface,
-        border = BorderStroke(1.dp, colors.critical.copy(alpha = 0.6f)),
-        shadowElevation = if (colors.isDark) 0.dp else 2.dp
+    // Pulsing halo animation for the emergency trigger
+    val infiniteTransition = rememberInfiniteTransition(label = "sos_pulse")
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.03f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "sos_scale"
+    )
+    val glowAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 0.7f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "sos_glow"
+    )
+
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        contentAlignment = Alignment.Center
     ) {
-        Row(
+        // Outer pulsing glow/halo
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .scale(pulseScale)
+                .clip(RoundedCornerShape(14.dp))
+                .background(colors.critical.copy(alpha = glowAlpha * 0.25f))
+        )
+
+        Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .clickable(onClick = onTriggerSOS),
+            shape = RoundedCornerShape(12.dp),
+            color = colors.critical,
+            shadowElevation = 4.dp
         ) {
             Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .defaultMinSize(minHeight = 56.dp)
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier.weight(1f)
+                horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
                 Box(
                     modifier = Modifier
-                        .size(34.dp)
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(colors.critical.copy(alpha = 0.2f)),
+                        .size(38.dp)
+                        .clip(CircleShape)
+                        .background(Color.White.copy(alpha = 0.22f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         Icons.Default.Emergency,
                         contentDescription = "SOS",
-                        tint = colors.critical,
-                        modifier = Modifier.size(20.dp)
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
                     )
                 }
-                Column {
+
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.Center
+                ) {
                     Text(
-                        text = if (isCitizenMode) "EMERGENCY HELP (SOS)" else strings.emergencySosTitle,
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 12.sp,
+                        text = strings.sosButtonLabel,
+                        fontWeight = FontWeight.Black,
+                        fontSize = 15.sp,
                         letterSpacing = 0.5.sp,
-                        color = colors.critical
+                        color = Color.White
                     )
                     Text(
-                        text = if (isCitizenMode) "Instant 1-tap distress alert to rescue teams" else strings.emergencySosSubtitle,
+                        text = strings.sosButtonSub,
                         style = MaterialTheme.typography.bodySmall,
                         fontSize = 11.sp,
-                        color = colors.textSecondary
+                        fontWeight = FontWeight.Medium,
+                        color = Color.White.copy(alpha = 0.88f)
                     )
                 }
-            }
 
-            Button(
-                onClick = onTriggerSOS,
-                colors = ButtonDefaults.buttonColors(containerColor = colors.critical),
-                shape = RoundedCornerShape(6.dp),
-                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
-            ) {
-                Text(
-                    text = if (isCitizenMode) "SEND SOS" else strings.transmit,
-                    fontWeight = FontWeight.Black,
-                    fontSize = 11.sp,
-                    letterSpacing = 0.8.sp,
-                    color = Color.White
+                Icon(
+                    Icons.Default.ArrowForwardIos,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(16.dp)
                 )
             }
         }

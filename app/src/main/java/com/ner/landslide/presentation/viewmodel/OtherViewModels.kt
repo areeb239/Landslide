@@ -55,11 +55,12 @@ class PredictionViewModel @Inject constructor(
             locationHelper.getCurrentLocation()?.let { loc ->
                 val lat = String.format(java.util.Locale.US, "%.4f", loc.latitude)
                 val lon = String.format(java.util.Locale.US, "%.4f", loc.longitude)
+                val resolved = locationHelper.reverseGeocode(loc.latitude, loc.longitude)
                 _uiState.update {
                     it.copy(
                         latitude = lat,
                         longitude = lon,
-                        locationName = "GPS: ${lat}°N, ${lon}°E",
+                        locationName = resolved.formattedHeadline,
                         selectedPreset = null
                     )
                 }
@@ -101,8 +102,14 @@ class PredictionViewModel @Inject constructor(
         _uiState.update { it.copy(isExtractingFeatures = true, error = null, telemetryMessage = null) }
 
         viewModelScope.launch {
+            val resolved = locationHelper.reverseGeocode(lat, lon)
             extractFeatures(lat, lon, date)
                 .onSuccess { feat ->
+                    val resolvedPlace = if (!feat.locationName.isNullOrBlank() && !feat.locationName.contains("°")) {
+                        feat.locationName
+                    } else {
+                        resolved.formattedHeadline
+                    }
                     _uiState.update {
                         it.copy(
                             isExtractingFeatures = false,
@@ -113,7 +120,7 @@ class PredictionViewModel @Inject constructor(
                             rainfall7d = String.format(java.util.Locale.US, "%.1f", feat.rainfallPrevious7d),
                             lithologyGroup = feat.lithologyGroup,
                             landCover = feat.landCover,
-                            locationName = feat.locationName ?: "${lat}°N, ${lon}°E",
+                            locationName = resolvedPlace,
                             telemetryMessage = "Synced from ${feat.source["elevation"] ?: "SRTM DEM / GLiM"}"
                         )
                     }
@@ -122,6 +129,7 @@ class PredictionViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             isExtractingFeatures = false,
+                            locationName = resolved.formattedHeadline,
                             error = "Telemetry lookup failed: ${err.localizedMessage}"
                         )
                     }
@@ -165,10 +173,10 @@ class PredictionViewModel @Inject constructor(
     }
 }
 
-// ─── Weather ──────────────────────────────────────────────────────────────────
-
 data class WeatherUiState(
     val forecast: WeatherForecast? = null,
+    val locationName: String = "Guwahati, Assam",
+    val lastUpdatedTime: Long = System.currentTimeMillis(),
     val isLoading: Boolean = true,
     val error: String? = null
 )
@@ -176,7 +184,8 @@ data class WeatherUiState(
 @HiltViewModel
 class WeatherViewModel @Inject constructor(
     private val getWeather: GetWeatherForecastUseCase,
-    private val networkMonitor: NetworkMonitor
+    private val networkMonitor: NetworkMonitor,
+    private val locationHelper: LocationHelper
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(WeatherUiState())
@@ -206,8 +215,18 @@ class WeatherViewModel @Inject constructor(
         currentLng = lng
         _uiState.update { it.copy(isLoading = true, error = null) }
         viewModelScope.launch {
+            val resolved = locationHelper.reverseGeocode(lat, lng)
             getWeather(lat, lng)
-                .onSuccess { forecast -> _uiState.update { it.copy(forecast = forecast, isLoading = false) } }
+                .onSuccess { forecast ->
+                    _uiState.update {
+                        it.copy(
+                            forecast = forecast,
+                            locationName = resolved.formattedHeadline,
+                            lastUpdatedTime = System.currentTimeMillis(),
+                            isLoading = false
+                        )
+                    }
+                }
                 .onFailure { e -> _uiState.update { it.copy(isLoading = false, error = e.localizedMessage) } }
         }
     }

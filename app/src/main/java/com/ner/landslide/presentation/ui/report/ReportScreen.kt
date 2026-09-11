@@ -38,9 +38,37 @@ fun ReportScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val colors = BhurakshakTheme.colors
+    val strings = LocalAppStrings.current
+    val context = androidx.compose.ui.platform.LocalContext.current
     var currentStep by remember { mutableIntStateOf(1) } // Step 1: Location/Evidence, Step 2: Classification/Severity
     val latDisplay = if (uiState.latitude != 0.0) String.format(java.util.Locale.US, "%.4f° N", uiState.latitude) else "27.1765° N"
     val lonDisplay = if (uiState.longitude != 0.0) String.format(java.util.Locale.US, "%.4f° E", uiState.longitude) else "88.5321° E"
+
+    var showPermissionRationale by remember { mutableStateOf(false) }
+    var showGpsDialog by remember { mutableStateOf(false) }
+
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val fineGranted = permissions[android.Manifest.permission.ACCESS_FINE_LOCATION] ?: false
+        val coarseGranted = permissions[android.Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
+        if (fineGranted || coarseGranted) {
+            if (!viewModel.checkGpsEnabled()) {
+                showGpsDialog = true
+            } else {
+                viewModel.autoDetectLocation()
+            }
+        }
+    }
+
+    val hasLocationPermission = androidx.core.content.ContextCompat.checkSelfPermission(
+        context,
+        android.Manifest.permission.ACCESS_FINE_LOCATION
+    ) == android.content.pm.PackageManager.PERMISSION_GRANTED ||
+    androidx.core.content.ContextCompat.checkSelfPermission(
+        context,
+        android.Manifest.permission.ACCESS_COARSE_LOCATION
+    ) == android.content.pm.PackageManager.PERMISSION_GRANTED
 
     val photoPicker = rememberLauncherForActivityResult(
         ActivityResultContracts.GetMultipleContents()
@@ -61,6 +89,78 @@ fun ReportScreen(
         if (uiState.error != null) {
             showErrorDialog = true
         }
+    }
+
+    if (showPermissionRationale) {
+        AlertDialog(
+            onDismissRequest = { showPermissionRationale = false },
+            containerColor = colors.bgSurface,
+            icon = { Icon(Icons.Default.LocationSearching, null, tint = colors.accent, modifier = Modifier.size(28.dp)) },
+            title = { Text(strings.permDialogTitle, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = colors.textPrimary) },
+            text = {
+                Text(
+                    text = strings.permDialogDesc,
+                    fontSize = 12.sp,
+                    color = colors.textSecondary,
+                    lineHeight = 17.sp
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showPermissionRationale = false
+                        locationPermissionLauncher.launch(
+                            arrayOf(
+                                android.Manifest.permission.ACCESS_FINE_LOCATION,
+                                android.Manifest.permission.ACCESS_COARSE_LOCATION
+                            )
+                        )
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = colors.accent)
+                ) {
+                    Text(strings.grantPermission, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPermissionRationale = false }) {
+                    Text(strings.cancel, color = colors.textSecondary, fontSize = 12.sp)
+                }
+            }
+        )
+    }
+
+    if (showGpsDialog) {
+        AlertDialog(
+            onDismissRequest = { showGpsDialog = false },
+            containerColor = colors.bgSurface,
+            icon = { Icon(Icons.Default.GpsOff, null, tint = colors.warning, modifier = Modifier.size(28.dp)) },
+            title = { Text(strings.gpsDisabledTitle, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = colors.textPrimary) },
+            text = {
+                Text(
+                    text = strings.gpsDisabledDesc,
+                    fontSize = 12.sp,
+                    color = colors.textSecondary,
+                    lineHeight = 17.sp
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showGpsDialog = false
+                        val intent = android.content.Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                        context.startActivity(intent)
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = colors.warning)
+                ) {
+                    Text(strings.openSettings, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color.White)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showGpsDialog = false }) {
+                    Text(strings.cancel, color = colors.textSecondary, fontSize = 12.sp)
+                }
+            }
+        )
     }
 
     if (showErrorDialog && uiState.error != null) {
@@ -252,18 +352,18 @@ fun ReportScreen(
                             .padding(horizontal = 16.dp, vertical = 10.dp),
                         verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
-                        // Section 1: GNSS Satellite Lock Card
+                        // Section 1: Verified Location & GNSS Card
                         FieldCard(modifier = Modifier.fillMaxWidth()) {
-                            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        "GNSS TRIANGULATION LOCK",
+                                        "VERIFIED INCIDENT LOCATION",
                                         fontWeight = FontWeight.Bold,
-                                        fontSize = 12.sp,
+                                        fontSize = 11.sp,
                                         letterSpacing = 0.5.sp,
                                         color = colors.textSecondary
                                     )
@@ -288,19 +388,73 @@ fun ReportScreen(
                                     }
                                 }
 
-
+                                // Human-readable location as primary headline
+                                val locationHeadline = if (uiState.resolvedLocationName.isNotBlank()) {
+                                    uiState.resolvedLocationName
+                                } else if (uiState.district.isNotBlank()) {
+                                    uiState.district
+                                } else {
+                                    strings.detectingLocation
+                                }
 
                                 Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                    modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Column {
-                                        Text("COORDINATES", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = colors.textSecondary)
-                                        Text("$latDisplay, $lonDisplay", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = colors.textPrimary)
+                                    Box(
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(colors.accent.copy(alpha = 0.15f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(Icons.Default.LocationOn, null, tint = colors.accent, modifier = Modifier.size(20.dp))
                                     }
-                                    Column(horizontalAlignment = Alignment.End) {
-                                        Text("ELEVATION", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = colors.textSecondary)
-                                        Text("1,420 m MSL", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = colors.textPrimary)
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = locationHeadline,
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 15.sp,
+                                            color = colors.textPrimary,
+                                            lineHeight = 20.sp
+                                        )
+                                        Text(
+                                            text = "$latDisplay, $lonDisplay • 1,420 m MSL",
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = colors.textSecondary
+                                        )
+                                    }
+                                }
+
+                                // Auto-Detect My Location Button
+                                OutlinedButton(
+                                    onClick = {
+                                        if (hasLocationPermission) {
+                                            if (!viewModel.checkGpsEnabled()) {
+                                                showGpsDialog = true
+                                            } else {
+                                                viewModel.autoDetectLocation()
+                                            }
+                                        } else {
+                                            showPermissionRationale = true
+                                        }
+                                    },
+                                    modifier = Modifier.fillMaxWidth().height(42.dp),
+                                    shape = RoundedCornerShape(8.dp),
+                                    border = BorderStroke(1.dp, colors.accent.copy(alpha = 0.5f)),
+                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.accent)
+                                ) {
+                                    if (uiState.isFetchingLocation) {
+                                        CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp, color = colors.accent)
+                                        Spacer(Modifier.width(8.dp))
+                                        Text(strings.detectingLocation, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                    } else {
+                                        Icon(Icons.Default.MyLocation, null, modifier = Modifier.size(15.dp), tint = colors.accent)
+                                        Spacer(Modifier.width(8.dp))
+                                        Text(strings.autoDetectLocation, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                                     }
                                 }
 
@@ -310,8 +464,8 @@ fun ReportScreen(
                                 OutlinedTextField(
                                     value = uiState.district,
                                     onValueChange = { viewModel.onDistrictChange(it) },
-                                    label = { Text("Sector / District Location", fontSize = 12.sp) },
-                                    placeholder = { Text("e.g. East Sikkim, NH-10 KM 28", fontSize = 12.sp) },
+                                    label = { Text(strings.locationFieldLabel, fontSize = 12.sp) },
+                                    placeholder = { Text(strings.locationFieldHint, fontSize = 12.sp) },
                                     singleLine = true,
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = RoundedCornerShape(8.dp),
@@ -459,7 +613,7 @@ fun ReportScreen(
                     ) {
                         // Section 1: Incident Type Selector
                         SectionHeader(
-                            title = "Hazard Classification",
+                            title = strings.hazardType,
                             subtitle = "Select the specific geotechnical or slope failure category"
                         )
 
@@ -519,7 +673,7 @@ fun ReportScreen(
 
                         // Section 2: Graduated Hazard Severity Level
                         SectionHeader(
-                            title = "Hazard Threat Severity",
+                            title = strings.severityLevel,
                             subtitle = "Visual scale reflecting immediate risk to life, highway, or infrastructure"
                         )
 
@@ -556,7 +710,7 @@ fun ReportScreen(
                                         color = colors.warning
                                     )
                                     Text(
-                                        uiState.severity.toActionGuideline(),
+                                        uiState.severity.toLocalizedDirective(strings),
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.SemiBold,
                                         color = colors.textPrimary
@@ -579,7 +733,7 @@ fun ReportScreen(
                                 modifier = Modifier.weight(0.28f)
                             )
                             PrimaryActionButton(
-                                text = if (uiState.isSubmitting) "TRANSMITTING..." else "TRANSMIT DISASTER REPORT",
+                                text = if (uiState.isSubmitting) "TRANSMITTING..." else strings.transmitReport,
                                 onClick = { viewModel.submitReport() },
                                 enabled = !uiState.isSubmitting,
                                 containerColor = if (uiState.severity == AlertSeverity.CRITICAL) colors.critical else colors.accent,

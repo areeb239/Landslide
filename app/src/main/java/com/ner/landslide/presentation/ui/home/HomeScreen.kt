@@ -47,6 +47,11 @@ fun HomeScreen(
     var isCitizenMode by rememberSaveable { mutableStateOf(true) }
     var countdownSeconds by remember { mutableIntStateOf(5) }
     var isCountingDown by remember { mutableStateOf(false) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    LaunchedEffect(Unit) {
+        com.ner.landslide.util.NetworkMonitor.getInstance(context).refresh()
+    }
 
     LaunchedEffect(uiState.sosState) {
         if (uiState.sosState == SOSState.SENT) {
@@ -109,7 +114,7 @@ fun HomeScreen(
             title = {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "EMERGENCY SOS DISPATCH",
+                        text = strings.emergencySosTitle,
                         fontWeight = FontWeight.Black,
                         fontSize = 17.sp,
                         color = colors.critical,
@@ -156,7 +161,7 @@ fun HomeScreen(
                     }
 
                     Text(
-                        text = "This will immediately notify Quick Response Teams with your verified live coordinates.\n\nTap CANCEL below if tapped accidentally.",
+                        text = strings.sosDescription,
                         style = MaterialTheme.typography.bodySmall,
                         fontSize = 11.5.sp,
                         color = colors.textSecondary,
@@ -185,7 +190,7 @@ fun HomeScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = "CANCEL SOS DISPATCH",
+                        text = strings.cancel.uppercase(),
                         fontWeight = FontWeight.ExtraBold,
                         fontSize = 13.sp,
                         color = Color.White
@@ -202,7 +207,7 @@ fun HomeScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = "Send Immediately (Imminent Hazard) →",
+                        text = "${strings.transmit} →",
                         color = colors.textSecondary,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.SemiBold
@@ -842,7 +847,7 @@ private fun HeroAiFeatureCard(
                     border = BorderStroke(1.dp, if (isOnline) colors.success.copy(alpha = 0.3f) else colors.warning.copy(alpha = 0.3f))
                 ) {
                     Text(
-                        text = if (isOnline) strings.online else "OFFLINE",
+                        text = if (isOnline) strings.online else strings.offline,
                         fontSize = 9.sp,
                         fontWeight = FontWeight.Bold,
                         color = if (isOnline) colors.success else colors.warning,

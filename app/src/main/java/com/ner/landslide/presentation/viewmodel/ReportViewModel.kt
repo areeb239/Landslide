@@ -23,6 +23,8 @@ data class ReportUiState(
     val village: String = "",
     val latitude: Double = 0.0,
     val longitude: Double = 0.0,
+    val resolvedLocationName: String = "",
+    val isGpsEnabled: Boolean = true,
     val photoUris: List<Uri> = emptyList(),
     val isSubmitting: Boolean = false,
     val isSuccess: Boolean = false,
@@ -53,22 +55,50 @@ class ReportViewModel @Inject constructor(
                 _uiState.update { it.copy(isOnline = online) }
             }
         }
-        fetchLocation()
+        autoDetectLocation()
     }
 
-    fun fetchLocation() {
-        _uiState.update { it.copy(isFetchingLocation = true) }
+    fun checkGpsEnabled(): Boolean = locationHelper.isGpsEnabled()
+
+    fun autoDetectLocation() {
+        val gpsOn = locationHelper.isGpsEnabled()
+        _uiState.update { it.copy(isFetchingLocation = true, isGpsEnabled = gpsOn) }
         viewModelScope.launch {
             val loc = locationHelper.getCurrentLocation()
-            _uiState.update {
-                it.copy(
-                    latitude = loc?.latitude ?: 0.0,
-                    longitude = loc?.longitude ?: 0.0,
-                    isFetchingLocation = false
-                )
+            if (loc != null) {
+                val resolved = locationHelper.reverseGeocode(loc.latitude, loc.longitude)
+                _uiState.update {
+                    it.copy(
+                        latitude = loc.latitude,
+                        longitude = loc.longitude,
+                        resolvedLocationName = resolved.formattedHeadline,
+                        district = if (it.district.isBlank() && resolved.district.isNotBlank()) resolved.district else it.district,
+                        village = if (it.village.isBlank() && resolved.area.isNotBlank()) resolved.area else it.village,
+                        isFetchingLocation = false,
+                        isGpsEnabled = locationHelper.isGpsEnabled()
+                    )
+                }
+            } else {
+                // Fallback default coordinates if none retrieved
+                val fallbackLat = if (_uiState.value.latitude != 0.0) _uiState.value.latitude else 27.1765
+                val fallbackLon = if (_uiState.value.longitude != 0.0) _uiState.value.longitude else 88.5321
+                val resolved = locationHelper.reverseGeocode(fallbackLat, fallbackLon)
+                _uiState.update {
+                    it.copy(
+                        latitude = fallbackLat,
+                        longitude = fallbackLon,
+                        resolvedLocationName = resolved.formattedHeadline,
+                        district = if (it.district.isBlank() && resolved.district.isNotBlank()) resolved.district else it.district,
+                        village = if (it.village.isBlank() && resolved.area.isNotBlank()) resolved.area else it.village,
+                        isFetchingLocation = false,
+                        isGpsEnabled = locationHelper.isGpsEnabled()
+                    )
+                }
             }
         }
     }
+
+    fun fetchLocation() = autoDetectLocation()
 
     fun onIncidentTypeChange(type: IncidentType) = _uiState.update { it.copy(incidentType = type) }
     fun onSeverityChange(s: AlertSeverity) = _uiState.update { it.copy(severity = s) }

@@ -24,6 +24,7 @@ import com.ner.landslide.domain.model.HourlyWeather
 import com.ner.landslide.presentation.ui.components.*
 import com.ner.landslide.presentation.ui.theme.*
 import com.ner.landslide.presentation.viewmodel.WeatherViewModel
+import com.ner.landslide.util.toRelativeTimeString
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,6 +34,7 @@ fun WeatherScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val colors = BhurakshakTheme.colors
+    val strings = LocalAppStrings.current
 
     Scaffold(
         containerColor = colors.bgBase,
@@ -40,8 +42,8 @@ fun WeatherScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text("Doppler & Weather Radar", fontWeight = FontWeight.Bold, fontSize = 16.sp, color = colors.textPrimary)
-                        Text("Real-Time Precipitation Telemetry", style = MaterialTheme.typography.labelSmall, fontSize = 11.sp, color = colors.accent)
+                        Text(strings.rainWatchTitle, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = colors.textPrimary)
+                        Text(strings.rainWatchSub, style = MaterialTheme.typography.labelSmall, fontSize = 11.sp, color = colors.accent)
                     }
                 },
                 navigationIcon = {
@@ -72,33 +74,38 @@ fun WeatherScreen(
                     // Location Banner Card
                     FieldCard(modifier = Modifier.fillMaxWidth()) {
                         Row(
-                            modifier = Modifier.padding(12.dp),
+                            modifier = Modifier.padding(14.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(RoundedCornerShape(6.dp))
+                                    .size(38.dp)
+                                    .clip(RoundedCornerShape(8.dp))
                                     .background(colors.accent.copy(alpha = 0.12f)),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Icon(Icons.Default.LocationOn, null, tint = colors.accent, modifier = Modifier.size(18.dp))
+                                Icon(Icons.Default.LocationOn, null, tint = colors.accent, modifier = Modifier.size(20.dp))
                             }
-                            Column {
+                            Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    "EASTERN HIMALAYAS MET STATION",
-                                    style = MaterialTheme.typography.labelSmall,
+                                    text = uiState.locationName,
+                                    style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
-                                    fontSize = 10.sp,
-                                    letterSpacing = 0.6.sp,
-                                    color = colors.accent
+                                    fontSize = 15.sp,
+                                    color = colors.textPrimary
                                 )
                                 Text(
-                                    "Lat: %.2f°N, Lon: %.2f°E".format(forecast.latitude, forecast.longitude),
+                                    text = String.format(
+                                        java.util.Locale.US,
+                                        "%.4f° N, %.4f° E • %s",
+                                        forecast.latitude,
+                                        forecast.longitude,
+                                        String.format(strings.lastUpdated, uiState.lastUpdatedTime.toRelativeTimeString())
+                                    ),
                                     style = MaterialTheme.typography.bodySmall,
-                                    fontSize = 12.sp,
-                                    color = colors.textPrimary
+                                    fontSize = 11.sp,
+                                    color = colors.textSecondary
                                 )
                             }
                         }
