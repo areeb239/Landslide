@@ -83,6 +83,8 @@ class PredictionResponse(BaseModel):
     is_mock: bool = False
     model_version: str = "1.0.0"
     extracted_telemetry: Optional[dict[str, Any]] = None
+    is_outside_corridor: bool = False
+    outside_corridor_message: Optional[str] = None
 
 
 class FeatureExtractionResponse(BaseModel):
@@ -98,6 +100,7 @@ class FeatureExtractionResponse(BaseModel):
     lithology_group: str
     land_cover: str
     source: dict[str, str] = Field(default_factory=dict)
+    is_outside_corridor: bool = False
 
 
 class ModelMetadataResponse(BaseModel):

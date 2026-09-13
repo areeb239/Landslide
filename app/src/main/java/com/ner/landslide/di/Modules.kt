@@ -67,6 +67,11 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    fun provideAuthApi(@Named("prediction") retrofit: Retrofit): com.ner.landslide.data.remote.api.AuthApi =
+        retrofit.create(com.ner.landslide.data.remote.api.AuthApi::class.java)
+
+    @Provides
+    @Singleton
     fun provideWeatherApi(@Named("weather") retrofit: Retrofit): WeatherApi =
         retrofit.create(WeatherApi::class.java)
 }
@@ -81,6 +86,11 @@ object DatabaseModule {
         Room.databaseBuilder(context, NERDatabase::class.java, "ner_database")
             .fallbackToDestructiveMigration()
             .build()
+
+    @Provides
+    @Singleton
+    fun provideUserCredentialDao(database: NERDatabase): com.ner.landslide.data.local.database.UserCredentialDao =
+        database.userCredentialDao()
 }
 
 @Module
@@ -140,8 +150,11 @@ object RepositoryModule {
         RiskZoneRepositoryImpl(source)
 
     @Provides @Singleton
-    fun providePredictionRepository(api: PredictionApi): PredictionRepository =
-        PredictionRepositoryImpl(api)
+    fun providePredictionRepository(
+        api: PredictionApi,
+        networkMonitor: com.ner.landslide.util.NetworkMonitor
+    ): PredictionRepository =
+        PredictionRepositoryImpl(api, networkMonitor)
 
     @Provides @Singleton
     fun provideWeatherRepository(api: WeatherApi): WeatherRepository =
@@ -157,6 +170,8 @@ object RepositoryModule {
     fun provideUserRepository(
         @ApplicationContext context: Context,
         auth: FirebaseAuth,
-        firestore: FirebaseFirestore
-    ): UserRepository = UserRepositoryImpl(context, auth, firestore)
+        firestore: FirebaseFirestore,
+        authApi: com.ner.landslide.data.remote.api.AuthApi,
+        userCredentialDao: com.ner.landslide.data.local.database.UserCredentialDao
+    ): UserRepository = UserRepositoryImpl(context, auth, firestore, authApi, userCredentialDao)
 }

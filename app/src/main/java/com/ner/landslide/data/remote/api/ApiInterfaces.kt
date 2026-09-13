@@ -33,7 +33,9 @@ data class PredictionResponseDto(
     @SerializedName("sample_factors") val sampleFactors: Map<String, Any> = emptyMap(),
     @SerializedName("recommendation") val recommendation: String = "",
     @SerializedName("is_mock") val isMock: Boolean = false,
-    @SerializedName("model_version") val modelVersion: String? = null
+    @SerializedName("model_version") val modelVersion: String? = null,
+    @SerializedName("is_outside_corridor") val isOutsideCorridor: Boolean? = false,
+    @SerializedName("outside_corridor_message") val outsideCorridorMessage: String? = null
 )
 
 data class FeatureExtractionResponseDto(
@@ -48,7 +50,8 @@ data class FeatureExtractionResponseDto(
     @SerializedName("rainfall_previous_7d") val rainfallPrevious7d: Double,
     @SerializedName("lithology_group") val lithologyGroup: String,
     @SerializedName("land_cover") val landCover: String,
-    @SerializedName("source") val source: Map<String, String> = emptyMap()
+    @SerializedName("source") val source: Map<String, String> = emptyMap(),
+    @SerializedName("is_outside_corridor") val isOutsideCorridor: Boolean? = false
 )
 
 interface PredictionApi {
@@ -71,7 +74,23 @@ interface PredictionApi {
 data class OpenMeteoResponse(
     @SerializedName("latitude") val latitude: Double,
     @SerializedName("longitude") val longitude: Double,
+    @SerializedName("timezone") val timezone: String? = null,
+    @SerializedName("current") val current: CurrentDto? = null,
     @SerializedName("hourly") val hourly: HourlyDto
+)
+
+data class CurrentDto(
+    @SerializedName("time") val time: String = "",
+    @SerializedName("interval") val interval: Int? = null,
+    @SerializedName("temperature_2m") val temperature: Double = 0.0,
+    @SerializedName("relative_humidity_2m") val humidity: Double = 0.0,
+    @SerializedName("apparent_temperature") val apparentTemperature: Double? = null,
+    @SerializedName("precipitation") val precipitation: Double = 0.0,
+    @SerializedName("rain") val rain: Double = 0.0,
+    @SerializedName("weather_code") val weatherCode: Int = 0,
+    @SerializedName("wind_speed_10m") val windSpeed: Double = 0.0,
+    @SerializedName("wind_direction_10m") val windDirection: Double = 0.0,
+    @SerializedName("precipitation_probability") val precipitationProbability: Int? = null
 )
 
 data class HourlyDto(
@@ -91,6 +110,7 @@ interface WeatherApi {
     suspend fun getWeatherForecast(
         @Query("latitude") latitude: Double,
         @Query("longitude") longitude: Double,
+        @Query("current") current: String = "temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,weather_code,wind_speed_10m,wind_direction_10m,precipitation_probability",
         @Query("hourly") hourly: String = "precipitation,temperature_2m,relative_humidity_2m,wind_speed_10m,precipitation_probability,uv_index,wind_direction_10m,weather_code",
         @Query("forecast_days") forecastDays: Int = 7,
         @Query("timezone") timezone: String = "Asia/Kolkata"

@@ -230,43 +230,132 @@ class RiskZoneFirestoreSource @Inject constructor(
     companion object {
         val defaultZones = listOf(
             RiskZone(
-                id = "zone_dzongu",
-                name = "Dzongu High Threat Zone",
+                id = "zone_mangan",
+                name = "Mangan North Threat Zone",
                 severity = AlertSeverity.CRITICAL,
                 polygonPoints = listOf(
-                    LatLng(27.510, 88.520),
-                    LatLng(27.535, 88.530),
-                    LatLng(27.530, 88.560),
-                    LatLng(27.505, 88.545)
+                    LatLng(27.505, 88.515),
+                    LatLng(27.540, 88.528),
+                    LatLng(27.535, 88.565),
+                    LatLng(27.500, 88.548)
                 ),
                 district = "North Sikkim",
-                lastUpdated = System.currentTimeMillis()
+                lastUpdated = System.currentTimeMillis(),
+                riskProbability = 0.94,
+                affectedAreaKm2 = 14.8,
+                recommendation = "Active slope shear failure detected. Evacuate riverbank settlements to higher ground."
+            ),
+            RiskZone(
+                id = "zone_dzongu",
+                name = "Dzongu Valley High Threat Sector",
+                severity = AlertSeverity.HIGH,
+                polygonPoints = listOf(
+                    LatLng(27.460, 88.460),
+                    LatLng(27.495, 88.475),
+                    LatLng(27.490, 88.510),
+                    LatLng(27.455, 88.490)
+                ),
+                district = "Dzongu, North Sikkim",
+                lastUpdated = System.currentTimeMillis(),
+                riskProbability = 0.78,
+                affectedAreaKm2 = 18.2,
+                recommendation = "High antecedent rainfall saturation. Restrict non-essential vehicular travel."
             ),
             RiskZone(
                 id = "zone_sevoke",
-                name = "Sevoke - Kalimpong Escarpment",
+                name = "Sevoke - Kalimpong Gorge Escarpment",
                 severity = AlertSeverity.HIGH,
                 polygonPoints = listOf(
-                    LatLng(27.160, 88.510),
-                    LatLng(27.190, 88.525),
-                    LatLng(27.185, 88.555),
-                    LatLng(27.155, 88.540)
+                    LatLng(26.870, 88.445),
+                    LatLng(26.920, 88.465),
+                    LatLng(26.915, 88.510),
+                    LatLng(26.865, 88.485)
                 ),
                 district = "Kalimpong",
-                lastUpdated = System.currentTimeMillis()
+                lastUpdated = System.currentTimeMillis(),
+                riskProbability = 0.76,
+                affectedAreaKm2 = 22.5,
+                recommendation = "Teesta river gorge debris flow alert. Heavy transport diverted via NH-717A."
+            ),
+            RiskZone(
+                id = "zone_gangtok",
+                name = "Gangtok Ridge Urban Slopes",
+                severity = AlertSeverity.MODERATE,
+                polygonPoints = listOf(
+                    LatLng(27.310, 88.590),
+                    LatLng(27.350, 88.605),
+                    LatLng(27.345, 88.635),
+                    LatLng(27.305, 88.620)
+                ),
+                district = "East Sikkim",
+                lastUpdated = System.currentTimeMillis(),
+                riskProbability = 0.44,
+                affectedAreaKm2 = 9.4,
+                recommendation = "Continuous soil pore monitoring active. Ground stability verified nominal-advisory."
             ),
             RiskZone(
                 id = "zone_haflong",
                 name = "Haflong Dima Hasao Hill Slopes",
                 severity = AlertSeverity.MODERATE,
                 polygonPoints = listOf(
-                    LatLng(25.160, 93.000),
-                    LatLng(25.200, 93.015),
-                    LatLng(25.195, 93.040),
-                    LatLng(25.155, 93.025)
+                    LatLng(25.150, 88.520 + 4.47), // 92.99
+                    LatLng(25.205, 93.015),
+                    LatLng(25.195, 93.055),
+                    LatLng(25.145, 93.030)
                 ),
-                district = "Dima Hasao",
-                lastUpdated = System.currentTimeMillis()
+                district = "Dima Hasao, Assam",
+                lastUpdated = System.currentTimeMillis(),
+                riskProbability = 0.52,
+                affectedAreaKm2 = 31.0,
+                recommendation = "Railway cutting erosion monitoring active. Moderate slope creep advisory."
+            ),
+            RiskZone(
+                id = "zone_kohima",
+                name = "Kohima Bypass Landslide Belt",
+                severity = AlertSeverity.MODERATE,
+                polygonPoints = listOf(
+                    LatLng(25.640, 94.075),
+                    LatLng(25.690, 94.095),
+                    LatLng(25.685, 94.135),
+                    LatLng(25.635, 94.115)
+                ),
+                district = "Kohima, Nagaland",
+                lastUpdated = System.currentTimeMillis(),
+                riskProbability = 0.48,
+                affectedAreaKm2 = 16.3,
+                recommendation = "Mudslide alert on single-lane bypass. Speed limit restricted to 20 km/h."
+            ),
+            RiskZone(
+                id = "zone_guwahati",
+                name = "Guwahati - Kamrup Hilly Belt",
+                severity = AlertSeverity.LOW,
+                polygonPoints = listOf(
+                    LatLng(26.115, 91.690),
+                    LatLng(26.170, 91.710),
+                    LatLng(26.165, 91.775),
+                    LatLng(26.110, 91.750)
+                ),
+                district = "Kamrup Metro, Assam",
+                lastUpdated = System.currentTimeMillis(),
+                riskProbability = 0.12,
+                affectedAreaKm2 = 28.6,
+                recommendation = "Normal ground stability conditions. Standard drainage maintenance recommended."
+            ),
+            RiskZone(
+                id = "zone_tawang",
+                name = "Tawang Pass High Altitude Corridor",
+                severity = AlertSeverity.LOW,
+                polygonPoints = listOf(
+                    LatLng(27.550, 91.830),
+                    LatLng(27.610, 91.850),
+                    LatLng(27.605, 91.905),
+                    LatLng(27.545, 91.880)
+                ),
+                district = "Tawang, Arunachal Pradesh",
+                lastUpdated = System.currentTimeMillis(),
+                riskProbability = 0.09,
+                affectedAreaKm2 = 42.0,
+                recommendation = "Rockfall prevention barriers intact. Weather clear, normal traffic permitted."
             )
         )
 
@@ -276,24 +365,61 @@ class RiskZoneFirestoreSource @Inject constructor(
                 name = "NH-10 Sevoke to Gangtok (29th Mile)",
                 status = RoadStatus.BLOCKED,
                 points = listOf(
+                    LatLng(26.890, 88.460),
+                    LatLng(27.020, 88.490),
                     LatLng(27.165, 88.520),
                     LatLng(27.1765, 88.5321),
-                    LatLng(27.195, 88.545)
+                    LatLng(27.240, 88.570),
+                    LatLng(27.330, 88.610)
                 ),
-                blockageReason = "Debris avalanche at 29th Mile",
-                reportedAt = System.currentTimeMillis()
+                blockageReason = "Debris avalanche at 29th Mile near Teesta",
+                reportedAt = System.currentTimeMillis(),
+                routeCode = "NH-10",
+                alternateRoute = "Divert via NH-717A (Rhenock - Pakyong - Gangtok)"
+            ),
+            RoadSegment(
+                id = "road_nh717a",
+                name = "NH-717A Rhenock - Pakyong Evacuation Corridor",
+                status = RoadStatus.OPEN,
+                points = listOf(
+                    LatLng(27.180, 88.640),
+                    LatLng(27.235, 88.595),
+                    LatLng(27.280, 88.605),
+                    LatLng(27.325, 88.620)
+                ),
+                blockageReason = "Clear & operational — Primary all-weather evacuation bypass",
+                reportedAt = System.currentTimeMillis(),
+                routeCode = "NH-717A",
+                alternateRoute = "Active primary emergency corridor"
             ),
             RoadSegment(
                 id = "road_nh29",
                 name = "NH-29 Kohima - Dimapur Corridor",
                 status = RoadStatus.PARTIALLY_BLOCKED,
                 points = listOf(
-                    LatLng(25.660, 94.090),
+                    LatLng(25.890, 93.750),
+                    LatLng(25.770, 93.920),
                     LatLng(25.6751, 94.1086),
                     LatLng(25.690, 94.125)
                 ),
-                blockageReason = "Single-lane traffic due to mud slide",
-                reportedAt = System.currentTimeMillis()
+                blockageReason = "Single-lane traffic due to mud slide at Pagla Pahar",
+                reportedAt = System.currentTimeMillis(),
+                routeCode = "NH-29",
+                alternateRoute = "Heavy transport restricted during evening rainfall"
+            ),
+            RoadSegment(
+                id = "road_nh13",
+                name = "NH-13 Trans-Arunachal Highway",
+                status = RoadStatus.OPEN,
+                points = listOf(
+                    LatLng(27.120, 92.150),
+                    LatLng(27.350, 92.280),
+                    LatLng(27.560, 92.420)
+                ),
+                blockageReason = "Clear and operational",
+                reportedAt = System.currentTimeMillis(),
+                routeCode = "NH-13",
+                alternateRoute = "Normal traffic permissible"
             )
         )
     }

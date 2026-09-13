@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">NER भूस्खलन चेतावनी</string>
+    <string name="app_name">भूचेतक</string>
 
     <!-- Auth -->
     <string name="welcome_back">वापस स्वागत है</string>

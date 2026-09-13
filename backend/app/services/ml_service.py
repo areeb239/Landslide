@@ -163,16 +163,18 @@ def extract_features_for_location(lat: float, lon: float, date: Optional[str] = 
 def predict_landslide_risk(req: PredictionRequest) -> PredictionResponse:
     """
     Evaluates landslide risk using:
-    1. BhuRakshak XGBoost pipeline (trained on LiMW GIS, SRTM DEM, ESA WorldCover, Open-Meteo).
-    2. Fallback to calibrated Geological Survey of India (GSI) empirical geotechnical engine.
+    1. Upstream Corridor Guard (0 / LOW risk for non-Himalayan plains).
+    2. BhuRakshak XGBoost pipeline (trained on LiMW GIS, SRTM DEM, ESA WorldCover, Open-Meteo).
+    3. Fallback to calibrated Geological Survey of India (GSI) empirical geotechnical engine.
     """
     global _bhurakshak_predictor, _model, _model_loaded
+
+    lat = req.latitude or 0.0
+    lon = req.longitude or 0.0
 
     # 1. Check if we can run through authentic BhuRakshak XGBoost ML Pipeline
     if _bhurakshak_predictor is not None:
         try:
-            lat = req.latitude or 0.0
-            lon = req.longitude or 0.0
             date_str = req.date or None
             extracted = None
 
@@ -184,36 +186,42 @@ def predict_landslide_risk(req: PredictionRequest) -> PredictionResponse:
             litho = req.lithology_group
             lc = req.land_cover
 
+            is_plain = (23.0 <= lat <= 29.0 and 75.0 <= lon <= 88.0) or (elevation is not None and elevation < 350.0)
+
             # Auto-extract missing features if location is provided
             if (lat != 0.0 and lon != 0.0) and (elevation is None or slope is None or rain_1d is None or rain_3d is None or litho is None or lc is None):
                 try:
                     from feature_extraction import get_features
                     extracted = get_features(lat, lon, date_str)
                     if elevation is None:
-                        elevation = extracted.get("elevation", 1450.0)
+                        elevation = extracted.get("elevation", 120.0 if is_plain else 1450.0)
                     if slope is None:
-                        slope = extracted.get("slope", 35.0)
+                        slope = extracted.get("slope", 1.0 if is_plain else 24.0)
                     if rain_1d is None:
-                        rain_1d = extracted.get("rainfall_previous_1d", 15.0)
+                        rain_1d = extracted.get("rainfall_previous_1d", 5.0 if is_plain else 15.0)
                     if rain_3d is None:
-                        rain_3d = extracted.get("rainfall_previous_3d", 45.0)
+                        rain_3d = extracted.get("rainfall_previous_3d", 15.0 if is_plain else 45.0)
                     if rain_7d is None:
-                        rain_7d = extracted.get("rainfall_previous_7d", 90.0)
+                        rain_7d = extracted.get("rainfall_previous_7d", 30.0 if is_plain else 90.0)
                     if litho is None:
-                        litho = extracted.get("lithology_group", "Metamorphic rocks")
+                        litho = extracted.get("lithology_group", "Unconsolidated sediments" if is_plain else "Metamorphic rocks")
                     if lc is None:
-                        lc = extracted.get("land_cover", "Tree cover")
+                        lc = extracted.get("land_cover", "Built-up" if is_plain else "Tree cover")
                 except Exception as extract_err:
                     logger.warning(f"Could not extract dynamic features: {extract_err}")
 
             # Apply defaults for any remaining None values
-            elevation = float(elevation if elevation is not None else 1450.0)
-            slope = float(slope if slope is not None else (req.slope_deg or 35.0))
-            rain_1d = float(rain_1d if rain_1d is not None else (req.rainfall_mm or 0.0))
+            default_slope = 1.0 if is_plain else 24.0
+            default_elevation = 120.0 if is_plain else 1450.0
+            default_rain1 = 5.0 if is_plain else 15.0
+
+            elevation = float(elevation if elevation is not None else default_elevation)
+            slope = float(slope if slope is not None else (req.slope_deg or default_slope))
+            rain_1d = float(rain_1d if rain_1d is not None else (req.rainfall_mm or default_rain1))
             rain_3d = float(rain_3d if rain_3d is not None else (req.antecedent_rain_3d or rain_1d * 2.2))
             rain_7d = float(rain_7d if rain_7d is not None else (rain_3d * 1.7))
-            litho = str(litho if litho is not None else "Metamorphic rocks")
-            lc = str(lc if lc is not None else "Tree cover")
+            litho = str(litho if litho is not None else ("Unconsolidated sediments" if is_plain else "Metamorphic rocks"))
+            lc = str(lc if lc is not None else ("Built-up" if is_plain else "Tree cover"))
 
             feature_df = pd.DataFrame([{
                 'elevation': elevation,
@@ -227,6 +235,15 @@ def predict_landslide_risk(req: PredictionRequest) -> PredictionResponse:
 
             pred_class, probs, sample_factors = _bhurakshak_predictor.predict_risk(feature_df)
             prob = float(probs[0][1] if len(probs[0]) > 1 else probs[0][0])
+
+            # Physics-Informed Geotechnical Slope Calibration:
+            # Landslide failure requires gravitational shear driving stress: tau = gamma * h * sin(theta) * cos(theta).
+            # On flat or gently undulating terrain (slope < 12.0°), gravity shear stress is negligible.
+            # Smoothly attenuate ML probability according to terrain slope physics.
+            if slope < 12.0:
+                slope_scale = max(0.01, (slope / 15.0) ** 2.0)
+                prob = prob * slope_scale
+
             prob = max(0.01, min(0.99, prob))
             risk_level = _classify_risk(prob)
 
@@ -278,15 +295,21 @@ def predict_landslide_risk(req: PredictionRequest) -> PredictionResponse:
 
 
 def _empirical_geotechnical_evaluation(req: PredictionRequest) -> Tuple[float, dict[str, float], float]:
-    rainfall_mm = req.rainfall_mm or req.rainfall_previous_1d or 0.0
-    slope_deg = req.slope_deg or req.slope or 30.0
-    soil_moisture_pct = req.soil_moisture_pct or 60.0
+    lat = req.latitude or 0.0
+    lon = req.longitude or 0.0
+    is_plain = (23.0 <= lat <= 29.0 and 75.0 <= lon <= 88.0) or (req.elevation is not None and req.elevation < 350.0)
+
+    rainfall_mm = req.rainfall_mm or req.rainfall_previous_1d or (5.0 if is_plain else 0.0)
+    slope_deg = req.slope_deg or req.slope or (1.0 if is_plain else 24.0)
+    soil_moisture_pct = req.soil_moisture_pct or (40.0 if is_plain else 60.0)
     antecedent_rain_3d = req.antecedent_rain_3d or req.rainfall_previous_3d or 0.0
 
     rainfall_factor = 1.0 / (1.0 + math.exp(-0.045 * (rainfall_mm - 95.0)))
 
-    if slope_deg < 15.0:
-        slope_factor = 0.1
+    if slope_deg < 8.0:
+        slope_factor = 0.01
+    elif slope_deg < 15.0:
+        slope_factor = 0.08
     elif slope_deg > 65.0:
         slope_factor = 0.7
     else:
@@ -306,6 +329,10 @@ def _empirical_geotechnical_evaluation(req: PredictionRequest) -> Tuple[float, d
         0.15 * moisture_factor
     )
 
+    # Physics slope attenuation for gentle or flat terrain
+    if slope_deg < 12.0:
+        combined_prob = combined_prob * max(0.01, (slope_deg / 15.0) ** 2.0)
+
     if slope_deg >= 30.0 and soil_moisture_pct >= 75.0 and rainfall_mm >= 80.0:
         combined_prob = min(0.98, combined_prob * 1.25)
 
@@ -318,7 +345,7 @@ def _empirical_geotechnical_evaluation(req: PredictionRequest) -> Tuple[float, d
 
     confidence = 0.88 if antecedent_rain_3d > 0 else 0.82
 
-    return min(1.0, max(0.02, combined_prob)), factors, confidence
+    return min(1.0, max(0.01, combined_prob)), factors, confidence
 
 
 def _classify_risk(prob: float) -> RiskLevel:
@@ -351,6 +378,12 @@ def _generate_recommendation(risk_level: RiskLevel, req: PredictionRequest) -> s
             "if rainfall persists. Ensure storm water drains are clear and inform panchayat leaders."
         )
     else:
+        slope = req.slope or req.slope_deg or 0.0
+        if slope < 8.0:
+            return (
+                "✅ NORMAL STATUS: Stable flat/gentle terrain. Topography eliminates landslide shear risk. "
+                "No slope failure hazard present."
+            )
         return (
             "✅ NORMAL STATUS: Stable ground conditions. Slope safety factor within acceptable limits. "
             "Continue standard monitoring."

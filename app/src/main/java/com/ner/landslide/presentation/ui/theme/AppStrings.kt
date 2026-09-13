@@ -124,7 +124,27 @@ data class AppStrings(
     // Language Dialog
     val languageDialogTitle: String,
     val languageDialogSub: String,
-    val filterByState: String
+    val filterByState: String,
+
+    // Top Bar & Identity
+    val safetyMonitorActive: String,
+    val roleCitizen: String,
+    val soilSatUnit: String,
+    val defaultSectorName: String,
+
+    // Hero AI Feature Card
+    val checkLandslideRiskTitle: String,
+    val checkLandslideRiskDesc: String,
+    val checkMyRiskBtn: String,
+    val rainRadarBtn: String,
+
+    // Offline & SOS Feedback
+    val offlineModeCached: String,
+    val offlineNotice: String,
+    val offlineSosDispatchedTitle: String,
+    val offlineSosDispatchedDesc: String,
+    val cloudSosDispatchedTitle: String,
+    val cloudSosDispatchedDesc: String
 )
 
 fun AlertSeverity.toLocalizedLabel(strings: AppStrings): String = when (this) {
@@ -251,7 +271,21 @@ object AppStringsRepository {
         tabProfile = "Profile",
         languageDialogTitle = "Language & Dialect",
         languageDialogSub = "Eastern Himalayan Region",
-        filterByState = "Filter by State / Region"
+        filterByState = "Filter by State / Region",
+        safetyMonitorActive = "SAFETY MONITOR: ACTIVE",
+        roleCitizen = "Citizen",
+        soilSatUnit = "Sat",
+        defaultSectorName = "SECTOR: Eastern Himalayas (Sikkim / Assam Corridor)",
+        checkLandslideRiskTitle = "CHECK LANDSLIDE RISK",
+        checkLandslideRiskDesc = "Check if your village, slope, or travel route is at risk of landslide based on recent rain and steep terrain.",
+        checkMyRiskBtn = "Check My Risk",
+        rainRadarBtn = "Rain Radar",
+        offlineModeCached = "OFFLINE MODE — CACHED RISK DATA",
+        offlineNotice = "Offline — showing last known risk data. Emergency SOS and disaster reports are queued locally for transmission.",
+        offlineSosDispatchedTitle = "OFFLINE SOS DISPATCHED VIA SMS",
+        offlineSosDispatchedDesc = "Distress beacon sent via Cellular SMS to 112 with GPS coordinates & Maps pin. Auto-queued to sync with SDRF Cloud Dashboard when internet returns.",
+        cloudSosDispatchedTitle = "EMERGENCY SOS DISPATCHED (CLOUD)",
+        cloudSosDispatchedDesc = "Your GPS telemetry has been relayed to SDRF / NDMA quick-response teams."
     )
 
     val HI = AppStrings(
@@ -348,7 +382,21 @@ object AppStringsRepository {
         tabProfile = "प्रोफाइल",
         languageDialogTitle = "भाषा और बोली",
         languageDialogSub = "पूर्वी हिमालय क्षेत्र",
-        filterByState = "राज्य / क्षेत्र अनुसार खोजें"
+        filterByState = "राज्य / क्षेत्र अनुसार खोजें",
+        safetyMonitorActive = "सुरक्षा निगरानी: सक्रिय",
+        roleCitizen = "नागरिक",
+        soilSatUnit = "संतृप्ति",
+        defaultSectorName = "सेक्टर: पूर्वी हिमालय (सिक्किम / असम कॉरिडोर)",
+        checkLandslideRiskTitle = "भूस्खलन जोखिम जांचें",
+        checkLandslideRiskDesc = "हालिया बारिश और खड़ी ढलान के आधार पर अपने गांव, मार्ग या पहाड़ी ढलान के भूस्खलन जोखिम की जांच करें।",
+        checkMyRiskBtn = "जोखिम जांचें",
+        rainRadarBtn = "वर्षा रडार",
+        offlineModeCached = "ऑफलाइन मोड — सुरक्षित डेटा",
+        offlineNotice = "ऑफलाइन — पुराना जोखिम डेटा प्रदर्शित हो रहा है। आपातकालीन SOS और रिपोर्ट ऑफलाइन संदेश द्वारा भेजी जाएंगी।",
+        offlineSosDispatchedTitle = "एसएमएस द्वारा ऑफलाइन SOS भेजा गया",
+        offlineSosDispatchedDesc = "जीपीएस निर्देशांक सहित 112 पर एसएमएस आपातकालीन संदेश भेजा गया। इंटरनेट आने पर स्वचालित सिंक होगा।",
+        cloudSosDispatchedTitle = "आपातकालीन SOS भेजा गया (क्लाउड)",
+        cloudSosDispatchedDesc = "आपके जीपीएस निर्देशांक SDRF / NDMA त्वरित राहत दल को प्रेषित कर दिए गए हैं।"
     )
 
     val AS = AppStrings(
@@ -445,7 +493,21 @@ object AppStringsRepository {
         tabProfile = "প্ৰফাইল",
         languageDialogTitle = "ভাষা আৰু উপভাষা",
         languageDialogSub = "পূব হিমালয় অঞ্চল",
-        filterByState = "ৰাজ্য / অঞ্চল অনুসৰি বাছক"
+        filterByState = "ৰাজ্য / অঞ্চল অনুসৰি বাছক",
+        safetyMonitorActive = "সুৰক্ষা নিৰীক্ষণ: সক্ৰিয়",
+        roleCitizen = "নাগৰিক",
+        soilSatUnit = "আৰ্দ্ৰতা",
+        defaultSectorName = "ছেক্টৰ: পূব হিমালয় (চিকিম / অসম কৰিডৰ)",
+        checkLandslideRiskTitle = "ভূমিস্খলন বিপদ পৰীক্ষা",
+        checkLandslideRiskDesc = "শেহতীয়া বৰষুণ আৰু পাহাৰীয়া ঢালৰ ওপৰত ভিত্তি কৰি আপোনাৰ গাঁও বা যাতায়ত পথৰ বিপদ পৰীক্ষা কৰক।",
+        checkMyRiskBtn = "বিপদ পৰীক্ষা কৰক",
+        rainRadarBtn = "বৰষুণ ৰাডাৰ",
+        offlineModeCached = "অফলাইন ম'ড — সংৰক্ষিত তথ্য",
+        offlineNotice = "অফলাইন — পূৰ্বৰ বিপদৰ তথ্য দেখুওৱা হৈছে। জৰুৰীকালীন SOS আৰু প্ৰতিবেদন অফলাইন বাৰ্তাযোগে প্ৰেৰণ হ'ব।",
+        offlineSosDispatchedTitle = "SMS যোগে অফলাইন SOS প্ৰেৰণ কৰা হ'ল",
+        offlineSosDispatchedDesc = "GPS স্থানাংক সহ ১১২ নম্বৰলৈ জৰুৰীকালীন বাৰ্তা প্ৰেৰণ কৰা হ'ল। ইণ্টাৰনেট আহিলে ক্লাউডৰ সৈতে স্বয়ংক্ৰিয়ভাৱে সংযোগ হ'ব।",
+        cloudSosDispatchedTitle = "জৰুৰীকালীন SOS প্ৰেৰণ কৰা হ'ল (ক্লাউড)",
+        cloudSosDispatchedDesc = "আপোনাৰ GPS স্থানাংক SDRF / NDMA উদ্ধাৰকাৰী দললৈ প্ৰেৰণ কৰা হৈছে।"
     )
 
     val BN = AppStrings(
@@ -542,7 +604,21 @@ object AppStringsRepository {
         tabProfile = "প্রোফাইল",
         languageDialogTitle = "ভাষা ও উপভাষা",
         languageDialogSub = "পূর্ব হিমালয় টেলিমেট্রি",
-        filterByState = "রাজ্য / অঞ্চল অনুসারে ফিল্টার করুন"
+        filterByState = "রাজ্য / অঞ্চল অনুসারে ফিল্টার করুন",
+        safetyMonitorActive = "সুরক্ষা পর্যবেক্ষণ: সক্রিয়",
+        roleCitizen = "নাগরিক",
+        soilSatUnit = "আর্দ্রতা",
+        defaultSectorName = "সেক্টর: পূর্ব হিমালয় (সিকিম / আসাম করিডোর)",
+        checkLandslideRiskTitle = "ভূমিধসের ঝুঁকি পরীক্ষা",
+        checkLandslideRiskDesc = "সাম্প্রতিক বৃষ্টিপাত ও খাড়া ঢালের ওপর ভিত্তি করে আপনার এলাকা বা যাতায়াত পথের ঝুঁকি যাচাই করুন।",
+        checkMyRiskBtn = "ঝুঁকি পরীক্ষা",
+        rainRadarBtn = "বৃষ্টি রাডার",
+        offlineModeCached = "অফলাইন মোড — সংরক্ষিত তথ্য",
+        offlineNotice = "অফলাইন — সর্বশেষ প্রাপ্ত তথ্য প্রদর্শিত হচ্ছে। জরুরি SOS এবং রিপোর্ট অফলাইনে পাঠানোর ব্যবস্থা করা হয়েছে।",
+        offlineSosDispatchedTitle = "SMS মাধ্যমে অফলাইন SOS পাঠানো হয়েছে",
+        offlineSosDispatchedDesc = "GPS স্থানাঙ্ক সহ ১১২ নম্বরে জরুরি সংকেত পাঠানো হয়েছে। ইন্টারনেট সক্রিয় হলে ক্লাউডে স্বয়ংক্রিয় সিঙ্ক হবে।",
+        cloudSosDispatchedTitle = "জরুরি SOS পাঠানো হয়েছে (ক্লাউড)",
+        cloudSosDispatchedDesc = "আপনার GPS স্থানাঙ্ক SDRF / NDMA উদ্ধারকারী দলের নিকট পাঠানো হয়েছে।"
     )
 
     val NE = AppStrings(
@@ -639,7 +715,21 @@ object AppStringsRepository {
         tabProfile = "प्रोफाइल",
         languageDialogTitle = "भाषा र स्थानीय बोली",
         languageDialogSub = "पूर्वी हिमालय क्षेत्र",
-        filterByState = "राज्य / क्षेत्र अनुसार खोज्नुहोस्"
+        filterByState = "राज्य / क्षेत्र अनुसार खोज्नुहोस्",
+        safetyMonitorActive = "सुरक्षा निगरानी: सक्रिय",
+        roleCitizen = "नागरिक",
+        soilSatUnit = "संतृप्ति",
+        defaultSectorName = "सेक्टर: पूर्वी हिमालय (सिक्किम / असम करिडोर)",
+        checkLandslideRiskTitle = "पहिरो जोखिम जाँच गर्नुहोस्",
+        checkLandslideRiskDesc = "हालको वर्षा र भिरालो जमिनको आधारमा आफ्नो गाउँ वा यात्रा मार्गको पहिरो जोखिम जाँच गर्नुहोस्।",
+        checkMyRiskBtn = "जोखिम जाँच गर्नुहोस्",
+        rainRadarBtn = "वर्षा रडार",
+        offlineModeCached = "अफलाइन मोड — सुरक्षित डेटा",
+        offlineNotice = "अफलाइन — पछिल्लो जोखिम डेटा देखाइएको छ। आपतकालीन SOS र रिपोर्टहरू अफलाइन सन्देश मार्फत पठाइनेछन्।",
+        offlineSosDispatchedTitle = "SMS मार्फत अफलाइन SOS पठाइयो",
+        offlineSosDispatchedDesc = "GPS निर्देशांक सहित ११२ मा आपतकालीन सन्देश पठाइयो। इन्टरनेट पुनः सुरु हुँदा स्वचालित सिङ्क हुनेछ।",
+        cloudSosDispatchedTitle = "आपतकालीन SOS पठाइयो (क्लाउड)",
+        cloudSosDispatchedDesc = "तपाईंको GPS टेलिमेट्री SDRF / NDMA उद्धार टोलीलाई पठाइएको छ।"
     )
 
     fun get(code: String): AppStrings {

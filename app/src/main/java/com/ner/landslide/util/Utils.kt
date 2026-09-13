@@ -36,6 +36,30 @@ data class ResolvedLocation(
 class LocationHelper @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
+    companion object {
+        const val NER_MIN_LAT = 21.5
+        const val NER_MAX_LAT = 29.8
+        const val NER_MIN_LON = 87.5
+        const val NER_MAX_LON = 97.5
+
+        const val INDIA_MIN_LAT = 6.5
+        const val INDIA_MAX_LAT = 37.5
+        const val INDIA_MIN_LON = 68.0
+        const val INDIA_MAX_LON = 97.5
+
+        const val DEFAULT_NER_LAT = 27.3389
+        const val DEFAULT_NER_LON = 88.6065
+        const val DEFAULT_NER_NAME = "Gangtok, East Sikkim (NER)"
+
+        fun isWithinNER(lat: Double, lon: Double): Boolean {
+            return lat in NER_MIN_LAT..NER_MAX_LAT && lon in NER_MIN_LON..NER_MAX_LON
+        }
+
+        fun isWithinIndia(lat: Double, lon: Double): Boolean {
+            return lat in INDIA_MIN_LAT..INDIA_MAX_LAT && lon in INDIA_MIN_LON..INDIA_MAX_LON
+        }
+    }
+
     private val fusedLocationClient: FusedLocationProviderClient =
         LocationServices.getFusedLocationProviderClient(context)
 
@@ -56,31 +80,33 @@ class LocationHelper @Inject constructor(
     }
 
     suspend fun reverseGeocode(latitude: Double, longitude: Double): ResolvedLocation {
-        // Tier 1: Try Android Geocoder with IO dispatcher
+        // Tier 1: Try Android Geocoder with IO dispatcher & 2.5s timeout
         val geocoded = withContext(Dispatchers.IO) {
             try {
-                if (Geocoder.isPresent()) {
-                    val geocoder = Geocoder(context, Locale.ENGLISH)
-                    @Suppress("DEPRECATION")
-                    val addresses = geocoder.getFromLocation(latitude, longitude, 1)
-                    if (!addresses.isNullOrEmpty()) {
-                        val addr: Address = addresses[0]
-                        val loc = addr.locality ?: addr.subLocality ?: addr.featureName ?: ""
-                        val dist = addr.subAdminArea ?: addr.adminArea ?: ""
-                        val st = addr.adminArea ?: ""
-                        val name = buildString {
-                            if (loc.isNotBlank()) append("$loc, ")
-                            if (dist.isNotBlank() && dist != loc) append("$dist, ")
-                            if (st.isNotBlank()) append(st) else append("NER")
-                        }.trim().trimEnd(',')
-                        ResolvedLocation(
-                            locality = loc.ifBlank { dist }.ifBlank { "Local Sector" },
-                            district = dist.ifBlank { "Regional District" },
-                            state = st.ifBlank { "Northeast India" },
-                            formattedName = name.ifBlank { "Local Monitored Sector" }
-                        )
+                withTimeoutOrNull(2500L) {
+                    if (Geocoder.isPresent()) {
+                        val geocoder = Geocoder(context, Locale.ENGLISH)
+                        @Suppress("DEPRECATION")
+                        val addresses = geocoder.getFromLocation(latitude, longitude, 1)
+                        if (!addresses.isNullOrEmpty()) {
+                            val addr: Address = addresses[0]
+                            val loc = addr.locality ?: addr.subLocality ?: addr.featureName ?: ""
+                            val dist = addr.subAdminArea ?: addr.adminArea ?: ""
+                            val st = addr.adminArea ?: ""
+                            val name = buildString {
+                                if (loc.isNotBlank()) append("$loc, ")
+                                if (dist.isNotBlank() && dist != loc) append("$dist, ")
+                                if (st.isNotBlank()) append(st) else append("NER")
+                            }.trim().trimEnd(',')
+                            ResolvedLocation(
+                                locality = loc.ifBlank { dist }.ifBlank { "Local Sector" },
+                                district = dist.ifBlank { "Regional District" },
+                                state = st.ifBlank { "Northeast India" },
+                                formattedName = name.ifBlank { "Local Monitored Sector" }
+                            )
+                        } else null
                     } else null
-                } else null
+                }
             } catch (e: Exception) {
                 null
             }
@@ -90,6 +116,32 @@ class LocationHelper @Inject constructor(
 
         // Tier 2: Offline Fallback mapping to nearest Northeast India district / town centroid
         return offlineRegionalLookup(latitude, longitude)
+    }
+
+    suspend fun forwardGeocode(query: String): Pair<Double, Double>? = withContext(Dispatchers.IO) {
+        if (query.isBlank()) return@withContext null
+        try {
+            if (Geocoder.isPresent()) {
+                val geocoder = Geocoder(context, Locale.ENGLISH)
+                @Suppress("DEPRECATION")
+                val addresses = geocoder.getFromLocationName(query, 1)
+                if (!addresses.isNullOrEmpty()) {
+                    val a = addresses[0]
+                    return@withContext Pair(a.latitude, a.longitude)
+                }
+            }
+        } catch (e: Exception) {
+            // Fall through to regional centroids
+        }
+
+        val matched = offlineCentroids.firstOrNull {
+            query.contains(it.locality, ignoreCase = true) ||
+            query.contains(it.district, ignoreCase = true) ||
+            it.locality.contains(query, ignoreCase = true)
+        }
+        if (matched != null) {
+            Pair(matched.lat, matched.lon)
+        } else null
     }
 
     private data class RegionalCentroid(
@@ -145,7 +197,30 @@ class LocationHelper @Inject constructor(
         RegionalCentroid("Imphal", "Imphal West", "Manipur", 24.8170, 93.9368),
         RegionalCentroid("Churachandpur", "Churachandpur", "Manipur", 24.3333, 93.6833),
         // Tripura
-        RegionalCentroid("Agartala", "West Tripura", "Tripura", 23.8315, 91.2868)
+        RegionalCentroid("Agartala", "West Tripura", "Tripura", 23.8315, 91.2868),
+        // Western Ghats & Southern Hills
+        RegionalCentroid("Wayanad", "Wayanad", "Kerala", 11.6854, 76.1320),
+        RegionalCentroid("Munnar", "Idukki", "Kerala", 10.0889, 77.0595),
+        RegionalCentroid("Idukki", "Idukki", "Kerala", 9.8494, 76.9806),
+        RegionalCentroid("Mahabaleshwar", "Satara", "Maharashtra", 17.9237, 73.6586),
+        RegionalCentroid("Lonavala", "Pune", "Maharashtra", 18.7557, 73.4091),
+        RegionalCentroid("Ooty", "Nilgiris", "Tamil Nadu", 11.4102, 76.6950),
+        RegionalCentroid("Coorg", "Kodagu", "Karnataka", 12.4244, 75.7382),
+        // Western & Central Himalayas
+        RegionalCentroid("Shimla", "Shimla", "Himachal Pradesh", 31.1048, 77.1734),
+        RegionalCentroid("Manali", "Kullu", "Himachal Pradesh", 32.2396, 77.1887),
+        RegionalCentroid("Dharamshala", "Kangra", "Himachal Pradesh", 32.2190, 76.3234),
+        RegionalCentroid("Chamoli", "Chamoli", "Uttarakhand", 30.5526, 79.5658),
+        RegionalCentroid("Joshimath", "Chamoli", "Uttarakhand", 30.5562, 79.5649),
+        RegionalCentroid("Rishikesh", "Dehradun", "Uttarakhand", 30.0869, 78.2676),
+        RegionalCentroid("Dehradun", "Dehradun", "Uttarakhand", 30.3165, 78.0322),
+        RegionalCentroid("Nainital", "Nainital", "Uttarakhand", 29.3919, 79.4542),
+        RegionalCentroid("Srinagar", "Srinagar", "Jammu and Kashmir", 34.0837, 74.7973),
+        // Major Urban & Plain Reference Baselines
+        RegionalCentroid("Lucknow", "Lucknow", "Uttar Pradesh", 26.8467, 80.9462),
+        RegionalCentroid("New Delhi", "New Delhi", "Delhi", 28.6139, 77.2090),
+        RegionalCentroid("Patna", "Patna", "Bihar", 25.5941, 85.1376),
+        RegionalCentroid("Kolkata", "Kolkata", "West Bengal", 22.5726, 88.3639)
     )
 
     private fun offlineRegionalLookup(lat: Double, lon: Double): ResolvedLocation {
@@ -194,12 +269,20 @@ class NetworkMonitor @Inject constructor(
     private val networkCallback = object : ConnectivityManager.NetworkCallback() {
         override fun onAvailable(network: Network) {
             val caps = cm.getNetworkCapabilities(network)
-            val hasInternet = caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) ?: true
+            val hasInternet = caps?.let {
+                it.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) ||
+                it.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                it.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
+                it.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
+            } ?: true
             _isOnline.value = hasInternet
         }
 
         override fun onCapabilitiesChanged(network: Network, networkCapabilities: NetworkCapabilities) {
-            val hasInternet = networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            val hasInternet = networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) ||
+                    networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                    networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
+                    networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
             _isOnline.value = hasInternet
         }
 
@@ -240,10 +323,19 @@ class NetworkMonitor @Inject constructor(
         _isOnline.value = isCurrentlyOnline()
     }
 
+    fun notifyNetworkSuccess() {
+        if (!_isOnline.value) {
+            _isOnline.value = true
+        }
+    }
+
     fun isCurrentlyOnline(): Boolean {
         val active = cm.activeNetwork ?: return false
         val caps = cm.getNetworkCapabilities(active) ?: return false
-        return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+        return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) ||
+                caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
+                caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
     }
 }
 

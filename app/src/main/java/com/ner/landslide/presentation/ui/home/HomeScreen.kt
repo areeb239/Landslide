@@ -44,12 +44,17 @@ fun HomeScreen(
     val localeController = LocalLocaleController.current
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showSOSDialog by remember { mutableStateOf(false) }
+    var showEmergencyContactsDialog by remember { mutableStateOf(false) }
+    var showLocationSheet by remember { mutableStateOf(false) }
     var selectedSeverityFilter by remember { mutableStateOf<AlertSeverity?>(null) }
 
-    var isCitizenMode by rememberSaveable { mutableStateOf(true) }
+    val isCitizenMode = true
     var countdownSeconds by remember { mutableIntStateOf(5) }
     var isCountingDown by remember { mutableStateOf(false) }
     val context = androidx.compose.ui.platform.LocalContext.current
+    var savedEmergencyContacts by remember {
+        mutableStateOf(com.ner.landslide.util.EmergencySmsHelper.getSavedContacts(context))
+    }
 
     LaunchedEffect(Unit) {
         com.ner.landslide.util.NetworkMonitor.getInstance(context).refresh()
@@ -85,8 +90,37 @@ fun HomeScreen(
         }
     }
 
+    if (showLocationSheet) {
+        LocationSelectionBottomSheet(
+            currentLocation = uiState.selectedLocation,
+            onDismissRequest = { showLocationSheet = false },
+            onSelectGpsLocation = {
+                viewModel.switchToGpsLocation()
+            },
+            onSelectCustomLocation = { sector ->
+                viewModel.selectCustomLocation(sector)
+            },
+            onSearchQueryChange = { query ->
+                viewModel.searchLocations(query)
+            },
+            searchResults = uiState.locationSearchResults.ifEmpty {
+                com.ner.landslide.util.AppLocationManager.POPULAR_SECTOR_HOTSPOTS
+            },
+            isSearching = uiState.isSearchingLocation
+        )
+    }
+
     if (showLanguageDialog) {
         LanguageSelectionDialog(onDismissRequest = { showLanguageDialog = false })
+    }
+
+    if (showEmergencyContactsDialog) {
+        EmergencyContactsDialog(
+            onDismissRequest = { showEmergencyContactsDialog = false },
+            onContactsUpdated = {
+                savedEmergencyContacts = com.ner.landslide.util.EmergencySmsHelper.getSavedContacts(context)
+            }
+        )
     }
 
     if (showSOSDialog) {
@@ -180,10 +214,38 @@ fun HomeScreen(
                                 fontWeight = FontWeight.Bold,
                                 color = colors.textPrimary
                             )
+                            HorizontalDivider(color = colors.borderDefault.copy(alpha = 0.6f), thickness = 0.8.dp)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "SMS RECIPIENTS (${savedEmergencyContacts.size + 1})",
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colors.textSecondary
+                                )
+                                Text(
+                                    text = "+ Add / Manage",
+                                    fontSize = 9.5.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colors.accent,
+                                    modifier = Modifier.clickable {
+                                        isCountingDown = false
+                                        showEmergencyContactsDialog = true
+                                    }
+                                )
+                            }
                             Text(
-                                text = "Emergency Relay: 112 (National Disaster Response) + Google Maps PIN",
+                                text = if (savedEmergencyContacts.isEmpty())
+                                    "112 (National Disaster Line)"
+                                else
+                                    "112 + " + savedEmergencyContacts.joinToString(", ") { "${it.name} (${it.phoneNumber})" },
                                 fontSize = 9.5.sp,
-                                color = colors.textSecondary
+                                color = colors.textPrimary,
+                                maxLines = 2,
+                                lineHeight = 13.sp
                             )
                         }
                     }
@@ -270,7 +332,7 @@ fun HomeScreen(
                     ) {
                         PulsingStatusDot(color = colors.accent, size = 6.dp)
                         Text(
-                            text = if (isCitizenMode) "SAFETY MONITOR: ACTIVE" else strings.telemetryRadarActive,
+                            text = strings.safetyMonitorActive,
                             style = MaterialTheme.typography.labelSmall,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
@@ -279,53 +341,34 @@ fun HomeScreen(
                         )
                     }
 
-                    // Global utility controls: Citizen/Official Mode, Admin, Language Selector, Theme Switcher
+                    // Global utility controls: Static Citizen Badge, Language Selector, Theme Switcher
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        // Plain-Language Citizen Mode vs Official Mode Switch
+                        // Static Citizen Badge (No toggle to official)
                         Surface(
-                            onClick = { isCitizenMode = !isCitizenMode },
                             shape = RoundedCornerShape(16.dp),
                             color = colors.bgSurface,
-                            border = BorderStroke(1.dp, if (isCitizenMode) colors.accent else colors.warning)
+                            border = BorderStroke(1.dp, colors.accent.copy(alpha = 0.5f))
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp),
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 Icon(
-                                    imageVector = if (isCitizenMode) Icons.Default.Person else Icons.Default.Tune,
+                                    imageVector = Icons.Default.Person,
                                     contentDescription = null,
-                                    tint = if (isCitizenMode) colors.accent else colors.warning,
+                                    tint = colors.accent,
                                     modifier = Modifier.size(12.dp)
                                 )
                                 Text(
-                                    text = if (isCitizenMode) "Citizen" else "Official",
+                                    text = strings.roleCitizen,
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = if (isCitizenMode) colors.accent else colors.warning
+                                    color = colors.accent
                                 )
-                            }
-                        }
-
-                        if (uiState.currentUser?.role == UserRole.ADMIN) {
-                            Surface(
-                                onClick = onNavigateToAdmin,
-                                shape = RoundedCornerShape(12.dp),
-                                color = colors.bgSurface,
-                                border = BorderStroke(1.dp, colors.borderDefault)
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                ) {
-                                    Icon(Icons.Default.AdminPanelSettings, null, tint = colors.textSecondary, modifier = Modifier.size(12.dp))
-                                    Text("ADMIN", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = colors.textPrimary)
-                                }
                             }
                         }
 
@@ -391,8 +434,8 @@ fun HomeScreen(
                             Text(
                                 text = strings.appTitle,
                                 fontSize = 20.sp,
-                                fontWeight = FontWeight.Black,
-                                letterSpacing = 1.sp,
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = if (strings.langCode == "en") 0.8.sp else 0.sp,
                                 color = colors.textPrimary
                             )
                         }
@@ -491,6 +534,151 @@ fun HomeScreen(
                 }
             }
 
+            // Operational Location Ribbon (Single Source of Truth)
+            item {
+                Surface(
+                    onClick = {
+                        viewModel.searchLocations("")
+                        showLocationSheet = true
+                    },
+                    shape = RoundedCornerShape(10.dp),
+                    color = colors.bgSurface,
+                    border = BorderStroke(1.dp, if (uiState.selectedLocation.isGpsLocation) colors.accent.copy(alpha = 0.5f) else colors.borderDefault),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 9.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(30.dp)
+                                    .clip(CircleShape)
+                                    .background(if (uiState.selectedLocation.isGpsLocation) colors.accent.copy(alpha = 0.15f) else colors.bgBase),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = if (uiState.selectedLocation.isGpsLocation) Icons.Default.GpsFixed else Icons.Default.Place,
+                                    contentDescription = null,
+                                    tint = colors.accent,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                            Column {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                                    Text(
+                                        text = if (uiState.selectedLocation.isGpsLocation) "CURRENT GPS LOCATION" else "CUSTOM SELECTED SECTOR",
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = colors.accent,
+                                        letterSpacing = 0.6.sp
+                                    )
+                                    PulsingStatusDot(color = colors.accent, size = 4.dp)
+                                }
+                                Text(
+                                    text = uiState.selectedLocation.name,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.5.sp,
+                                    color = colors.textPrimary,
+                                    maxLines = 1
+                                )
+                            }
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = colors.bgBase,
+                            border = BorderStroke(1.dp, colors.borderDefault)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(Icons.Default.SwapHoriz, null, tint = colors.accent, modifier = Modifier.size(13.dp))
+                                Text(
+                                    text = "Change",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = colors.textPrimary
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Responsive Weather Feature & AI Hazard Cards (Left Space Utilized!)
+            item {
+                BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                    val isWide = maxWidth >= 540.dp
+                    if (isWide) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            HomeWeatherCard(
+                                weather = uiState.currentWeather,
+                                location = uiState.selectedLocation,
+                                isLoading = uiState.isWeatherLoading,
+                                condition = uiState.weatherCondition,
+                                onOpenWeather = onNavigateToWeather,
+                                onChangeLocation = {
+                                    viewModel.searchLocations("")
+                                    showLocationSheet = true
+                                },
+                                modifier = Modifier.weight(1f)
+                            )
+
+                            HeroAiFeatureCard(
+                                riskLevel = uiState.currentRiskLevel,
+                                probability = uiState.currentRiskProbability,
+                                isRiskLoading = uiState.isRiskLoading,
+                                onRunPredict = onNavigateToPrediction,
+                                onOpenDoppler = onNavigateToWeather,
+                                isCitizenMode = isCitizenMode,
+                                isOnline = uiState.isOnline,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    } else {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            HomeWeatherCard(
+                                weather = uiState.currentWeather,
+                                location = uiState.selectedLocation,
+                                isLoading = uiState.isWeatherLoading,
+                                condition = uiState.weatherCondition,
+                                onOpenWeather = onNavigateToWeather,
+                                onChangeLocation = {
+                                    viewModel.searchLocations("")
+                                    showLocationSheet = true
+                                }
+                            )
+
+                            HeroAiFeatureCard(
+                                riskLevel = uiState.currentRiskLevel,
+                                probability = uiState.currentRiskProbability,
+                                isRiskLoading = uiState.isRiskLoading,
+                                onRunPredict = onNavigateToPrediction,
+                                onOpenDoppler = onNavigateToWeather,
+                                isCitizenMode = isCitizenMode,
+                                isOnline = uiState.isOnline
+                            )
+                        }
+                    }
+                }
+            }
+
             // Real-time Regional Telemetry Instrumentation (Inline Micro-Gauges)
             item {
                 Row(
@@ -508,7 +696,7 @@ fun HomeScreen(
                     TelemetryInstrumentTile(
                         title = strings.soilSat,
                         value = "64%",
-                        unit = "Sat",
+                        unit = strings.soilSatUnit,
                         progressFraction = 0.64f,
                         indicatorColor = colors.warning,
                         modifier = Modifier.weight(1f)
@@ -589,6 +777,52 @@ fun HomeScreen(
                 }
             }
 
+            // Emergency Contacts Quick Status / Management Strip
+            item {
+                Surface(
+                    onClick = { showEmergencyContactsDialog = true },
+                    shape = RoundedCornerShape(8.dp),
+                    color = colors.bgSurface,
+                    border = BorderStroke(1.dp, colors.borderDefault),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(
+                                Icons.Default.PermPhoneMsg,
+                                contentDescription = null,
+                                tint = colors.accent,
+                                modifier = Modifier.size(15.dp)
+                            )
+                            Text(
+                                text = if (savedEmergencyContacts.isEmpty())
+                                    "Offline SMS: 112 (Default) • Tap to add numbers"
+                                else
+                                    "Offline SMS: ${savedEmergencyContacts.size} Personal Contact${if (savedEmergencyContacts.size > 1) "s" else ""} + 112",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = colors.textPrimary,
+                                maxLines = 1
+                            )
+                        }
+                        Text(
+                            text = "Manage",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = colors.accent
+                        )
+                    }
+                }
+            }
+
             // Embedded Emergency SOS Dispatch Action Bar (Tactile Crimson Treatment)
             item {
                 EmergencySOSBar(
@@ -597,16 +831,8 @@ fun HomeScreen(
                 )
             }
 
-            // Secondary Utility: AI Hazard Prediction Card
-            item {
-                HeroAiFeatureCard(
-                    onRunPredict = onNavigateToPrediction,
-                    onOpenDoppler = onNavigateToWeather,
-                    isCitizenMode = isCitizenMode,
-                    isOnline = uiState.isOnline
-                )
-            }
 
+            /* // Regional Hazard Feed hidden per user request
             // Section Header: Regional Hazard Feed with Severity Filters
             item {
                 Spacer(Modifier.height(4.dp))
@@ -773,6 +999,7 @@ fun HomeScreen(
                     AlertCard(alert = alert)
                 }
             }
+            */
 
             // Bottom clearance padding above navigation dock
             item { Spacer(Modifier.height(24.dp)) }
@@ -783,6 +1010,7 @@ fun HomeScreen(
 @Composable
 private fun MissionUserProfileCard(user: User) {
     val colors = BhurakshakTheme.colors
+    val strings = LocalAppStrings.current
     FieldCard(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.padding(12.dp),
@@ -816,14 +1044,14 @@ private fun MissionUserProfileCard(user: User) {
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = user.name,
+                    text = user.name.replace(" (Citizen)", "").replace(" (Admin)", "").replace(" (Field)", ""),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
                     color = colors.textPrimary
                 )
                 Text(
-                    text = "SECTOR: Eastern Himalayas (Sikkim / Assam Corridor)",
+                    text = strings.defaultSectorName,
                     style = MaterialTheme.typography.labelSmall,
                     fontSize = 10.sp,
                     color = colors.textSecondary
@@ -836,7 +1064,7 @@ private fun MissionUserProfileCard(user: User) {
                 border = BorderStroke(1.dp, colors.borderDefault)
             ) {
                 Text(
-                    text = user.role.name,
+                    text = strings.roleCitizen.uppercase(),
                     style = MaterialTheme.typography.labelSmall,
                     fontSize = 9.sp,
                     fontWeight = FontWeight.Bold,
@@ -850,14 +1078,26 @@ private fun MissionUserProfileCard(user: User) {
 
 @Composable
 private fun HeroAiFeatureCard(
+    riskLevel: String = "LOW",
+    probability: Double = 0.01,
+    isRiskLoading: Boolean = false,
     onRunPredict: () -> Unit,
     onOpenDoppler: () -> Unit,
     isCitizenMode: Boolean = true,
-    isOnline: Boolean = true
+    isOnline: Boolean = true,
+    modifier: Modifier = Modifier
 ) {
     val colors = BhurakshakTheme.colors
     val strings = LocalAppStrings.current
-    FieldCard(modifier = Modifier.fillMaxWidth()) {
+
+    val badgeColor = when (riskLevel.uppercase()) {
+        "CRITICAL" -> colors.critical
+        "HIGH" -> colors.warning
+        "MODERATE" -> Color(0xFFF59E0B)
+        else -> colors.accent
+    }
+
+    FieldCard(modifier = modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -875,15 +1115,15 @@ private fun HeroAiFeatureCard(
                         modifier = Modifier
                             .size(28.dp)
                             .clip(RoundedCornerShape(6.dp))
-                            .background(colors.accent.copy(alpha = 0.12f)),
+                            .background(badgeColor.copy(alpha = 0.12f)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.Psychology, null, tint = colors.accent, modifier = Modifier.size(17.dp))
+                        Icon(Icons.Default.Psychology, null, tint = badgeColor, modifier = Modifier.size(17.dp))
                     }
                     Text(
-                        text = if (isCitizenMode) "CHECK LANDSLIDE RISK" else strings.aiHazardNeuralCore,
+                        text = "AI HAZARD EVALUATION",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp,
+                        fontSize = 11.sp,
                         letterSpacing = 0.5.sp,
                         color = colors.textPrimary
                     )
@@ -891,26 +1131,72 @@ private fun HeroAiFeatureCard(
 
                 Surface(
                     shape = RoundedCornerShape(4.dp),
-                    color = if (isOnline) colors.success.copy(alpha = 0.12f) else colors.warning.copy(alpha = 0.12f),
-                    border = BorderStroke(1.dp, if (isOnline) colors.success.copy(alpha = 0.3f) else colors.warning.copy(alpha = 0.3f))
+                    color = badgeColor.copy(alpha = 0.15f),
+                    border = BorderStroke(1.dp, badgeColor.copy(alpha = 0.4f))
                 ) {
                     Text(
-                        text = if (isOnline) strings.online else strings.offline,
+                        text = riskLevel.uppercase(),
                         fontSize = 9.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (isOnline) colors.success else colors.warning,
+                        fontWeight = FontWeight.Black,
+                        color = badgeColor,
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                     )
                 }
             }
 
-            Text(
-                text = if (isCitizenMode) "Check if your village, slope, or travel route is at risk of landslide based on recent rain and steep terrain." else strings.aiHazardDescription,
-                style = MaterialTheme.typography.bodySmall,
-                fontSize = 11.sp,
-                color = colors.textSecondary,
-                lineHeight = 16.sp
-            )
+            if (isRiskLoading) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(38.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        color = colors.accent,
+                        strokeWidth = 2.dp
+                    )
+                }
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = String.format(java.util.Locale.US, "%.1f%% Probability", probability * 100),
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Black,
+                            color = badgeColor
+                        )
+                        Text(
+                            text = if (riskLevel.uppercase() == "LOW")
+                                "Physics Verified • Stable Ground Conditions"
+                            else
+                                "Slope Shear Alert • Telemetry Monitored",
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 10.5.sp,
+                            color = colors.textSecondary
+                        )
+                    }
+
+                    Surface(
+                        shape = CircleShape,
+                        color = badgeColor.copy(alpha = 0.12f),
+                        modifier = Modifier.size(34.dp)
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = if (riskLevel.uppercase() == "LOW") Icons.Default.Shield else Icons.Default.Warning,
+                                contentDescription = null,
+                                tint = badgeColor,
+                                modifier = Modifier.size(17.dp)
+                            )
+                        }
+                    }
+                }
+            }
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -920,11 +1206,11 @@ private fun HeroAiFeatureCard(
                     onClick = onRunPredict,
                     shape = RoundedCornerShape(6.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = colors.accent),
-                    modifier = Modifier.weight(1.2f).height(40.dp)
+                    modifier = Modifier.weight(1.2f).height(38.dp)
                 ) {
-                    Icon(Icons.Default.Bolt, null, modifier = Modifier.size(15.dp), tint = Color.White)
+                    Icon(Icons.Default.Bolt, null, modifier = Modifier.size(14.dp), tint = Color.White)
                     Spacer(Modifier.width(6.dp))
-                    Text(if (isCitizenMode) "Check My Risk" else strings.calculateRisk, fontWeight = FontWeight.Bold, color = Color.White, fontSize = 12.sp)
+                    Text(strings.checkMyRiskBtn, fontWeight = FontWeight.Bold, color = Color.White, fontSize = 11.5.sp)
                 }
 
                 OutlinedButton(
@@ -932,11 +1218,11 @@ private fun HeroAiFeatureCard(
                     shape = RoundedCornerShape(6.dp),
                     border = BorderStroke(1.dp, colors.borderDefault),
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.textPrimary),
-                    modifier = Modifier.weight(1f).height(40.dp)
+                    modifier = Modifier.weight(1f).height(38.dp)
                 ) {
-                    Icon(Icons.Default.Radar, null, modifier = Modifier.size(15.dp), tint = colors.accent)
+                    Icon(Icons.Default.Radar, null, modifier = Modifier.size(14.dp), tint = colors.accent)
                     Spacer(Modifier.width(6.dp))
-                    Text(if (isCitizenMode) "Rain Radar" else strings.doppler, fontWeight = FontWeight.SemiBold, color = colors.textPrimary, fontSize = 12.sp)
+                    Text(strings.rainRadarBtn, fontWeight = FontWeight.SemiBold, color = colors.textPrimary, fontSize = 11.5.sp)
                 }
             }
         }

@@ -33,10 +33,25 @@ fun ProfileScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val colors = BhurakshakTheme.colors
+    val strings = LocalAppStrings.current
     val themeController = LocalThemeController.current
     val localeController = LocalLocaleController.current
+    val context = androidx.compose.ui.platform.LocalContext.current
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
+    var showEmergencyContactsDialog by remember { mutableStateOf(false) }
+    var emergencyContactsCount by remember {
+        mutableIntStateOf(com.ner.landslide.util.EmergencySmsHelper.getSavedContacts(context).size)
+    }
+
+    if (showEmergencyContactsDialog) {
+        EmergencyContactsDialog(
+            onDismissRequest = { showEmergencyContactsDialog = false },
+            onContactsUpdated = {
+                emergencyContactsCount = com.ner.landslide.util.EmergencySmsHelper.getSavedContacts(context).size
+            }
+        )
+    }
 
     if (showLanguageDialog) {
         LanguageSelectionDialog(onDismissRequest = { showLanguageDialog = false })
@@ -59,7 +74,7 @@ fun ProfileScreen(
             },
             title = {
                 Text(
-                    "Sign Out of Incident Network?",
+                    "Sign Out of Bhoochetak?",
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
                     color = colors.textPrimary
@@ -76,6 +91,7 @@ fun ProfileScreen(
             confirmButton = {
                 Button(
                     onClick = {
+                        com.ner.landslide.data.repository.UserRepositoryImpl.clearSession(context)
                         viewModel.signOut()
                         showLogoutDialog = false
                         onLogout()
@@ -126,7 +142,7 @@ fun ProfileScreen(
         uiState.user?.let { user ->
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = user.name,
+                    text = user.name.replace(" (Citizen)", "").replace(" (Admin)", "").replace(" (Field)", ""),
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                     color = colors.textPrimary
@@ -138,7 +154,7 @@ fun ProfileScreen(
                 )
             }
 
-            // Role Badge
+            // Role Badge (Locked to Citizen)
             Surface(
                 shape = RoundedCornerShape(4.dp),
                 color = colors.bgSurface,
@@ -150,17 +166,13 @@ fun ProfileScreen(
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Icon(
-                        when (user.role.name) {
-                            "ADMIN" -> Icons.Default.AdminPanelSettings
-                            "FIELD_OFFICER" -> Icons.Default.Badge
-                            else -> Icons.Default.Person
-                        },
+                        Icons.Default.Person,
                         null,
                         tint = colors.accent,
                         modifier = Modifier.size(14.dp)
                     )
                     Text(
-                        text = user.role.name.replace("_", " "),
+                        text = strings.roleCitizen,
                         color = colors.textPrimary,
                         style = MaterialTheme.typography.labelSmall,
                         fontSize = 10.sp,
@@ -196,16 +208,16 @@ fun ProfileScreen(
 
                     HorizontalDivider(color = colors.borderDefault, thickness = 0.8.dp)
 
-                    if (user.role.name == "ADMIN") {
-                        ProfileMenuItem(
-                            icon = Icons.Default.AdminPanelSettings,
-                            label = "Disaster Admin Command Hub",
-                            tint = colors.accent,
-                            onClick = onNavigateToAdmin,
-                            textColor = colors.textPrimary
-                        )
-                        HorizontalDivider(color = colors.borderDefault, thickness = 0.8.dp)
-                    }
+                    // Emergency SOS Contacts Tile (Offline SMS Dispatch)
+                    ProfileMenuItem(
+                        icon = Icons.Default.PermPhoneMsg,
+                        label = "Emergency SOS Contacts ($emergencyContactsCount configured)",
+                        tint = colors.critical,
+                        onClick = { showEmergencyContactsDialog = true },
+                        textColor = colors.textPrimary
+                    )
+
+                    HorizontalDivider(color = colors.borderDefault, thickness = 0.8.dp)
 
                     ProfileMenuItem(
                         icon = Icons.Default.Security,

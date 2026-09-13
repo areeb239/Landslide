@@ -19,6 +19,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,7 +41,13 @@ fun ReportScreen(
     val colors = BhurakshakTheme.colors
     val strings = LocalAppStrings.current
     val context = androidx.compose.ui.platform.LocalContext.current
-    var currentStep by remember { mutableIntStateOf(1) } // Step 1: Location/Evidence, Step 2: Classification/Severity
+    var currentStep by remember { mutableIntStateOf(1) } // Step 1: Location & Details, Step 2: Danger Level
+
+    // Step 1 Validation state
+    val hasValidLocation = (uiState.latitude != 0.0 && uiState.longitude != 0.0) || uiState.district.trim().isNotBlank()
+    val hasValidDescription = uiState.description.trim().length >= 5
+    val isStep1Valid = hasValidLocation && hasValidDescription
+    var showStep1Errors by remember { mutableStateOf(false) }
 
     var showPermissionRationale by remember { mutableStateOf(false) }
     var showGpsDialog by remember { mutableStateOf(false) }
@@ -166,10 +173,10 @@ fun ReportScreen(
             onDismissRequest = { showErrorDialog = false },
             containerColor = colors.bgSurface,
             icon = { Icon(Icons.Default.ErrorOutline, null, tint = colors.critical, modifier = Modifier.size(28.dp)) },
-            title = { Text("Submission Error", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = colors.textPrimary) },
+            title = { Text("Report Submission Issue", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = colors.textPrimary) },
             text = {
                 Text(
-                    text = "${uiState.error}\n\nYour report details and coordinates are preserved. Please tap retry or save to offline emergency buffer.",
+                    text = "${uiState.error}\n\nYour entered details and photos are safely preserved. Please tap retry to send again.",
                     fontSize = 12.sp,
                     color = colors.textSecondary
                 )
@@ -182,12 +189,12 @@ fun ReportScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = colors.accent)
                 ) {
-                    Text("Retry Transmission", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color.White)
+                    Text("Try Again", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color.White)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showErrorDialog = false }) {
-                    Text("Dismiss", color = colors.textSecondary, fontSize = 12.sp)
+                    Text("Cancel", color = colors.textSecondary, fontSize = 12.sp)
                 }
             }
         )
@@ -200,14 +207,14 @@ fun ReportScreen(
                 title = {
                     Column {
                         Text(
-                            "DISASTER INCIDENT REPORT",
+                            text = "Report Landslide or Hazard",
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp,
-                            letterSpacing = 0.6.sp,
+                            letterSpacing = 0.5.sp,
                             color = colors.textPrimary
                         )
                         Text(
-                            "Step $currentStep of 2 • Field Telemetry Intake",
+                            text = if (currentStep == 1) "Step 1 of 2: Location & What Happened" else "Step 2 of 2: Danger Type & Urgency",
                             style = MaterialTheme.typography.labelSmall,
                             fontSize = 11.sp,
                             color = colors.textSecondary
@@ -220,7 +227,7 @@ fun ReportScreen(
                 actions = {
                     if (currentStep == 2) {
                         TextButton(onClick = { currentStep = 1 }) {
-                            Text("Edit Step 1", color = colors.accent, fontSize = 12.sp)
+                            Text("Edit Details", color = colors.accent, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -238,7 +245,7 @@ fun ReportScreen(
                 OfflineBanner(pendingCount = 1)
             }
 
-            // Stepper Progress Header (Solid Active Fill, Muted Upcoming)
+            // Stepper Progress Header
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -248,7 +255,7 @@ fun ReportScreen(
             ) {
                 // Step 1 Pill
                 val isStep1Active = currentStep == 1
-                val isStep1Completed = currentStep > 1
+                val isStep1Completed = currentStep > 1 || isStep1Valid
                 Surface(
                     onClick = { currentStep = 1 },
                     shape = RoundedCornerShape(8.dp),
@@ -258,7 +265,7 @@ fun ReportScreen(
                     modifier = Modifier.weight(1f)
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
@@ -268,32 +275,39 @@ fun ReportScreen(
                                 .clip(CircleShape)
                                 .background(
                                     when {
-                                        isStep1Completed -> colors.success
+                                        currentStep > 1 -> colors.success
                                         isStep1Active -> Color.White.copy(alpha = 0.25f)
                                         else -> colors.borderDefault
                                     }
                                 ),
                             contentAlignment = Alignment.Center
                         ) {
-                            if (isStep1Completed) {
+                            if (currentStep > 1) {
                                 Icon(Icons.Default.Check, null, tint = Color.White, modifier = Modifier.size(12.dp))
                             } else {
                                 Text("1", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.White)
                             }
                         }
                         Text(
-                            text = "Location & Evidence",
-                            fontSize = 11.sp,
+                            text = "1. Location & Details",
+                            fontSize = 11.5.sp,
                             fontWeight = if (isStep1Active) FontWeight.Bold else FontWeight.Medium,
                             color = if (isStep1Active) Color.White else colors.textSecondary
                         )
                     }
                 }
 
-                // Step 2 Pill
+                // Step 2 Pill (With Strict Validation Guard)
                 val isStep2Active = currentStep == 2
                 Surface(
-                    onClick = { currentStep = 2 },
+                    onClick = {
+                        if (isStep1Valid) {
+                            currentStep = 2
+                            showStep1Errors = false
+                        } else {
+                            showStep1Errors = true
+                        }
+                    },
                     shape = RoundedCornerShape(8.dp),
                     color = if (isStep2Active) colors.accent else colors.bgSurface,
                     border = BorderStroke(1.dp, if (isStep2Active) colors.accent else colors.borderDefault),
@@ -301,7 +315,7 @@ fun ReportScreen(
                     modifier = Modifier.weight(1f)
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
@@ -320,8 +334,8 @@ fun ReportScreen(
                             )
                         }
                         Text(
-                            text = "Classification",
-                            fontSize = 11.sp,
+                            text = "2. Hazard & Urgency",
+                            fontSize = 11.5.sp,
                             fontWeight = if (isStep2Active) FontWeight.Bold else FontWeight.Medium,
                             color = if (isStep2Active) Color.White else colors.textSecondary
                         )
@@ -342,7 +356,7 @@ fun ReportScreen(
                 modifier = Modifier.weight(1f)
             ) { step ->
                 if (step == 1) {
-                    // ─── STEP 1: Location, Observations & Photographic Evidence ───
+                    // ─── STEP 1: Location & What Happened ───
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -350,7 +364,7 @@ fun ReportScreen(
                             .padding(horizontal = 16.dp, vertical = 10.dp),
                         verticalArrangement = Arrangement.spacedBy(14.dp)
                     ) {
-                        // Section 1: Verified Location & GNSS Card
+                        // Section 1: Location Card
                         FieldCard(modifier = Modifier.fillMaxWidth()) {
                             Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                 Row(
@@ -359,40 +373,41 @@ fun ReportScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        "VERIFIED INCIDENT LOCATION",
+                                        "1. WHERE IS THE DANGER?",
                                         fontWeight = FontWeight.Bold,
-                                        fontSize = 11.sp,
+                                        fontSize = 12.sp,
                                         letterSpacing = 0.5.sp,
-                                        color = colors.textSecondary
+                                        color = colors.textPrimary
                                     )
-                                    Surface(
-                                        shape = RoundedCornerShape(4.dp),
-                                        color = colors.accent.copy(alpha = 0.15f),
-                                        border = BorderStroke(1.dp, colors.accent.copy(alpha = 0.3f))
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    if (hasValidLocation) {
+                                        Surface(
+                                            shape = RoundedCornerShape(4.dp),
+                                            color = colors.success.copy(alpha = 0.15f),
+                                            border = BorderStroke(1.dp, colors.success.copy(alpha = 0.3f))
                                         ) {
-                                            PulsingStatusDot(color = colors.accent, size = 5.dp)
-                                            Text(
-                                                "GNSS LOCKED ±3.2m",
-                                                fontSize = 10.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = colors.accent
-                                            )
+                                            Row(
+                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                            ) {
+                                                PulsingStatusDot(color = colors.success, size = 5.dp)
+                                                Text(
+                                                    "GPS ACTIVE",
+                                                    fontSize = 10.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = colors.success
+                                                )
+                                            }
                                         }
                                     }
                                 }
 
-                                // Human-readable location as primary headline
                                 val locationHeadline = if (uiState.resolvedLocationName.isNotBlank()) {
                                     uiState.resolvedLocationName
                                 } else if (uiState.district.isNotBlank()) {
                                     uiState.district
                                 } else {
-                                    strings.detectingLocation
+                                    "Tap 'Use My Current GPS Location' or type landmark below"
                                 }
 
                                 Row(
@@ -414,14 +429,13 @@ fun ReportScreen(
                                             text = locationHeadline,
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.Bold,
-                                            fontSize = 15.sp,
+                                            fontSize = 14.sp,
                                             color = colors.textPrimary,
-                                            lineHeight = 20.sp
+                                            lineHeight = 18.sp
                                         )
                                         Text(
-                                            text = "GNSS Precise Sensor Lock • 1,420 m MSL",
+                                            text = "Coordinates saved using your phone's GPS",
                                             fontSize = 11.sp,
-                                            fontWeight = FontWeight.Medium,
                                             color = colors.textSecondary
                                         )
                                     }
@@ -440,64 +454,74 @@ fun ReportScreen(
                                             showPermissionRationale = true
                                         }
                                     },
-                                    modifier = Modifier.fillMaxWidth().height(42.dp),
+                                    modifier = Modifier.fillMaxWidth().height(44.dp),
                                     shape = RoundedCornerShape(8.dp),
-                                    border = BorderStroke(1.dp, colors.accent.copy(alpha = 0.5f)),
+                                    border = BorderStroke(1.dp, colors.accent.copy(alpha = 0.6f)),
                                     colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.accent)
                                 ) {
                                     if (uiState.isFetchingLocation) {
-                                        CircularProgressIndicator(modifier = Modifier.size(14.dp), strokeWidth = 2.dp, color = colors.accent)
+                                        CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp, color = colors.accent)
                                         Spacer(Modifier.width(8.dp))
-                                        Text(strings.detectingLocation, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                                        Text("Finding GPS Location...", fontSize = 12.5.sp, fontWeight = FontWeight.SemiBold)
                                     } else {
-                                        Icon(Icons.Default.MyLocation, null, modifier = Modifier.size(15.dp), tint = colors.accent)
+                                        Icon(Icons.Default.MyLocation, null, modifier = Modifier.size(16.dp), tint = colors.accent)
                                         Spacer(Modifier.width(8.dp))
-                                        Text(strings.autoDetectLocation, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                        Text("Use My Current GPS Location", fontSize = 12.5.sp, fontWeight = FontWeight.Bold)
                                     }
                                 }
 
                                 HorizontalDivider(color = colors.borderDefault, thickness = 0.8.dp)
 
-                                // District / Location manual refinement
-                                OutlinedTextField(
-                                    value = uiState.district,
-                                    onValueChange = { viewModel.onDistrictChange(it) },
-                                    label = { Text(strings.locationFieldLabel, fontSize = 12.sp) },
-                                    placeholder = { Text(strings.locationFieldHint, fontSize = 12.sp) },
-                                    singleLine = true,
-                                    modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(8.dp),
-                                    colors = OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = colors.accent,
-                                        unfocusedBorderColor = colors.borderDefault,
-                                        focusedLabelColor = colors.accent,
-                                        unfocusedLabelColor = colors.textSecondary,
-                                        focusedTextColor = colors.textPrimary,
-                                        unfocusedTextColor = colors.textPrimary,
-                                        focusedContainerColor = colors.bgSurface,
-                                        unfocusedContainerColor = colors.bgSurface,
-                                        cursorColor = colors.accent
+                                // Town / Landmark manual input
+                                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    OutlinedTextField(
+                                        value = uiState.district,
+                                        onValueChange = { viewModel.onDistrictChange(it) },
+                                        label = { Text("Town, Village, or Road Landmark *", fontSize = 12.sp) },
+                                        placeholder = { Text("e.g. Near Singtam Bridge, NH-10, Upper Dzongu", fontSize = 12.sp) },
+                                        singleLine = true,
+                                        isError = showStep1Errors && !hasValidLocation,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(8.dp),
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedBorderColor = colors.accent,
+                                            unfocusedBorderColor = colors.borderDefault,
+                                            focusedLabelColor = colors.accent,
+                                            unfocusedLabelColor = colors.textSecondary,
+                                            focusedTextColor = colors.textPrimary,
+                                            unfocusedTextColor = colors.textPrimary,
+                                            focusedContainerColor = colors.bgSurface,
+                                            unfocusedContainerColor = colors.bgSurface,
+                                            cursorColor = colors.accent
+                                        )
                                     )
-                                )
+                                    if (showStep1Errors && !hasValidLocation) {
+                                        Text(
+                                            text = "⚠️ Location is required. Please tap 'Use My Current GPS Location' or enter your town / landmark.",
+                                            fontSize = 11.sp,
+                                            color = colors.critical
+                                        )
+                                    }
+                                }
                             }
                         }
 
-                        // Section 2: Field Observations Field
+                        // Section 2: What Happened Field
                         FieldCard(modifier = Modifier.fillMaxWidth()) {
                             Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text(
-                                    "FIELD OBSERVATIONS",
+                                    "2. WHAT DID YOU SEE? *",
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 12.sp,
                                     letterSpacing = 0.5.sp,
-                                    color = colors.textSecondary
+                                    color = colors.textPrimary
                                 )
                                 OutlinedTextField(
                                     value = uiState.description,
                                     onValueChange = { viewModel.onDescriptionChange(it) },
                                     placeholder = {
                                         Text(
-                                            "Describe slope movement, tension crack widening, water seepage, rockfall volume, or highway obstruction...",
+                                            "Describe what happened (e.g., mud and rocks sliding onto highway, cracks forming on hillside, road blocked, water rising)...",
                                             fontSize = 12.sp,
                                             color = colors.textSecondary,
                                             lineHeight = 17.sp
@@ -505,6 +529,7 @@ fun ReportScreen(
                                     },
                                     minLines = 4,
                                     maxLines = 6,
+                                    isError = showStep1Errors && !hasValidDescription,
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = RoundedCornerShape(8.dp),
                                     colors = OutlinedTextFieldDefaults.colors(
@@ -517,10 +542,17 @@ fun ReportScreen(
                                         cursorColor = colors.accent
                                     )
                                 )
+                                if (showStep1Errors && !hasValidDescription) {
+                                    Text(
+                                        text = "⚠️ Please write a brief description (at least 5 characters) of the hazard.",
+                                        fontSize = 11.sp,
+                                        color = colors.critical
+                                    )
+                                }
                             }
                         }
 
-                        // Section 3: Photographic Evidence Dropzone
+                        // Section 3: Photos (Optional)
                         FieldCard(modifier = Modifier.fillMaxWidth()) {
                             Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                 Row(
@@ -529,14 +561,14 @@ fun ReportScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        "PHOTOGRAPHIC EVIDENCE",
+                                        "3. ADD PHOTOS (OPTIONAL)",
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 12.sp,
                                         letterSpacing = 0.5.sp,
-                                        color = colors.textSecondary
+                                        color = colors.textPrimary
                                     )
                                     Text(
-                                        "${uiState.photoUris.size} attached",
+                                        if (uiState.photoUris.isEmpty()) "Optional" else "${uiState.photoUris.size} photo(s) selected",
                                         fontSize = 11.sp,
                                         color = colors.textSecondary
                                     )
@@ -563,7 +595,6 @@ fun ReportScreen(
                                     }
                                 }
 
-                                // Attach button
                                 Surface(
                                     onClick = { photoPicker.launch("image/*") },
                                     shape = RoundedCornerShape(8.dp),
@@ -579,9 +610,9 @@ fun ReportScreen(
                                         Icon(Icons.Default.CameraAlt, null, tint = colors.accent, modifier = Modifier.size(18.dp))
                                         Spacer(Modifier.width(8.dp))
                                         Text(
-                                            "Attach Photo Evidence from Field",
+                                            "Take Photo or Pick from Gallery",
                                             fontWeight = FontWeight.SemiBold,
-                                            fontSize = 12.sp,
+                                            fontSize = 12.5.sp,
                                             color = colors.textPrimary
                                         )
                                     }
@@ -589,33 +620,80 @@ fun ReportScreen(
                             }
                         }
 
+                        // Validation Alert Banner
+                        if (showStep1Errors && !isStep1Valid) {
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = colors.critical.copy(alpha = 0.12f),
+                                border = BorderStroke(1.dp, colors.critical.copy(alpha = 0.5f)),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Icon(Icons.Default.Warning, null, tint = colors.critical, modifier = Modifier.size(20.dp))
+                                    Text(
+                                        text = "Please fill in your location and description before continuing.",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = colors.critical
+                                    )
+                                }
+                            }
+                        }
+
                         Spacer(Modifier.height(4.dp))
 
-                        // Step 1 Primary CTA
-                        PrimaryActionButton(
-                            text = "Continue to Classification (Step 2) →",
-                            onClick = { currentStep = 2 },
-                            containerColor = colors.accent
-                        )
+                        // Step 1 Continue CTA
+                        Button(
+                            onClick = {
+                                if (isStep1Valid) {
+                                    currentStep = 2
+                                    showStep1Errors = false
+                                } else {
+                                    showStep1Errors = true
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(50.dp),
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isStep1Valid) colors.accent else colors.accent.copy(alpha = 0.75f)
+                            )
+                        ) {
+                            Text(
+                                text = "Next: Choose Hazard Type & Danger Level →",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.5.sp,
+                                color = Color.White
+                            )
+                        }
 
                         Spacer(Modifier.height(24.dp))
                     }
                 } else {
-                    // ─── STEP 2: Incident Classification & Graduated Severity ───
+                    // ─── STEP 2: Hazard Type & Urgency Level ───
+                    val step2ScrollState = rememberScrollState()
+                    LaunchedEffect(step) {
+                        step2ScrollState.scrollTo(0)
+                    }
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
+                            .verticalScroll(step2ScrollState)
                             .padding(horizontal = 16.dp, vertical = 10.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         // Section 1: Incident Type Selector
                         SectionHeader(
-                            title = strings.hazardType,
-                            subtitle = "Select the specific geotechnical or slope failure category"
+                            title = "1. WHAT KIND OF DANGER IS IT?",
+                            subtitle = "Tap the option that best describes what you observed"
                         )
 
-                        // 2x3 Grid of incident types with clean selection states
+                        // 2x3 Grid of incident types with simplified citizen-friendly labels
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             val types = IncidentType.values().toList()
                             types.chunked(2).forEach { rowTypes ->
@@ -625,6 +703,15 @@ fun ReportScreen(
                                 ) {
                                     rowTypes.forEach { type ->
                                         val isSelected = uiState.incidentType == type
+                                        val labelText = when (type) {
+                                            IncidentType.LANDSLIDE -> "Landslide / Mudslide"
+                                            IncidentType.CRACK -> "Ground / Hill Crack"
+                                            IncidentType.ROAD_BLOCKAGE -> "Road Blocked by Debris"
+                                            IncidentType.FLASH_FLOOD -> "Flash Flood / Overflow"
+                                            IncidentType.SLOPE_MOVEMENT -> "Sinking Ground / Slope"
+                                            IncidentType.OTHER -> "Other Danger"
+                                        }
+
                                         Surface(
                                             onClick = { viewModel.onIncidentTypeChange(type) },
                                             shape = RoundedCornerShape(8.dp),
@@ -637,9 +724,9 @@ fun ReportScreen(
                                             modifier = Modifier.weight(1f)
                                         ) {
                                             Row(
-                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 10.dp),
+                                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 12.dp),
                                                 verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                                             ) {
                                                 Icon(
                                                     imageVector = when (type) {
@@ -651,14 +738,14 @@ fun ReportScreen(
                                                         IncidentType.OTHER -> Icons.AutoMirrored.Filled.HelpOutline
                                                     },
                                                     contentDescription = null,
-                                                    modifier = Modifier.size(16.dp),
+                                                    modifier = Modifier.size(18.dp),
                                                     tint = if (isSelected) Color.White else colors.textSecondary
                                                 )
                                                 Text(
-                                                    text = type.name.replace("_", " "),
-                                                    fontSize = 10.5.sp,
+                                                    text = labelText,
+                                                    fontSize = 11.5.sp,
                                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                                    color = if (isSelected) Color.White else colors.textSecondary,
+                                                    color = if (isSelected) Color.White else colors.textPrimary,
                                                     maxLines = 1,
                                                     overflow = TextOverflow.Ellipsis
                                                 )
@@ -669,19 +756,18 @@ fun ReportScreen(
                             }
                         }
 
-                        // Section 2: Graduated Hazard Severity Level
+                        // Section 2: Urgency Level
                         SectionHeader(
-                            title = strings.severityLevel,
-                            subtitle = "Visual scale reflecting immediate risk to life, highway, or infrastructure"
+                            title = "2. HOW DANGEROUS IS IT RIGHT NOW?",
+                            subtitle = "Choose the urgency level to help rescue teams prioritize"
                         )
 
-                        // Graduated Severity Selector (Low -> Critical with increasing height & visual weight)
                         GraduatedSeveritySelector(
                             selectedSeverity = uiState.severity,
                             onSeveritySelected = { viewModel.onSeverityChange(it) }
                         )
 
-                        // Action Directive Banner (Warning amber tone shift, zero glow)
+                        // Safety Advice Banner
                         Surface(
                             shape = RoundedCornerShape(8.dp),
                             color = colors.bgSurface,
@@ -702,8 +788,8 @@ fun ReportScreen(
                                 )
                                 Column {
                                     Text(
-                                        "PROTOCOL DIRECTIVE",
-                                        fontSize = 9.sp,
+                                        "SAFETY ADVICE",
+                                        fontSize = 9.5.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = colors.warning
                                     )
@@ -717,34 +803,34 @@ fun ReportScreen(
                             }
                         }
 
-                        Spacer(Modifier.height(8.dp))
+                        Spacer(Modifier.height(4.dp))
 
-                        // Bottom Navigation CTAs: Ghost Back + Primary Transmit
+                        // Bottom Navigation CTAs: Back + Submit
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             GhostSecondaryButton(
-                                text = "← Back",
+                                text = "← Back to Details",
                                 onClick = { currentStep = 1 },
-                                modifier = Modifier.weight(0.28f)
+                                modifier = Modifier.weight(0.35f)
                             )
                             PrimaryActionButton(
-                                text = if (uiState.isSubmitting) "TRANSMITTING..." else strings.transmitReport,
+                                text = if (uiState.isSubmitting) "SUBMITTING..." else "SUBMIT REPORT",
                                 onClick = { viewModel.submitReport() },
                                 enabled = !uiState.isSubmitting,
                                 containerColor = if (uiState.severity == AlertSeverity.CRITICAL) colors.critical else colors.accent,
-                                modifier = Modifier.weight(0.72f)
+                                modifier = Modifier.weight(0.65f)
                             )
                         }
 
                         Text(
-                            text = "Direct encrypted dispatch to State Disaster Response Force (SDRF) Command",
-                            fontSize = 10.sp,
+                            text = "Your report is sent directly to emergency response teams and local authorities.",
+                            fontSize = 11.sp,
                             color = colors.textSecondary,
                             modifier = Modifier.fillMaxWidth(),
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            textAlign = TextAlign.Center
                         )
 
                         Spacer(Modifier.height(24.dp))
@@ -758,6 +844,9 @@ fun ReportScreen(
         AlertDialog(
             onDismissRequest = {
                 showSuccessDialog = false
+                viewModel.resetState()
+                currentStep = 1
+                showStep1Errors = false
                 onReportSubmitted()
             },
             containerColor = colors.bgSurface,
@@ -774,12 +863,12 @@ fun ReportScreen(
             },
             title = {
                 Text(
-                    "REPORT DISPATCHED TO SDRF",
+                    "Report Sent Successfully!",
                     fontWeight = FontWeight.Black,
-                    fontSize = 16.sp,
+                    fontSize = 17.sp,
                     letterSpacing = 0.5.sp,
                     color = colors.textPrimary,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    textAlign = TextAlign.Center
                 )
             },
             text = {
@@ -801,30 +890,30 @@ fun ReportScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text("TRACKING ID", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = colors.textSecondary)
+                                Text("Receipt Number", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = colors.textSecondary)
                                 Text("#$reportReceiptId", fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, color = colors.accent)
                             }
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text("INCIDENT TYPE", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = colors.textSecondary)
+                                Text("Hazard Type", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = colors.textSecondary)
                                 Text(uiState.incidentType.name.replace("_", " "), fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = colors.textPrimary)
                             }
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text("SEVERITY", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = colors.textSecondary)
+                                Text("Danger Level", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = colors.textSecondary)
                                 Text(uiState.severity.name, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = uiState.severity.toThemeColor())
                             }
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text("INCIDENT LOCATION", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = colors.textSecondary)
+                                Text("Location", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = colors.textSecondary)
                                 Text(
-                                    uiState.resolvedLocationName.ifBlank { uiState.district.ifBlank { "Verified Incident Sector" } },
+                                    uiState.resolvedLocationName.ifBlank { uiState.district.ifBlank { "Reported Sector" } },
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Medium,
                                     color = colors.textPrimary
@@ -835,14 +924,14 @@ fun ReportScreen(
 
                     Text(
                         text = if (uiState.isOnline) {
-                            "Encrypted broadcast delivered to State Disaster Response Force (SDRF) & District Incident Command Center. Emergency response teams notified."
+                            "Emergency responders and district authorities have been alerted. Please stay in a safe place away from active landslide slopes."
                         } else {
-                            "Saved securely in local offline buffer. Your report and GPS telemetry will automatically dispatch the moment network or mesh connection is restored."
+                            "Saved securely offline on your device. Your report and GPS coordinates will automatically be sent as soon as mobile network or internet reconnects."
                         },
                         style = MaterialTheme.typography.bodySmall,
-                        fontSize = 11.5.sp,
+                        fontSize = 12.sp,
                         color = colors.textSecondary,
-                        lineHeight = 16.sp
+                        lineHeight = 17.sp
                     )
                 }
             },
@@ -850,13 +939,16 @@ fun ReportScreen(
                 Button(
                     onClick = {
                         showSuccessDialog = false
+                        viewModel.resetState()
+                        currentStep = 1
+                        showStep1Errors = false
                         onReportSubmitted()
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = colors.accent),
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("DONE / RETURN TO HOME", fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color.White)
+                    Text("DONE / RETURN TO HOME", fontWeight = FontWeight.Bold, fontSize = 12.5.sp, color = Color.White)
                 }
             }
         )

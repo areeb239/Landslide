@@ -37,7 +37,7 @@ fun SplashScreen(
     LaunchedEffect(Unit) {
         visible = true
         delay(1800)
-        if (FirebaseAuth.getInstance().currentUser != null || com.ner.landslide.data.repository.UserRepositoryImpl.isSessionActive(context)) {
+        if (com.ner.landslide.data.repository.UserRepositoryImpl.isSessionActive(context)) {
             onNavigateToHome()
         } else {
             onNavigateToLogin()

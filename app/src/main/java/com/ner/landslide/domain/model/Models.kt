@@ -35,7 +35,10 @@ data class RiskZone(
     val severity: AlertSeverity = AlertSeverity.LOW,
     val polygonPoints: List<LatLng> = emptyList(),
     val district: String = "",
-    val lastUpdated: Long = System.currentTimeMillis()
+    val lastUpdated: Long = System.currentTimeMillis(),
+    val riskProbability: Double = 0.0,
+    val affectedAreaKm2: Double = 0.0,
+    val recommendation: String = ""
 )
 
 data class LatLng(val latitude: Double, val longitude: Double)
@@ -49,7 +52,9 @@ data class RoadSegment(
     val status: RoadStatus = RoadStatus.UNKNOWN,
     val points: List<LatLng> = emptyList(),
     val blockageReason: String = "",
-    val reportedAt: Long = System.currentTimeMillis()
+    val reportedAt: Long = System.currentTimeMillis(),
+    val routeCode: String = "",
+    val alternateRoute: String = ""
 )
 
 // Incident report submitted by field officer / citizen
@@ -88,17 +93,17 @@ data class SOSAlert(
 
 // AI Prediction from FastAPI
 data class PredictionRequest(
-    val rainfallMm: Double = 0.0,
-    val slopeDeg: Double = 35.0,
-    val soilMoisturePct: Double = 75.0,
-    val antecedentRain3d: Double = 120.0,
-    val elevation: Double = 1450.0,
-    val slope: Double = 35.0,
-    val rainfallPrevious1d: Double = 45.0,
-    val rainfallPrevious3d: Double = 120.0,
-    val rainfallPrevious7d: Double = 250.0,
-    val lithologyGroup: String = "Metamorphic rocks",
-    val landCover: String = "Tree cover",
+    val rainfallMm: Double? = null,
+    val slopeDeg: Double? = null,
+    val soilMoisturePct: Double? = null,
+    val antecedentRain3d: Double? = null,
+    val elevation: Double? = null,
+    val slope: Double? = null,
+    val rainfallPrevious1d: Double? = null,
+    val rainfallPrevious3d: Double? = null,
+    val rainfallPrevious7d: Double? = null,
+    val lithologyGroup: String? = null,
+    val landCover: String? = null,
     val latitude: Double = 0.0,
     val longitude: Double = 0.0
 )
@@ -141,7 +146,8 @@ data class FeatureExtractionResult(
     val rainfallPrevious7d: Double = 160.0,
     val lithologyGroup: String = "Metamorphic rocks",
     val landCover: String = "Tree cover",
-    val source: Map<String, String> = emptyMap()
+    val source: Map<String, String> = emptyMap(),
+    val isOutsideCorridor: Boolean = false
 )
 
 data class PredictionResult(
@@ -153,7 +159,9 @@ data class PredictionResult(
     val sampleFactors: Map<String, Any> = emptyMap(),
     val recommendation: String = "",
     val isMock: Boolean = false,         // true when backend is unavailable, uses fallback
-    val modelVersion: String = "Bhoochetak-XGBoost (bhurakshak_pipeline.pkl)"
+    val modelVersion: String = "Bhoochetak-XGBoost (bhurakshak_pipeline.pkl)",
+    val isOutsideCorridor: Boolean = false,
+    val corridorMessage: String = ""
 )
 
 // Weather (Open-Meteo)
@@ -161,6 +169,7 @@ data class HourlyWeather(
     val time: String = "",
     val rainfallMm: Double = 0.0,
     val temperature: Double = 0.0,
+    val apparentTemperature: Double? = null,
     val humidity: Double = 0.0,
     val windSpeedKmh: Double = 0.0,
     val rainProbability: Int = 0,
@@ -173,6 +182,7 @@ data class WeatherForecast(
     val district: String = "",
     val latitude: Double = 0.0,
     val longitude: Double = 0.0,
+    val currentWeather: HourlyWeather? = null,
     val hourlyData: List<HourlyWeather> = emptyList(),
     val fetchedAt: Long = System.currentTimeMillis()
 )

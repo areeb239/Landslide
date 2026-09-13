@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Bhoochetak Tactical GIS Map</title>
+    <link rel="stylesheet" href="leaflet.css" />
+    <script src="leaflet.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background-color: #0B111E;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+        #map {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #0B111E;
+            z-index: 1;
+        }
+        .leaflet-container {
+            background: #0B111E !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+        /* Custom Marker Styling */
+        .centroid-beacon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(15, 23, 42, 0.85);
+            border: 2px solid #F97316;
+            box-shadow: 0 0 12px rgba(249, 115, 22, 0.6);
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        .centroid-beacon.critical {
+            border-color: #EF4444;
+            box-shadow: 0 0 14px rgba(239, 68, 68, 0.7);
+        }
+        .centroid-beacon:active {
+            transform: scale(1.2);
+        }
+        .active-loc-marker {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #38BDF8;
+            border: 3px solid #FFFFFF;
+            box-shadow: 0 0 14px rgba(56, 189, 248, 0.8);
+            position: relative;
+        }
+        .active-loc-marker::after {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            right: -8px;
+            bottom: -8px;
+            border-radius: 50%;
+            border: 2px solid rgba(56, 189, 248, 0.5);
+            animation: pulse-ring 1.8s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.5); opacity: 1; }
+            100% { transform: scale(1.6); opacity: 0; }
+        }
+        .leaflet-control-attribution {
+            display: none !important;
+        }
+        .leaflet-control-zoom {
+            display: none !important;
+        }
+        .leaflet-control-scale {
+            margin-left: 14px !important;
+            margin-bottom: 58px !important;
+        }
+        .leaflet-control-scale-line {
+            background: rgba(15, 23, 42, 0.88) !important;
+            border: 1.5px solid #38BDF8 !important;
+            border-top: none !important;
+            color: #94A3B8 !important;
+            font-size: 8.5px !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.3px !important;
+            padding: 2px 5px !important;
+            border-radius: 0 0 3px 3px !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <script>
+        console.log("[TACTICAL_MAP] Script starting execution...");
+        window.onerror = function(msg, url, line, col, err) {
+            console.error("[TACTICAL_MAP ERROR] " + msg + " at " + line + ":" + col);
+            return false;
+        };
+
+        console.log("[TACTICAL_MAP] Leaflet check: " + (typeof L !== 'undefined' ? ('v' + L.version) : 'UNDEFINED'));
+
+        // Layer definitions
+        // High-speed Esri World Topo Map for mountain terrain & contour hillshading
+        const terrainLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 19
+        });
+
+        // CartoDB Voyager standard navigation map
+        const standardLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            maxZoom: 19,
+            subdomains: ['a', 'b', 'c', 'd']
+        });
+
+        // Esri High-Resolution World Satellite Imagery
+        const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 19
+        });
+
+        // Explicit Viewport Sizing for Android WebView Container
+        function resizeMap() {
+            var mapEl = document.getElementById('map');
+            var w = window.innerWidth || document.documentElement.clientWidth || (window.screen ? window.screen.width : 0);
+            var h = window.innerHeight || document.documentElement.clientHeight || (window.screen ? window.screen.height : 0);
+            if (mapEl && w > 0 && h > 0) {
+                mapEl.style.width = w + 'px';
+                mapEl.style.height = h + 'px';
+            }
+            if (typeof map !== 'undefined' && map) {
+                map.invalidateSize(true);
+            }
+        }
+        window.addEventListener('resize', resizeMap);
+        window.addEventListener('orientationchange', resizeMap);
+
+        // Initialize Map
+        let map;
+        try {
+            resizeMap();
+            map = L.map('map', {
+                center: [27.3389, 88.6065],
+                zoom: 10,
+                zoomControl: false,
+                attributionControl: false,
+                layers: [terrainLayer]
+            });
+            resizeMap();
+            console.log("[TACTICAL_MAP] Map initialized successfully!");
+        } catch (e) {
+            console.error("[TACTICAL_MAP MAP INIT FAILED]", e);
+        }
+
+        // Native dynamic scale indicator
+        L.control.scale({ imperial: false, position: 'bottomleft', maxWidth: 85 }).addTo(map);
+
+        let currentLayer = terrainLayer;
+        let zonesLayerGroup = L.layerGroup().addTo(map);
+        let roadsLayerGroup = L.layerGroup().addTo(map);
+        let locationLayerGroup = L.layerGroup().addTo(map);
+
+        // Click outside selection clearing
+        map.on('click', function(e) {
+            if (window.AndroidBridge && window.AndroidBridge.onMapClicked) {
+                window.AndroidBridge.onMapClicked();
+            }
+        });
+
+        // Base Layer Switcher API
+        function setMapMode(mode) {
+            map.removeLayer(currentLayer);
+            if (mode === 'terrain') {
+                currentLayer = terrainLayer;
+            } else if (mode === 'standard') {
+                currentLayer = standardLayer;
+            } else if (mode === 'satellite') {
+                currentLayer = satelliteLayer;
+            }
+            map.addLayer(currentLayer);
+            currentLayer.bringToBack();
+        }
+
+        // Camera Pan & Zoom API
+        function setCenter(lat, lon, zoom) {
+            map.flyTo([lat, lon], zoom || map.getZoom(), { duration: 1.0 });
+        }
+
+        function zoomIn() {
+            map.zoomIn(1);
+        }
+
+        function zoomOut() {
+            map.zoomOut(1);
+        }
+
+        // Severity Color Resolver
+        function getSeverityColor(sev) {
+            const s = (sev || '').toUpperCase();
+            if (s === 'CRITICAL') return '#EF4444';
+            if (s === 'HIGH') return '#F97316';
+            if (s === 'MODERATE') return '#F59E0B';
+            return '#10B981';
+        }
+
+        // Update Risk Zones GeoJSON / Polygons
+        function setZones(zones) {
+            zonesLayerGroup.clearLayers();
+            if (!Array.isArray(zones)) return;
+
+            zones.forEach(function(zone) {
+                if (!zone.polygonPoints || zone.polygonPoints.length < 3) return;
+
+                const latLngs = zone.polygonPoints.map(function(p) {
+                    return [p.latitude, p.longitude];
+                });
+
+                const color = getSeverityColor(zone.severity);
+                const isCritical = (zone.severity || '').toUpperCase() === 'CRITICAL';
+
+                const polygon = L.polygon(latLngs, {
+                    color: color,
+                    weight: 3,
+                    fillColor: color,
+                    fillOpacity: isCritical ? 0.45 : 0.30
+                });
+
+                polygon.on('click', function(e) {
+                    L.DomEvent.stopPropagation(e);
+                    if (window.AndroidBridge && window.AndroidBridge.onZoneClicked) {
+                        window.AndroidBridge.onZoneClicked(zone.id);
+                    }
+                });
+
+                zonesLayerGroup.addLayer(polygon);
+
+                // Centroid Beacon
+                let sumLat = 0, sumLon = 0;
+                zone.polygonPoints.forEach(function(p) {
+                    sumLat += p.latitude;
+                    sumLon += p.longitude;
+                });
+                const centerLat = sumLat / zone.polygonPoints.length;
+                const centerLon = sumLon / zone.polygonPoints.length;
+
+                const icon = L.divIcon({
+                    className: 'custom-beacon-wrapper',
+                    html: '<div class="centroid-beacon ' + (isCritical ? 'critical' : '') + '">⚠️</div>',
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 16]
+                });
+
+                const marker = L.marker([centerLat, centerLon], { icon: icon });
+                marker.on('click', function(e) {
+                    L.DomEvent.stopPropagation(e);
+                    if (window.AndroidBridge && window.AndroidBridge.onZoneClicked) {
+                        window.AndroidBridge.onZoneClicked(zone.id);
+                    }
+                });
+
+                zonesLayerGroup.addLayer(marker);
+            });
+        }
+
+        // Update Road Segments / Evacuation Corridors
+        function setRoads(roads) {
+            roadsLayerGroup.clearLayers();
+            if (!Array.isArray(roads)) return;
+
+            roads.forEach(function(road) {
+                if (!road.points || road.points.length < 2) return;
+
+                const latLngs = road.points.map(function(p) {
+                    return [p.latitude, p.longitude];
+                });
+
+                const status = (road.status || '').toUpperCase();
+                let roadColor = '#10B981';
+                if (status === 'BLOCKED') roadColor = '#EF4444';
+                else if (status === 'PARTIALLY_BLOCKED') roadColor = '#F59E0B';
+
+                const polyline = L.polyline(latLngs, {
+                    color: roadColor,
+                    weight: 6,
+                    opacity: 0.9,
+                    dashArray: status === 'BLOCKED' ? '8, 8' : null
+                });
+
+                polyline.on('click', function(e) {
+                    L.DomEvent.stopPropagation(e);
+                    if (window.AndroidBridge && window.AndroidBridge.onRoadClicked) {
+                        window.AndroidBridge.onRoadClicked(road.id);
+                    }
+                });
+
+                roadsLayerGroup.addLayer(polyline);
+            });
+        }
+
+        // Update Active Selected Location & GPS Marker
+        function setActiveLocation(loc) {
+            locationLayerGroup.clearLayers();
+            if (!loc || typeof loc.latitude !== 'number' || typeof loc.longitude !== 'number') return;
+
+            const icon = L.divIcon({
+                className: 'active-loc-wrapper',
+                html: '<div class="active-loc-marker"></div>',
+                iconSize: [22, 22],
+                iconAnchor: [11, 11]
+            });
+
+            const marker = L.marker([loc.latitude, loc.longitude], { icon: icon });
+            const circle = L.circle([loc.latitude, loc.longitude], {
+                radius: 4500,
+                color: '#38BDF8',
+                weight: 2,
+                fillColor: '#38BDF8',
+                fillOpacity: 0.12
+            });
+
+            locationLayerGroup.addLayer(circle);
+            locationLayerGroup.addLayer(marker);
+        }
+
+        function refreshMap() {
+            resizeMap();
+        }
+
+        // Notify Android that map is ready
+        window.onload = function() {
+            resizeMap();
+            setTimeout(function() {
+                resizeMap();
+            }, 100);
+            setTimeout(function() {
+                resizeMap();
+            }, 500);
+            if (window.AndroidBridge && window.AndroidBridge.onMapReady) {
+                window.AndroidBridge.onMapReady();
+            }
+        };
+    </script>
+</body>
+</html>

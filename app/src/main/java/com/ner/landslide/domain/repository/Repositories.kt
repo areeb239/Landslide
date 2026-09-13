@@ -34,6 +34,9 @@ interface UserRepository {
     suspend fun saveUser(user: User): Result<Unit>
     suspend fun updateFcmToken(token: String): Result<Unit>
     suspend fun signOut(): Result<Unit> = Result.success(Unit)
+    suspend fun registerUser(name: String, email: String, password: String, role: UserRole): Result<User>
+    suspend fun authenticateUser(email: String, password: String): Result<User>
+    suspend fun isSessionValid(): Boolean
 }
 
 interface SOSRepository {

@@ -16,4 +16,10 @@ class MainApplication : Application(), Configuration.Provider {
         get() = Configuration.Builder()
             .setWorkerFactory(workerFactory)
             .build()
+
+    override fun onCreate() {
+        super.onCreate()
+        com.ner.landslide.service.SyncWorker.schedulePeriodicSync(this)
+        com.ner.landslide.service.BackgroundRiskWorker.schedulePeriodicRiskCheck(this)
+    }
 }

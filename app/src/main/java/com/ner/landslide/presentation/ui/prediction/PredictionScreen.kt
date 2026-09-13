@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -48,6 +49,11 @@ data class CityPreset(
 )
 
 private val HIMALAYAN_CITIES = listOf(
+    CityPreset("wayanad", "Wayanad (Western Ghats)", "Kerala • 99% Crit", 11.6854, 76.1320),
+    CityPreset("shimla", "Shimla (W. Himalayas)", "HP • 91% Crit", 31.1048, 77.1734),
+    CityPreset("chamoli", "Chamoli / Joshimath", "Uttarakhand • 94% Crit", 30.5526, 79.5658),
+    CityPreset("munnar", "Munnar (Tea Ranges)", "Kerala • 95% Crit", 10.0889, 77.0595),
+    CityPreset("lucknow", "Lucknow (Urban Plain)", "UP Baseline • 1.0% Low", 26.8467, 80.9462),
     CityPreset("gangtok", "Gangtok (Urban)", "Sikkim", 27.33, 88.61),
     CityPreset("shillong", "Shillong (Urban)", "Meghalaya", 25.57, 91.89),
     CityPreset("guwahati", "Guwahati (Built-up)", "Assam", 26.14, 91.74),
@@ -173,7 +179,7 @@ fun PredictionScreen(
 
                     // City Presets horizontal scroll
                     Text(
-                        text = "Regional Presets (Instant Cached Load):",
+                        text = "Pan-India Hotspots & Regional Presets (Instant Telemetry):",
                         style = MaterialTheme.typography.labelSmall,
                         color = colors.textSecondary,
                         fontWeight = FontWeight.Medium
@@ -243,22 +249,27 @@ fun PredictionScreen(
                                 ) {
                                     Icon(Icons.Default.MyLocation, contentDescription = null, tint = colors.accent, modifier = Modifier.size(18.dp))
                                 }
-                                Column {
+                                Column(modifier = Modifier.weight(1f, fill = false)) {
                                     Text(
                                         text = uiState.locationName ?: "Sector Location",
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 13.sp,
-                                        color = colors.textPrimary
+                                        color = colors.textPrimary,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
                                     )
                                     Text(
-                                        text = "GPS High-Precision Lock • Processing Internally",
+                                        text = "GPS High-Precision Lock • Pan-India Telemetry Active",
                                         style = MaterialTheme.typography.labelSmall,
                                         fontSize = 10.5.sp,
-                                        color = colors.textSecondary
+                                        color = colors.textSecondary,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
                                     )
                                 }
                             }
+                            Spacer(Modifier.width(8.dp))
                             Button(
                                 onClick = { viewModel.useCurrentLocation() },
                                 colors = ButtonDefaults.buttonColors(containerColor = colors.accent),
@@ -296,15 +307,17 @@ fun PredictionScreen(
                         } else {
                             Icon(Icons.Default.CloudDownload, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(8.dp))
-                            Text("Fetch Satellite Telemetry (SRTM / GLiM)", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                            Text("Fetch Satellite Telemetry (SRTM 30m DEM / GLiM)", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                         }
                     }
 
                     uiState.telemetryMessage?.let { msg ->
+                        val isCached = msg.contains("Cache", ignoreCase = true)
+                        val msgColor = if (isCached) colors.warning else colors.success
                         Surface(
                             shape = RoundedCornerShape(6.dp),
-                            color = colors.success.copy(alpha = 0.1f),
-                            border = BorderStroke(1.dp, colors.success.copy(alpha = 0.3f)),
+                            color = msgColor.copy(alpha = 0.1f),
+                            border = BorderStroke(1.dp, msgColor.copy(alpha = 0.3f)),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Row(
@@ -312,8 +325,13 @@ fun PredictionScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                Icon(Icons.Default.CheckCircle, contentDescription = null, tint = colors.success, modifier = Modifier.size(14.dp))
-                                Text(text = msg, fontSize = 11.sp, color = colors.success, fontWeight = FontWeight.Medium)
+                                Icon(
+                                    imageVector = if (isCached) Icons.Default.Info else Icons.Default.CheckCircle,
+                                    contentDescription = null,
+                                    tint = msgColor,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Text(text = msg, fontSize = 11.sp, color = msgColor, fontWeight = FontWeight.Medium)
                             }
                         }
                     }
@@ -618,7 +636,6 @@ private fun PredictionInputField(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PredictionDropdownField(
     label: String,
@@ -638,20 +655,22 @@ private fun PredictionDropdownField(
             fontWeight = FontWeight.Medium,
             color = colors.textPrimary
         )
-        ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = { expanded = !expanded },
-            modifier = Modifier.fillMaxWidth()
-        ) {
+        Box(modifier = Modifier.fillMaxWidth()) {
             OutlinedTextField(
                 value = selectedValue,
                 onValueChange = {},
                 readOnly = true,
                 leadingIcon = { Icon(icon, null, tint = iconColor, modifier = Modifier.size(18.dp)) },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .menuAnchor(),
+                trailingIcon = {
+                    IconButton(onClick = { expanded = !expanded }) {
+                        Icon(
+                            imageVector = if (expanded) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,
+                            contentDescription = null,
+                            tint = colors.textSecondary
+                        )
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(8.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = colors.accent,
@@ -662,7 +681,14 @@ private fun PredictionDropdownField(
                     unfocusedTextColor = colors.textPrimary
                 )
             )
-            ExposedDropdownMenu(
+            // Transparent overlay covering the input to reliably trigger dropdown on click
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable { expanded = !expanded }
+            )
+            DropdownMenu(
                 expanded = expanded,
                 onDismissRequest = { expanded = false },
                 modifier = Modifier.background(colors.bgSurface)
@@ -698,10 +724,16 @@ private fun HeroRiskAssessmentDisplay(result: PredictionResult) {
     }
     val animatedProgress = remember { Animatable(0f) }
 
-    LaunchedEffect(result.probability) {
+    val safeProbability = if (result.probability.isNaN() || result.probability.isInfinite()) {
+        0.01f
+    } else {
+        result.probability.toFloat().coerceIn(0f, 1f)
+    }
+
+    LaunchedEffect(safeProbability) {
         animatedProgress.snapTo(0f)
         animatedProgress.animateTo(
-            targetValue = result.probability.toFloat().coerceIn(0f, 1f),
+            targetValue = safeProbability,
             animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing)
         )
     }
@@ -737,16 +769,57 @@ private fun HeroRiskAssessmentDisplay(result: PredictionResult) {
 
                 Surface(
                     shape = RoundedCornerShape(6.dp),
-                    color = colors.bgSurface,
-                    border = BorderStroke(1.dp, colors.borderDefault)
+                    color = if (result.isMock) colors.warning.copy(alpha = 0.15f) else colors.accent.copy(alpha = 0.15f),
+                    border = BorderStroke(1.dp, if (result.isMock) colors.warning.copy(alpha = 0.5f) else colors.accent.copy(alpha = 0.5f))
                 ) {
                     Text(
-                        text = if (result.isMock) "OFFLINE MODE" else "LIVE XGBOOST",
+                        text = if (result.isMock) "OFFLINE HEURISTIC" else "LIVE XGBOOST",
                         fontSize = 9.sp,
                         fontWeight = FontWeight.Bold,
-                        color = colors.textSecondary,
+                        color = if (result.isMock) colors.warning else colors.accent,
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                     )
+                }
+            }
+
+            // High-Visibility Engine Attribution Card (Issue #5)
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = if (result.isMock) colors.warning.copy(alpha = 0.10f) else colors.accent.copy(alpha = 0.08f),
+                border = BorderStroke(1.dp, if (result.isMock) colors.warning.copy(alpha = 0.35f) else colors.accent.copy(alpha = 0.35f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Icon(
+                        imageVector = if (result.isMock) Icons.Default.Warning else Icons.Default.CheckCircle,
+                        contentDescription = null,
+                        tint = if (result.isMock) colors.warning else colors.accent,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Column {
+                        Text(
+                            text = if (result.isMock) "ENGINE: OFFLINE KINEMATIC HEURISTIC (ESTIMATED)" else "ENGINE: LIVE XGBOOST ML PIPELINE (bhurakshak_pipeline.pkl)",
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = 0.5.sp,
+                            color = if (result.isMock) colors.warning else colors.accent
+                        )
+                        Text(
+                            text = if (result.isMock) {
+                                "Calculated locally via empirical geotechnical slope-equilibrium equations while backend ML pipeline is unreachable. Scores may differ from trained statistical XGBoost classifier."
+                            } else {
+                                "Direct statistical inference via authentic 23-feature XGBoost pipeline trained on LiMW GIS, SRTM 30m DEM, and ESA WorldCover inventories."
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            fontSize = 10.5.sp,
+                            color = colors.textPrimary,
+                            lineHeight = 14.sp
+                        )
+                    }
                 }
             }
 
@@ -776,11 +849,13 @@ private fun HeroRiskAssessmentDisplay(result: PredictionResult) {
                         style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
                     )
 
-                    // Active risk gradient arc
+                    // Active risk gradient arc (guarded sweep angle)
+                    val currentProgress = animatedProgress.value.let { if (it.isNaN()) 0f else it.coerceIn(0f, 1f) }
+                    val activeSweep = (240f * currentProgress).coerceIn(0.1f, 240f)
                     drawArc(
                         brush = Brush.sweepGradient(gradientColors),
                         startAngle = 150f,
-                        sweepAngle = 240f * animatedProgress.value,
+                        sweepAngle = activeSweep,
                         useCenter = false,
                         topLeft = topLeft,
                         size = arcSize,
@@ -791,8 +866,9 @@ private fun HeroRiskAssessmentDisplay(result: PredictionResult) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    val displayProgress = animatedProgress.value.let { if (it.isNaN()) 0f else it.coerceIn(0f, 1f) }
                     Text(
-                        text = "${String.format(java.util.Locale.US, "%.0f", animatedProgress.value * 100)}%",
+                        text = "${String.format(java.util.Locale.US, "%.0f", displayProgress * 100)}%",
                         fontSize = 38.sp,
                         fontWeight = FontWeight.Black,
                         color = colors.textPrimary
@@ -805,7 +881,7 @@ private fun HeroRiskAssessmentDisplay(result: PredictionResult) {
                         color = riskColor
                     )
                     Text(
-                        text = if (result.isMock) "RULE-BASED ESTIMATE (OFFLINE)" else "AI PREDICT_PROBA (7-FEATURE XGBOOST)",
+                        text = if (result.isMock) "RULE-BASED KINEMATIC HEURISTIC" else "AI PREDICT_PROBA (7-FEATURE XGBOOST)",
                         style = MaterialTheme.typography.labelSmall,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
@@ -817,9 +893,13 @@ private fun HeroRiskAssessmentDisplay(result: PredictionResult) {
 
             // Geotechnical Factor Breakdown (Explainable AI / Feature Importances)
             val factorItems = if (result.featureImportances.isNotEmpty()) {
-                result.featureImportances.entries.sortedByDescending { it.value }
+                result.featureImportances.entries
+                    .filter { it.key.isNotBlank() && it.value != null && !it.value.isNaN() }
+                    .sortedByDescending { it.value }
             } else {
-                result.factors.entries.sortedByDescending { it.value }
+                result.factors.entries
+                    .filter { it.key.isNotBlank() && it.value != null && !it.value.isNaN() }
+                    .sortedByDescending { it.value }
             }
 
             if (factorItems.isNotEmpty()) {
@@ -850,7 +930,8 @@ private fun HeroRiskAssessmentDisplay(result: PredictionResult) {
                     }
 
                     factorItems.take(8).forEach { (factor, value) ->
-                        val factorPercent = (value * 100).toInt()
+                        val safeVal = (value ?: 0.0).let { if (it.isNaN() || it < 0.0) 0.0 else it }
+                        val factorPercent = (safeVal * 100).toInt()
                         val factorLabel = when (factor) {
                             "rainfall_previous_7d" -> "7-Day Cumulative Rainfall"
                             "rainfall_previous_3d" -> "3-Day Antecedent Rainfall"
@@ -871,14 +952,15 @@ private fun HeroRiskAssessmentDisplay(result: PredictionResult) {
                                     color = colors.textPrimary
                                 )
                                 Text(
-                                    text = "${String.format(java.util.Locale.US, "%.1f", value * 100)}%",
+                                    text = "${String.format(java.util.Locale.US, "%.1f", safeVal * 100)}%",
                                     style = MaterialTheme.typography.labelSmall,
                                     fontWeight = FontWeight.Bold,
                                     color = if (factorPercent >= 10) colors.critical else colors.textSecondary
                                 )
                             }
+                            val safeProgress = (safeVal / 0.16).toFloat().coerceIn(0f, 1f)
                             LinearProgressIndicator(
-                                progress = { (value / 0.16).toFloat().coerceIn(0f, 1f) },
+                                progress = { safeProgress },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(6.dp)

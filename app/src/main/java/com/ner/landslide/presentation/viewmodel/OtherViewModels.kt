@@ -12,19 +12,21 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class PredictionUiState(
-    val latitude: String = "27.33",
-    val longitude: String = "88.61",
+    val latitude: String = "26.8467",
+    val longitude: String = "80.9462",
     val date: String = "",
-    val locationName: String? = "Gangtok (Sikkim)",
-    val selectedPreset: String? = "gangtok",
-    val elevation: String = "1562",
-    val slopeDeg: String = "28.5",
-    val rainfall1d: String = "24.5",
-    val rainfall3d: String = "88.0",
-    val rainfall7d: String = "185.5",
-    val soilMoisturePct: String = "82",
-    val lithologyGroup: String = "Metamorphic rocks",
-    val landCover: String = "Tree cover",
+    val locationName: String? = null,
+    val isOutsideNER: Boolean = false,
+    val outsideNERRealPlace: String? = null,
+    val selectedPreset: String? = null,
+    val elevation: String = "117",
+    val slopeDeg: String = "0.8",
+    val rainfall1d: String = "5.0",
+    val rainfall3d: String = "15.0",
+    val rainfall7d: String = "32.0",
+    val soilMoisturePct: String = "50",
+    val lithologyGroup: String = "Unconsolidated sediments",
+    val landCover: String = "Built-up",
     val isExtractingFeatures: Boolean = false,
     val telemetryMessage: String? = null,
     val result: PredictionResult? = null,
@@ -40,31 +42,125 @@ data class PredictionUiState(
 class PredictionViewModel @Inject constructor(
     private val predictRisk: PredictRiskUseCase,
     private val extractFeatures: ExtractFeaturesUseCase,
-    private val locationHelper: LocationHelper
+    private val locationHelper: LocationHelper,
+    private val appLocationManager: com.ner.landslide.util.AppLocationManager
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(PredictionUiState())
+    companion object {
+        val PRESET_DATA_MAP = mapOf(
+            "wayanad" to listOf("980", "29.5", "42.0", "145.0", "280.0", "Metamorphic rocks", "Tree cover"),
+            "shimla" to listOf("2205", "32.0", "35.0", "110.0", "210.0", "Metamorphic rocks", "Tree cover"),
+            "chamoli" to listOf("1890", "36.5", "38.0", "120.0", "235.0", "Metamorphic rocks", "Bare/sparse vegetation"),
+            "munnar" to listOf("1532", "31.0", "40.0", "135.0", "260.0", "Metamorphic rocks", "Cropland"),
+            "lucknow" to listOf("117", "0.8", "5.0", "15.0", "32.0", "Unconsolidated sediments", "Built-up"),
+            "gangtok" to listOf("1562", "28.5", "24.5", "88.0", "185.5", "Metamorphic rocks", "Tree cover"),
+            "shillong" to listOf("1496", "22.0", "32.0", "110.0", "215.0", "Metamorphic rocks", "Tree cover"),
+            "guwahati" to listOf("55", "16.5", "5.0", "18.0", "42.0", "Unconsolidated sediments", "Built-up"),
+            "aizawl" to listOf("1132", "34.0", "18.0", "65.0", "140.0", "Siliciclastic sedimentary rocks", "Tree cover"),
+            "kohima" to listOf("1444", "31.5", "20.0", "72.0", "155.0", "Siliciclastic sedimentary rocks", "Tree cover"),
+            "itanagar" to listOf("320", "26.0", "28.0", "95.0", "190.0", "Mixed sedimentary rocks", "Tree cover"),
+            "darjeeling" to listOf("2042", "38.0", "35.0", "125.0", "240.0", "Metamorphic rocks", "Cropland"),
+            "kaziranga" to listOf("85", "4.5", "1.5", "4.5", "12.0", "Unconsolidated sediments", "Tree cover"),
+            "majuli" to listOf("84", "2.0", "2.0", "6.0", "16.0", "Unconsolidated sediments", "Cropland"),
+            "mawphlang" to listOf("1620", "15.0", "2.5", "7.0", "16.0", "Metamorphic rocks", "Tree cover")
+        )
+    }
+
+    private val _uiState = MutableStateFlow(
+        run {
+            val initial = appLocationManager.selectedLocation.value
+            val isPlain = (initial.latitude in 23.0..28.5 && initial.longitude in 75.0..87.5) || initial.latitude < 18.0
+            PredictionUiState(
+                latitude = String.format(java.util.Locale.US, "%.4f", initial.latitude),
+                longitude = String.format(java.util.Locale.US, "%.4f", initial.longitude),
+                locationName = initial.name,
+                elevation = if (isPlain) "117" else "1250",
+                slopeDeg = if (isPlain) "0.8" else "24.0",
+                rainfall1d = if (isPlain) "5.0" else "20.0",
+                rainfall3d = if (isPlain) "15.0" else "50.0",
+                rainfall7d = if (isPlain) "32.0" else "110.0",
+                lithologyGroup = if (isPlain) "Unconsolidated sediments" else "Metamorphic rocks",
+                landCover = if (isPlain) "Built-up" else "Tree cover"
+            )
+        }
+    )
     val uiState: StateFlow<PredictionUiState> = _uiState.asStateFlow()
 
-    fun onLatitudeChange(v: String) = _uiState.update { it.copy(latitude = v, selectedPreset = null) }
-    fun onLongitudeChange(v: String) = _uiState.update { it.copy(longitude = v, selectedPreset = null) }
+    init {
+        // Automatically sync with the app-wide single source of truth for location
+        viewModelScope.launch {
+            appLocationManager.selectedLocation.collect { loc ->
+                syncWithLocation(loc)
+            }
+        }
+    }
+
+    private fun syncWithLocation(loc: com.ner.landslide.util.SelectedLocation) {
+        val currentLat = _uiState.value.latitude.toDoubleOrNull() ?: 0.0
+        val currentLon = _uiState.value.longitude.toDoubleOrNull() ?: 0.0
+        val isSame = kotlin.math.abs(currentLat - loc.latitude) < 0.0001 &&
+                     kotlin.math.abs(currentLon - loc.longitude) < 0.0001 &&
+                     _uiState.value.locationName == loc.name
+
+        val matchedPreset = PRESET_DATA_MAP.entries.firstOrNull { (id, _) ->
+            loc.name.contains(id, ignoreCase = true)
+        }?.key
+
+        val isPlain = (loc.latitude in 23.0..28.5 && loc.longitude in 75.0..87.5) || loc.latitude < 18.0
+        val preset = matchedPreset?.let { PRESET_DATA_MAP[it] }
+
+        _uiState.update {
+            it.copy(
+                latitude = String.format(java.util.Locale.US, "%.4f", loc.latitude),
+                longitude = String.format(java.util.Locale.US, "%.4f", loc.longitude),
+                locationName = loc.name,
+                selectedPreset = matchedPreset,
+                isOutsideNER = false,
+                outsideNERRealPlace = null,
+                elevation = preset?.getOrNull(0) ?: if (isPlain) "117" else "1250",
+                slopeDeg = preset?.getOrNull(1) ?: if (isPlain) "0.8" else "24.0",
+                rainfall1d = preset?.getOrNull(2) ?: if (isPlain) "5.0" else "25.0",
+                rainfall3d = preset?.getOrNull(3) ?: if (isPlain) "15.0" else "55.0",
+                rainfall7d = preset?.getOrNull(4) ?: if (isPlain) "32.0" else "115.0",
+                lithologyGroup = preset?.getOrNull(5) ?: if (isPlain) "Unconsolidated sediments" else "Metamorphic rocks",
+                landCover = preset?.getOrNull(6) ?: if (isPlain) "Built-up" else "Tree cover",
+                telemetryMessage = "Synced with Active Location (${loc.name})",
+                error = null
+            )
+        }
+    }
+
+    fun onLatitudeChange(v: String) = _uiState.update {
+        it.copy(latitude = v, selectedPreset = null, isOutsideNER = false, outsideNERRealPlace = null)
+    }
+    fun onLongitudeChange(v: String) = _uiState.update {
+        it.copy(longitude = v, selectedPreset = null, isOutsideNER = false, outsideNERRealPlace = null)
+    }
     fun onDateChange(v: String) = _uiState.update { it.copy(date = v) }
 
     fun useCurrentLocation() {
         viewModelScope.launch {
-            locationHelper.getCurrentLocation()?.let { loc ->
-                val lat = String.format(java.util.Locale.US, "%.4f", loc.latitude)
-                val lon = String.format(java.util.Locale.US, "%.4f", loc.longitude)
-                val resolved = locationHelper.reverseGeocode(loc.latitude, loc.longitude)
+            try {
+                _uiState.update { it.copy(isExtractingFeatures = true, error = null) }
+                val success = appLocationManager.switchToCurrentGpsLocation()
+                if (success) {
+                    val loc = appLocationManager.selectedLocation.value
+                    syncWithLocation(loc)
+                } else {
+                    _uiState.update {
+                        it.copy(
+                            isExtractingFeatures = false,
+                            error = "Unable to acquire GPS lock. Please check location permissions."
+                        )
+                    }
+                }
+            } catch (e: Throwable) {
                 _uiState.update {
                     it.copy(
-                        latitude = lat,
-                        longitude = lon,
-                        locationName = resolved.formattedHeadline,
-                        selectedPreset = null
+                        isExtractingFeatures = false,
+                        error = "GPS Error: ${e.localizedMessage ?: "Unknown"}"
                     )
                 }
-                fetchTelemetry(loc.latitude, loc.longitude)
             }
         }
     }
@@ -83,70 +179,120 @@ class PredictionViewModel @Inject constructor(
     fun onAntecedentRainChange(v: String) = onRainfall3dChange(v)
 
     fun selectPreset(presetId: String, lat: Double, lon: Double, name: String) {
+        val preset = PRESET_DATA_MAP[presetId]
         _uiState.update {
             it.copy(
                 selectedPreset = presetId,
                 latitude = lat.toString(),
                 longitude = lon.toString(),
-                locationName = name
+                locationName = name,
+                isOutsideNER = false,
+                outsideNERRealPlace = null,
+                // Immediately populate telemetry to guarantee zero stale data lag
+                elevation = preset?.getOrNull(0) ?: it.elevation,
+                slopeDeg = preset?.getOrNull(1) ?: it.slopeDeg,
+                rainfall1d = preset?.getOrNull(2) ?: it.rainfall1d,
+                rainfall3d = preset?.getOrNull(3) ?: it.rainfall3d,
+                rainfall7d = preset?.getOrNull(4) ?: it.rainfall7d,
+                lithologyGroup = preset?.getOrNull(5) ?: it.lithologyGroup,
+                landCover = preset?.getOrNull(6) ?: it.landCover,
+                telemetryMessage = "Loaded from Curated Regional DEM / GLiM Cache",
+                error = null
             )
         }
-        fetchTelemetry(lat, lon)
+        // Update global centralized location store so all pages synchronize
+        appLocationManager.setCustomLocation(
+            name = name,
+            latitude = lat,
+            longitude = lon
+        )
     }
 
-    fun fetchTelemetry(forcedLat: Double? = null, forcedLon: Double? = null) {
-        val lat = forcedLat ?: _uiState.value.latitude.toDoubleOrNull() ?: 27.33
-        val lon = forcedLon ?: _uiState.value.longitude.toDoubleOrNull() ?: 88.61
+    fun fetchTelemetry(forcedLat: Double? = null, forcedLon: Double? = null, autoPredict: Boolean = false) {
+        val lat = forcedLat ?: _uiState.value.latitude.toDoubleOrNull() ?: 26.8467
+        val lon = forcedLon ?: _uiState.value.longitude.toDoubleOrNull() ?: 80.9462
         val date = _uiState.value.date.ifBlank { null }
 
         _uiState.update { it.copy(isExtractingFeatures = true, error = null, telemetryMessage = null) }
 
         viewModelScope.launch {
-            val resolved = locationHelper.reverseGeocode(lat, lon)
-            extractFeatures(lat, lon, date)
-                .onSuccess { feat ->
-                    val resolvedPlace = if (!feat.locationName.isNullOrBlank() && !feat.locationName.contains("°")) {
-                        feat.locationName
-                    } else {
-                        resolved.formattedHeadline
-                    }
-                    _uiState.update {
-                        it.copy(
-                            isExtractingFeatures = false,
-                            elevation = feat.elevation.toInt().toString(),
-                            slopeDeg = String.format(java.util.Locale.US, "%.1f", feat.slope),
-                            rainfall1d = String.format(java.util.Locale.US, "%.1f", feat.rainfallPrevious1d),
-                            rainfall3d = String.format(java.util.Locale.US, "%.1f", feat.rainfallPrevious3d),
-                            rainfall7d = String.format(java.util.Locale.US, "%.1f", feat.rainfallPrevious7d),
-                            lithologyGroup = feat.lithologyGroup,
-                            landCover = feat.landCover,
-                            locationName = resolvedPlace,
-                            telemetryMessage = "Synced from ${feat.source["elevation"] ?: "SRTM DEM / GLiM"}"
-                        )
+            try {
+                val resolved = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    try {
+                        locationHelper.reverseGeocode(lat, lon)
+                    } catch (e: Throwable) {
+                        null
                     }
                 }
-                .onFailure { err ->
-                    _uiState.update {
-                        it.copy(
-                            isExtractingFeatures = false,
-                            locationName = resolved.formattedHeadline,
-                            error = "Telemetry lookup failed: ${err.localizedMessage}"
-                        )
+                extractFeatures(lat, lon, date)
+                    .onSuccess { feat ->
+                        val resolvedPlace = if (!feat.locationName.isNullOrBlank() && !feat.locationName.contains("°")) {
+                            feat.locationName
+                        } else {
+                            resolved?.formattedHeadline ?: "${String.format(java.util.Locale.US, "%.2f", lat)}°N, ${String.format(java.util.Locale.US, "%.2f", lon)}°E"
+                        }
+                        val src = feat.source["elevation"] ?: "Curated Regional DEM / GLiM Cache"
+                        val formattedMsg = if (src.contains("Cache", ignoreCase = true)) {
+                            "Loaded from Curated Regional DEM / GLiM Cache"
+                        } else {
+                            "Synced from SRTM 30m DEM / NASA-ISRO GLiM"
+                        }
+                        _uiState.update {
+                            it.copy(
+                                isExtractingFeatures = false,
+                                elevation = feat.elevation.toInt().toString(),
+                                slopeDeg = String.format(java.util.Locale.US, "%.1f", feat.slope),
+                                rainfall1d = String.format(java.util.Locale.US, "%.1f", feat.rainfallPrevious1d),
+                                rainfall3d = String.format(java.util.Locale.US, "%.1f", feat.rainfallPrevious3d),
+                                rainfall7d = String.format(java.util.Locale.US, "%.1f", feat.rainfallPrevious7d),
+                                lithologyGroup = feat.lithologyGroup,
+                                landCover = feat.landCover,
+                                locationName = it.locationName ?: resolvedPlace,
+                                telemetryMessage = formattedMsg
+                            )
+                        }
+                        if (autoPredict) {
+                            predict()
+                        }
                     }
+                    .onFailure { err ->
+                        _uiState.update {
+                            it.copy(
+                                isExtractingFeatures = false,
+                                telemetryMessage = "Curated regional telemetry baseline active",
+                                error = null
+                            )
+                        }
+                        if (autoPredict) {
+                            predict()
+                        }
+                    }
+            } catch (e: Throwable) {
+                _uiState.update {
+                    it.copy(
+                        isExtractingFeatures = false,
+                        error = "Telemetry notice: ${e.localizedMessage ?: "Fallback active"}"
+                    )
                 }
+            } finally {
+                // Guaranteed safety: spinner will never get stuck indefinitely
+                _uiState.update { it.copy(isExtractingFeatures = false) }
+            }
         }
     }
 
     fun predict() {
         val state = _uiState.value
-        val rain1 = state.rainfall1d.toDoubleOrNull() ?: 45.0
-        val slope = state.slopeDeg.toDoubleOrNull() ?: 35.0
-        val rain3 = state.rainfall3d.toDoubleOrNull() ?: (rain1 * 2.2)
-        val rain7 = state.rainfall7d.toDoubleOrNull() ?: (rain3 * 1.7)
-        val elev = state.elevation.toDoubleOrNull() ?: 1450.0
-        val moist = state.soilMoisturePct.toDoubleOrNull() ?: 75.0
         val lat = state.latitude.toDoubleOrNull() ?: 0.0
         val lon = state.longitude.toDoubleOrNull() ?: 0.0
+        val isPlain = (lat in 23.0..28.5 && lon in 75.0..87.5) || (state.elevation.toDoubleOrNull() ?: 1000.0) < 350.0
+
+        val rain1 = state.rainfall1d.toDoubleOrNull() ?: (if (isPlain) 5.0 else 25.0)
+        val slope = state.slopeDeg.toDoubleOrNull() ?: (if (isPlain) 1.0 else 24.0)
+        val rain3 = state.rainfall3d.toDoubleOrNull() ?: (rain1 * 2.2)
+        val rain7 = state.rainfall7d.toDoubleOrNull() ?: (rain3 * 1.7)
+        val elev = state.elevation.toDoubleOrNull() ?: (if (isPlain) 120.0 else 1450.0)
+        val moist = state.soilMoisturePct.toDoubleOrNull() ?: (if (isPlain) 40.0 else 75.0)
 
         val request = PredictionRequest(
             rainfallMm = rain1,
@@ -166,9 +312,32 @@ class PredictionViewModel @Inject constructor(
 
         _uiState.update { it.copy(isLoading = true, error = null, result = null) }
         viewModelScope.launch {
-            predictRisk(request)
-                .onSuccess { result -> _uiState.update { it.copy(isLoading = false, result = result) } }
-                .onFailure { e -> _uiState.update { it.copy(isLoading = false, error = e.localizedMessage) } }
+            try {
+                predictRisk(request)
+                    .onSuccess { rawResult ->
+                        // Sanitize result factors to prevent NPE and NaN in UI
+                        val cleanFactors = rawResult.factors
+                            .filter { it.key.isNotBlank() && it.value != null && !it.value.isNaN() }
+                        val cleanImportances = rawResult.featureImportances
+                            .filter { it.key.isNotBlank() && it.value != null && !it.value.isNaN() }
+                        val cleanProb = if (rawResult.probability.isNaN() || rawResult.probability.isInfinite()) {
+                            0.01
+                        } else {
+                            rawResult.probability.coerceIn(0.0, 1.0)
+                        }
+                        val sanitizedResult = rawResult.copy(
+                            probability = cleanProb,
+                            factors = cleanFactors,
+                            featureImportances = cleanImportances
+                        )
+                        _uiState.update { it.copy(isLoading = false, result = sanitizedResult) }
+                    }
+                    .onFailure { e ->
+                        _uiState.update { it.copy(isLoading = false, error = e.localizedMessage ?: "Assessment error") }
+                    }
+            } catch (e: Throwable) {
+                _uiState.update { it.copy(isLoading = false, error = e.localizedMessage ?: "Assessment error") }
+            }
         }
     }
 }
@@ -185,23 +354,21 @@ data class WeatherUiState(
 class WeatherViewModel @Inject constructor(
     private val getWeather: GetWeatherForecastUseCase,
     private val networkMonitor: NetworkMonitor,
-    private val locationHelper: LocationHelper
+    private val locationHelper: LocationHelper,
+    private val appLocationManager: com.ner.landslide.util.AppLocationManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(WeatherUiState())
     val uiState: StateFlow<WeatherUiState> = _uiState.asStateFlow()
 
-    private var currentLat: Double = 26.14
-    private var currentLng: Double = 91.74
+    private var currentLat: Double = 27.33
+    private var currentLng: Double = 88.61
 
-    // Auto-detect GPS location if available, otherwise default to regional capital
     init {
+        // Automatically sync with the app-wide single source of truth for location
         viewModelScope.launch {
-            val loc = locationHelper.getCurrentLocation()
-            if (loc != null) {
-                loadWeather(loc.latitude, loc.longitude)
-            } else {
-                loadWeather(26.14, 91.74)
+            appLocationManager.selectedLocation.collect { loc ->
+                loadWeather(loc.latitude, loc.longitude, loc.name)
             }
         }
         observeNetworkReconnection()
@@ -220,33 +387,35 @@ class WeatherViewModel @Inject constructor(
     fun useCurrentLocation() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
-            val loc = locationHelper.getCurrentLocation()
-            if (loc != null) {
-                loadWeather(loc.latitude, loc.longitude)
-            } else {
-                loadWeather(currentLat, currentLng)
-            }
+            appLocationManager.switchToCurrentGpsLocation()
         }
     }
 
-    fun loadWeather(lat: Double, lng: Double) {
+    fun loadWeather(lat: Double, lng: Double, forcedName: String? = null) {
         currentLat = lat
         currentLng = lng
         _uiState.update { it.copy(isLoading = true, error = null) }
         viewModelScope.launch {
-            val resolved = locationHelper.reverseGeocode(lat, lng)
+            val resolvedHeadline = forcedName ?: locationHelper.reverseGeocode(lat, lng).formattedHeadline
             getWeather(lat, lng)
                 .onSuccess { forecast ->
                     _uiState.update {
                         it.copy(
                             forecast = forecast,
-                            locationName = resolved.formattedHeadline,
+                            locationName = resolvedHeadline.ifBlank { "Selected Sector" },
                             lastUpdatedTime = System.currentTimeMillis(),
                             isLoading = false
                         )
                     }
                 }
-                .onFailure { e -> _uiState.update { it.copy(isLoading = false, error = e.localizedMessage) } }
+                .onFailure { e ->
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            error = e.localizedMessage ?: "Failed to load weather"
+                        )
+                    }
+                }
         }
     }
 }

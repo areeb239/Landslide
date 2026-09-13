@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
-from app.routers import predict, alerts, sensors, sos, health, data_sources
+from app.routers import predict, alerts, sensors, sos, health, data_sources, auth
 
 # Configure logging
 logging.basicConfig(
@@ -58,6 +58,7 @@ app.include_router(alerts.router)
 app.include_router(sensors.router)
 app.include_router(sos.router)
 app.include_router(data_sources.router)
+app.include_router(auth.router)
 
 
 @app.get("/dashboard", response_class=FileResponse)

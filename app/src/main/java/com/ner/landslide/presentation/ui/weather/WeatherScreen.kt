@@ -312,7 +312,7 @@ fun WeatherScreen(
                 }
 
                 val currentHour = remember(forecast) {
-                    forecast.hourlyData.firstOrNull() ?: HourlyWeather(temperature = 24.0)
+                    forecast.currentWeather ?: forecast.hourlyData.firstOrNull() ?: HourlyWeather(temperature = 24.0)
                 }
                 val currentCondition = remember(currentHour) {
                     resolveCondition(
@@ -370,6 +370,7 @@ fun WeatherScreen(
                         overallMax = dailyList.maxOfOrNull { it.maxTemp } ?: 32.0
                     )
 
+                    /* // Bottom two layout sections hidden per user request
                     // ─── 5. AI RISK PREDICTION SECTION ───────────────────────────
                     AIRiskPredictionCard(
                         forecast = forecast,
@@ -382,6 +383,7 @@ fun WeatherScreen(
                         selectedIndex = selectedRadarDayIndex,
                         onSelectDay = { selectedRadarDayIndex = it }
                     )
+                    */
 
                     Spacer(Modifier.height(30.dp))
                 }

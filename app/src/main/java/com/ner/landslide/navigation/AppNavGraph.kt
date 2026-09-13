@@ -20,6 +20,7 @@ import com.ner.landslide.presentation.ui.admin.BroadcastAlertScreen
 import com.ner.landslide.presentation.ui.auth.LoginScreen
 import com.ner.landslide.presentation.ui.auth.RegisterScreen
 import com.ner.landslide.presentation.ui.auth.SplashScreen
+import com.ner.landslide.presentation.ui.auth.OnboardingPermissionScreen
 import com.ner.landslide.presentation.ui.home.HomeScreen
 import com.ner.landslide.presentation.ui.map.MapScreen
 import com.ner.landslide.presentation.ui.prediction.PredictionScreen
@@ -43,12 +44,18 @@ val defaultBottomNavItems = listOf(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AppNavGraph() {
+fun AppNavGraph(initialNavigateRoute: String? = null) {
     val navController = rememberNavController()
     val context = androidx.compose.ui.platform.LocalContext.current
     val auth = FirebaseAuth.getInstance()
     val isSessionActive = auth.currentUser != null || com.ner.landslide.data.repository.UserRepositoryImpl.isSessionActive(context)
-    val startDestination = if (isSessionActive) Screen.Home.route else Screen.Splash.route
+    val startDestination = Screen.Splash.route
+
+    LaunchedEffect(initialNavigateRoute) {
+        if (!initialNavigateRoute.isNullOrBlank()) {
+            navController.navigate(initialNavigateRoute)
+        }
+    }
     val strings = LocalAppStrings.current
     val navItems = remember(strings) {
         listOf(
@@ -107,7 +114,7 @@ fun AppNavGraph() {
                                 onClick = {
                                     navController.navigate(item.screen.route) {
                                         popUpTo(navController.graph.findStartDestination().id) {
-                                            saveState = true
+                                             saveState = true
                                         }
                                         launchSingleTop = true
                                         restoreState = true
@@ -131,26 +138,67 @@ fun AppNavGraph() {
         ) {
             composable(Screen.Splash.route) {
                 SplashScreen(
-                    onNavigateToLogin = { navController.navigate(Screen.Login.route) { popUpTo(0) } },
-                    onNavigateToHome = { navController.navigate(Screen.Home.route) { popUpTo(0) } }
+                    onNavigateToLogin = {
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    },
+                    onNavigateToHome = {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
                 )
             }
             composable(Screen.Login.route) {
                 LoginScreen(
-                    onLoginSuccess = { navController.navigate(Screen.Home.route) { popUpTo(0) } },
+                    onLoginSuccess = {
+                        navController.navigate(Screen.OnboardingPermission.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    },
                     onNavigateToRegister = { navController.navigate(Screen.Register.route) }
                 )
             }
             composable(Screen.Register.route) {
                 RegisterScreen(
-                    onRegisterSuccess = { navController.navigate(Screen.Home.route) { popUpTo(0) } },
+                    onRegisterSuccess = {
+                        navController.navigate(Screen.OnboardingPermission.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    },
                     onNavigateToLogin = { navController.popBackStack() }
+                )
+            }
+            composable(Screen.OnboardingPermission.route) {
+                OnboardingPermissionScreen(
+                    onContinueToDashboard = {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
                 )
             }
             composable(Screen.Home.route) {
                 HomeScreen(
-                    onNavigateToPrediction = { navController.navigate(Screen.Prediction.route) },
-                    onNavigateToWeather = { navController.navigate(Screen.Weather.route) },
+                    onNavigateToPrediction = {
+                        try {
+                            navController.navigate(Screen.Prediction.route) {
+                                launchSingleTop = true
+                            }
+                        } catch (e: Exception) {
+                            android.util.Log.e("BhoochetakNav", "Failed navigating to prediction", e)
+                        }
+                    },
+                    onNavigateToWeather = {
+                        try {
+                            navController.navigate(Screen.Weather.route) {
+                                launchSingleTop = true
+                            }
+                        } catch (e: Exception) {
+                            android.util.Log.e("BhoochetakNav", "Failed navigating to weather", e)
+                        }
+                    },
                     onNavigateToAdmin = { navController.navigate(Screen.AdminDashboard.route) }
                 )
             }
@@ -159,12 +207,21 @@ fun AppNavGraph() {
             }
             composable(Screen.Report.route) {
                 ReportScreen(
-                    onReportSubmitted = { navController.popBackStack() }
+                    onReportSubmitted = {
+                        navController.navigate(Screen.Home.route) {
+                            popUpTo(Screen.Home.route) { inclusive = false }
+                            launchSingleTop = true
+                        }
+                    }
                 )
             }
             composable(Screen.Profile.route) {
                 ProfileScreen(
-                    onLogout = { navController.navigate(Screen.Login.route) { popUpTo(0) } },
+                    onLogout = {
+                        navController.navigate(Screen.Login.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    },
                     onNavigateToAdmin = { navController.navigate(Screen.AdminDashboard.route) }
                 )
             }

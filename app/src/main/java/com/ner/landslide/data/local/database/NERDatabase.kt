@@ -78,14 +78,43 @@ interface PendingSOSDao {
     suspend fun deleteSyncedSOS()
 }
 
+@Entity(tableName = "registered_credentials")
+data class UserCredentialEntity(
+    @PrimaryKey val email: String,
+    val uid: String,
+    val name: String,
+    val passwordHash: String,
+    val salt: String,
+    val role: String = "CITIZEN",
+    val token: String = "",
+    val createdAt: Long = System.currentTimeMillis()
+)
+
+@Dao
+interface UserCredentialDao {
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertUser(user: UserCredentialEntity)
+
+    @Query("SELECT * FROM registered_credentials WHERE LOWER(email) = LOWER(:email) LIMIT 1")
+    suspend fun getUserByEmail(email: String): UserCredentialEntity?
+
+    @Query("SELECT * FROM registered_credentials ORDER BY createdAt DESC")
+    suspend fun getAllUsers(): List<UserCredentialEntity>
+
+    @Query("DELETE FROM registered_credentials WHERE LOWER(email) = LOWER(:email)")
+    suspend fun deleteUser(email: String)
+}
+
 // ─── Database ─────────────────────────────────────────────────────────────────
 
 @Database(
-    entities = [PendingReportEntity::class, PendingSOSEntity::class],
-    version = 2,
+    entities = [PendingReportEntity::class, PendingSOSEntity::class, UserCredentialEntity::class],
+    version = 3,
     exportSchema = false
 )
 abstract class NERDatabase : RoomDatabase() {
     abstract fun pendingReportDao(): PendingReportDao
     abstract fun pendingSOSDao(): PendingSOSDao
+    abstract fun userCredentialDao(): UserCredentialDao
 }

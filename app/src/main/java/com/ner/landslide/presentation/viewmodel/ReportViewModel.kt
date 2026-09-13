@@ -40,10 +40,21 @@ class ReportViewModel @Inject constructor(
     private val networkMonitor: NetworkMonitor,
     private val storage: FirebaseStorage,
     private val auth: FirebaseAuth,
-    private val getCurrentUser: GetCurrentUserUseCase
+    private val getCurrentUser: GetCurrentUserUseCase,
+    private val appLocationManager: com.ner.landslide.util.AppLocationManager
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(ReportUiState())
+    private val _uiState = MutableStateFlow(
+        run {
+            val initialLoc = appLocationManager.selectedLocation.value
+            ReportUiState(
+                latitude = initialLoc.latitude,
+                longitude = initialLoc.longitude,
+                resolvedLocationName = initialLoc.name,
+                district = initialLoc.district
+            )
+        }
+    )
     val uiState: StateFlow<ReportUiState> = _uiState.asStateFlow()
 
     private var currentUser: User? = null
@@ -55,7 +66,23 @@ class ReportViewModel @Inject constructor(
                 _uiState.update { it.copy(isOnline = online) }
             }
         }
-        autoDetectLocation()
+        // Keep in sync with app-wide single source of truth for location
+        viewModelScope.launch {
+            appLocationManager.selectedLocation.collect { loc ->
+                _uiState.update {
+                    it.copy(
+                        latitude = loc.latitude,
+                        longitude = loc.longitude,
+                        resolvedLocationName = loc.name,
+                        district = if (it.district.isBlank()) loc.district else it.district
+                    )
+                }
+            }
+        }
+        val currentLoc = appLocationManager.selectedLocation.value
+        if (currentLoc.isGpsLocation || (currentLoc.latitude == 0.0 && currentLoc.longitude == 0.0)) {
+            autoDetectLocation()
+        }
     }
 
     fun checkGpsEnabled(): Boolean = locationHelper.isGpsEnabled()
@@ -64,32 +91,24 @@ class ReportViewModel @Inject constructor(
         val gpsOn = locationHelper.isGpsEnabled()
         _uiState.update { it.copy(isFetchingLocation = true, isGpsEnabled = gpsOn) }
         viewModelScope.launch {
-            val loc = locationHelper.getCurrentLocation()
-            if (loc != null) {
-                val resolved = locationHelper.reverseGeocode(loc.latitude, loc.longitude)
+            val success = appLocationManager.switchToCurrentGpsLocation()
+            if (success) {
+                val loc = appLocationManager.selectedLocation.value
+                val isNER = com.ner.landslide.util.LocationHelper.isWithinNER(loc.latitude, loc.longitude)
+                val headline = if (isNER) loc.name else "${loc.name} [Outside NER Corridor]"
                 _uiState.update {
                     it.copy(
                         latitude = loc.latitude,
                         longitude = loc.longitude,
-                        resolvedLocationName = resolved.formattedHeadline,
-                        district = if (it.district.isBlank() && resolved.district.isNotBlank()) resolved.district else it.district,
-                        village = if (it.village.isBlank() && resolved.area.isNotBlank()) resolved.area else it.village,
+                        resolvedLocationName = headline,
+                        district = if (it.district.isBlank() && loc.district.isNotBlank()) loc.district else it.district,
                         isFetchingLocation = false,
-                        isGpsEnabled = locationHelper.isGpsEnabled()
+                        isGpsEnabled = true
                     )
                 }
             } else {
-                // Fallback default coordinates if none retrieved
-                val fallbackLat = if (_uiState.value.latitude != 0.0) _uiState.value.latitude else 27.1765
-                val fallbackLon = if (_uiState.value.longitude != 0.0) _uiState.value.longitude else 88.5321
-                val resolved = locationHelper.reverseGeocode(fallbackLat, fallbackLon)
                 _uiState.update {
                     it.copy(
-                        latitude = fallbackLat,
-                        longitude = fallbackLon,
-                        resolvedLocationName = resolved.formattedHeadline,
-                        district = if (it.district.isBlank() && resolved.district.isNotBlank()) resolved.district else it.district,
-                        village = if (it.village.isBlank() && resolved.area.isNotBlank()) resolved.area else it.village,
                         isFetchingLocation = false,
                         isGpsEnabled = locationHelper.isGpsEnabled()
                     )
@@ -107,43 +126,116 @@ class ReportViewModel @Inject constructor(
     fun onVillageChange(v: String) = _uiState.update { it.copy(village = v) }
     fun onPhotosSelected(uris: List<Uri>) = _uiState.update { it.copy(photoUris = uris) }
 
+    fun clearError() = _uiState.update { it.copy(error = null) }
+
+    fun isStep1Valid(): Boolean {
+        val state = _uiState.value
+        val hasDesc = state.description.trim().length >= 5
+        val hasLoc = (state.latitude != 0.0 && state.longitude != 0.0) || state.district.trim().isNotBlank()
+        return hasDesc && hasLoc
+    }
+
+    fun resetState() {
+        _uiState.update { current ->
+            ReportUiState(
+                latitude = current.latitude,
+                longitude = current.longitude,
+                resolvedLocationName = current.resolvedLocationName,
+                isGpsEnabled = current.isGpsEnabled,
+                isOnline = current.isOnline,
+                incidentType = IncidentType.LANDSLIDE,
+                severity = AlertSeverity.MODERATE,
+                description = "",
+                district = "",
+                village = "",
+                photoUris = emptyList(),
+                isSubmitting = false,
+                isSuccess = false,
+                isFetchingLocation = false,
+                error = null
+            )
+        }
+    }
+
     fun submitReport() {
+        val state = _uiState.value
+        if (state.description.trim().length < 5) {
+            _uiState.update { it.copy(error = "Please describe what happened (at least 5 characters).") }
+            return
+        }
+        val hasLocation = (state.latitude != 0.0 && state.longitude != 0.0) || state.district.trim().isNotBlank()
+        if (!hasLocation) {
+            _uiState.update { it.copy(error = "Please provide an incident location using GPS or entering your town/landmark.") }
+            return
+        }
+
         _uiState.update { it.copy(isSubmitting = true, error = null) }
         viewModelScope.launch {
             try {
-                val state = _uiState.value
+                if (currentUser == null) {
+                    try {
+                        currentUser = getCurrentUser()
+                    } catch (e: Exception) { /* ignore */ }
+                }
+
+                var finalLat = state.latitude
+                var finalLon = state.longitude
+                if (finalLat == 0.0 && finalLon == 0.0 && state.district.isNotBlank()) {
+                    val resolved = locationHelper.forwardGeocode(state.district)
+                    if (resolved != null) {
+                        finalLat = resolved.first
+                        finalLon = resolved.second
+                    }
+                }
+
                 // Upload photos if online
                 val uploadedUrls = if (state.isOnline) {
                     state.photoUris.mapNotNull { uri ->
                         try {
+                            val uid = auth.currentUser?.uid ?: currentUser?.uid ?: "anon"
                             val ref = storage.reference
-                                .child("reports/${auth.currentUser?.uid}/${System.currentTimeMillis()}_${uri.lastPathSegment}")
+                                .child("reports/$uid/${System.currentTimeMillis()}_${uri.lastPathSegment}")
                             ref.putFile(uri).await()
                             ref.downloadUrl.await().toString()
                         } catch (e: Exception) { null }
                     }
                 } else emptyList()
 
+                // Preserve local photo URIs if offline or remote upload was unavailable
+                val finalPhotos = if (uploadedUrls.isNotEmpty()) {
+                    uploadedUrls
+                } else {
+                    state.photoUris.map { it.toString() }
+                }
+
+                val resolvedUid = auth.currentUser?.uid?.ifBlank { null }
+                    ?: currentUser?.uid?.ifBlank { null }
+                    ?: "citizen_${System.currentTimeMillis()}"
+
+                val resolvedName = currentUser?.name?.ifBlank { null }
+                    ?: auth.currentUser?.displayName?.ifBlank { null }
+                    ?: "Citizen"
+
                 val report = IncidentReport(
-                    reporterUid = auth.currentUser?.uid ?: "",
-                    reporterName = currentUser?.name ?: "",
+                    reporterUid = resolvedUid,
+                    reporterName = resolvedName,
                     incidentType = state.incidentType,
                     severity = state.severity,
-                    description = state.description,
-                    latitude = state.latitude,
-                    longitude = state.longitude,
-                    photoUrls = uploadedUrls,
-                    district = state.district,
-                    village = state.village,
+                    description = state.description.trim(),
+                    latitude = finalLat,
+                    longitude = finalLon,
+                    photoUrls = finalPhotos,
+                    district = state.district.trim(),
+                    village = state.village.trim(),
                     reportedAt = System.currentTimeMillis()
                 )
                 submitReport(report)
                     .onSuccess { _uiState.update { it.copy(isSubmitting = false, isSuccess = true) } }
                     .onFailure { e ->
-                        _uiState.update { it.copy(isSubmitting = false, error = e.localizedMessage) }
+                        _uiState.update { it.copy(isSubmitting = false, error = e.localizedMessage ?: "Failed to submit report. Please retry.") }
                     }
             } catch (e: Exception) {
-                _uiState.update { it.copy(isSubmitting = false, error = e.localizedMessage) }
+                _uiState.update { it.copy(isSubmitting = false, error = e.localizedMessage ?: "Unexpected submission error.") }
             }
         }
     }
