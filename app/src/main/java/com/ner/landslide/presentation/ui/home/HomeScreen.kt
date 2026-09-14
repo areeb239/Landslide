@@ -49,7 +49,7 @@ fun HomeScreen(
     var selectedSeverityFilter by remember { mutableStateOf<AlertSeverity?>(null) }
 
     val isCitizenMode = true
-    var countdownSeconds by remember { mutableIntStateOf(5) }
+    var countdownSeconds by remember { mutableIntStateOf(3) }
     var isCountingDown by remember { mutableStateOf(false) }
     val context = androidx.compose.ui.platform.LocalContext.current
     var savedEmergencyContacts by remember {
@@ -69,7 +69,7 @@ fun HomeScreen(
 
     LaunchedEffect(showSOSDialog) {
         if (showSOSDialog) {
-            countdownSeconds = 5
+            countdownSeconds = 3
             isCountingDown = true
         } else {
             isCountingDown = false
@@ -262,7 +262,7 @@ fun HomeScreen(
                     )
 
                     LinearProgressIndicator(
-                        progress = { (countdownSeconds / 5f).coerceIn(0f, 1f) },
+                        progress = { (countdownSeconds / 3f).coerceIn(0f, 1f) },
                         color = colors.critical,
                         trackColor = colors.critical.copy(alpha = 0.2f),
                         modifier = Modifier
@@ -277,33 +277,41 @@ fun HomeScreen(
                     onClick = {
                         showSOSDialog = false
                         isCountingDown = false
+                        viewModel.onSOSTrigger()
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = colors.critical),
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        text = strings.cancel.uppercase(),
-                        fontWeight = FontWeight.ExtraBold,
-                        fontSize = 13.sp,
-                        color = Color.White
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(Icons.Default.Send, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                        Text(
+                            text = if (countdownSeconds > 0) "SEND SMS SOS NOW (${countdownSeconds}s)" else "SENDING SMS SOS...",
+                            fontWeight = FontWeight.Black,
+                            fontSize = 13.sp,
+                            color = Color.White
+                        )
+                    }
                 }
             },
             dismissButton = {
-                TextButton(
+                OutlinedButton(
                     onClick = {
                         showSOSDialog = false
                         isCountingDown = false
-                        viewModel.onSOSTrigger()
                     },
+                    border = BorderStroke(1.dp, colors.borderDefault),
+                    shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = "${strings.transmit} →",
+                        text = strings.cancel.uppercase(),
                         color = colors.textSecondary,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
                     )
                 }
             }

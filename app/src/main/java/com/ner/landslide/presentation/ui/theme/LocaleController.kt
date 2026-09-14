@@ -36,15 +36,22 @@ object SupportedLanguages {
         AppLanguage("en", "English", "English", "All States", "EN"),
         AppLanguage("hi", "Hindi", "हिन्दी", "All States", "HI"),
         AppLanguage("as", "Assamese", "অসমীয়া", "Assam", "AS"),
-        AppLanguage("bn", "Bengali", "বাংলা", "Tripura / Assam", "BN"),
-        AppLanguage("ne", "Nepali", "नेपाली", "Sikkim", "NE")
+        AppLanguage("brx", "Bodo", "बर'", "Assam / Bodoland", "BRX"),
+        AppLanguage("kha", "Khasi", "Ka Ktien Khasi", "Meghalaya", "KHA"),
+        AppLanguage("mni", "Manipuri", "মৈতৈলোন্", "Manipur", "MNI"),
+        AppLanguage("lus", "Mizo", "Mizo ṭawng", "Mizoram", "LUS"),
+        AppLanguage("ne", "Nepali", "नेपाली", "Sikkim", "NE"),
+        AppLanguage("bn", "Bengali", "বাংলা", "Tripura / Assam", "BN")
     )
 
     val STATES = listOf(
         "All States",
         "Assam",
-        "Tripura",
-        "Sikkim"
+        "Meghalaya",
+        "Manipur",
+        "Mizoram",
+        "Sikkim",
+        "Tripura"
     )
 
     fun findByCode(code: String): AppLanguage {

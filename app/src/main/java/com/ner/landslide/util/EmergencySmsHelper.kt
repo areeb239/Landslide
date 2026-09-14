@@ -197,6 +197,9 @@ object EmergencySmsHelper {
             return SmsDispatchResult.Failed("No valid recipient phone numbers configured")
         }
 
+        // Prioritize actual user contact if available, or 112
+        val primaryContact = cleanNumbers.firstOrNull { it != DEFAULT_EMERGENCY_NUMBER } ?: cleanNumbers.first()
+
         return try {
             val separator = if (Build.MANUFACTURER.contains("samsung", ignoreCase = true)) "," else ";"
             val recipients = cleanNumbers.joinToString(separator = separator)
@@ -204,24 +207,34 @@ object EmergencySmsHelper {
             val intent = Intent(Intent.ACTION_SENDTO, uri).apply {
                 putExtra("sms_body", message)
                 putExtra(Intent.EXTRA_TEXT, message)
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
             }
             context.startActivity(intent)
             SmsDispatchResult.IntentOpened
         } catch (e: Exception) {
-            // Fallback to primary single recipient
+            // Fallback to primary single recipient directly
             try {
-                val primary = cleanNumbers.firstOrNull() ?: DEFAULT_EMERGENCY_NUMBER
-                val uri = Uri.parse("smsto:$primary")
+                val uri = Uri.parse("smsto:$primaryContact")
                 val intent = Intent(Intent.ACTION_SENDTO, uri).apply {
                     putExtra("sms_body", message)
                     putExtra(Intent.EXTRA_TEXT, message)
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 }
                 context.startActivity(intent)
                 SmsDispatchResult.IntentOpened
             } catch (ex: Exception) {
-                SmsDispatchResult.Failed(ex.message ?: "Could not open SMS application")
+                try {
+                    val uri = Uri.parse("sms:$primaryContact")
+                    val intent = Intent(Intent.ACTION_VIEW, uri).apply {
+                        putExtra("sms_body", message)
+                        putExtra(Intent.EXTRA_TEXT, message)
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                    }
+                    context.startActivity(intent)
+                    SmsDispatchResult.IntentOpened
+                } catch (finalEx: Exception) {
+                    SmsDispatchResult.Failed(finalEx.message ?: "Could not open SMS application")
+                }
             }
         }
     }

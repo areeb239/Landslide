@@ -18,6 +18,7 @@ import com.ner.landslide.util.SelectedLocation
 import com.ner.landslide.util.SmsDispatchResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
@@ -236,12 +237,13 @@ class HomeViewModel @Inject constructor(
     fun onSOSTrigger() {
         _uiState.update { it.copy(sosState = SOSState.SENDING) }
         viewModelScope.launch {
-            val location = locationHelper.getCurrentLocation()
-            val lat = location?.latitude ?: _uiState.value.sosLocationLat
-            val lon = location?.longitude ?: _uiState.value.sosLocationLon
-            val resolved = locationHelper.reverseGeocode(lat, lon)
+            // 1. Instant Location & Sector Resolution (< 1ms from in-memory locked state)
+            val lat = _uiState.value.sosLocationLat
+            val lon = _uiState.value.sosLocationLon
+            val baseSector = _uiState.value.sosLocationName.ifBlank {
+                locationHelper.offlineRegionalLookup(lat, lon).formattedHeadline
+            }
             val isNER = com.ner.landslide.util.LocationHelper.isWithinNER(lat, lon)
-            val baseSector = resolved.formattedHeadline.ifBlank { _uiState.value.sosLocationName }
             val sectorName = if (isNER) baseSector else "$baseSector [Outside NER Corridor]"
 
             val user = _uiState.value.currentUser
@@ -258,29 +260,21 @@ class HomeViewModel @Inject constructor(
                 triggeredAt = System.currentTimeMillis()
             )
 
-            val isOnline = networkMonitor.isCurrentlyOnline()
-
-            if (isOnline) {
-                // Attempt cloud Firestore dispatch with a 4-second timeout
-                val cloudResult = withTimeoutOrNull(4000L) {
-                    triggerSOS(sos)
-                }
-                if (cloudResult != null && cloudResult.isSuccess) {
-                    _uiState.update {
-                        it.copy(
-                            sosState = SOSState.SENT,
-                            sosLocationLat = lat,
-                            sosLocationLon = lon,
-                            sosLocationName = sectorName
-                        )
+            // 2. Non-blocking Background Cloud & DB Dispatch (zero delay to SMS redirect)
+            viewModelScope.launch(Dispatchers.IO) {
+                try {
+                    triggerSOS.savePending(sos, sectorName = sectorName, smsDispatched = true)
+                    val isOnline = networkMonitor.isCurrentlyOnline()
+                    if (isOnline) {
+                        triggerSOS(sos)
                     }
-                    return@launch
+                    SyncWorker.triggerImmediateSync(context)
+                } catch (e: Exception) {
+                    android.util.Log.e("HomeViewModel", "Background SOS sync failed", e)
                 }
             }
 
-            // Fallback for offline mode or timed-out cloud sync
-            triggerSOS.savePending(sos, sectorName = sectorName, smsDispatched = true)
-
+            // 3. Immediately Launch Messaging App (< 50ms)
             val smsResult = EmergencySmsHelper.dispatchEmergencySms(
                 context = context,
                 userName = userName,
@@ -289,9 +283,6 @@ class HomeViewModel @Inject constructor(
                 longitude = lon,
                 sectorName = sectorName
             )
-
-            // Queue background sync so Firestore receives record as soon as mobile data connects
-            SyncWorker.triggerImmediateSync(context)
 
             when (smsResult) {
                 is SmsDispatchResult.DirectSmsSent -> {

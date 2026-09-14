@@ -223,7 +223,7 @@ class LocationHelper @Inject constructor(
         RegionalCentroid("Kolkata", "Kolkata", "West Bengal", 22.5726, 88.3639)
     )
 
-    private fun offlineRegionalLookup(lat: Double, lon: Double): ResolvedLocation {
+    fun offlineRegionalLookup(lat: Double, lon: Double): ResolvedLocation {
         var closest = offlineCentroids[0]
         var minD2 = Double.MAX_VALUE
         for (c in offlineCentroids) {
